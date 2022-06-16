@@ -1,0 +1,13 @@
+auto_update_conda: False
+channels:
+  - conda-forge
+  - dask/label/dev
+  - gpuci
+  - nvidia
+  - pytorch
+  - rapidsai
+  - rapidsai-nightly
+conda-build:
+  set_build_id: false
+  root_dir: /tmp/conda-bld-workspace
+  output_folder: /tmp/conda-bld-output

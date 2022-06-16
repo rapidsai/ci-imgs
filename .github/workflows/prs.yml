@@ -1,0 +1,11 @@
+name: ci
+
+on:
+  pull_request:
+
+jobs:
+  build-images:
+    uses: ./.github/workflows/build-and-publish-images.yml
+    with:
+      push: false
+    secrets: inherit
