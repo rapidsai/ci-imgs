@@ -46,6 +46,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: context
+          file: Dockerfile
           platforms: ${{ matrix.CUDA_VER >= '11.2.2' && matrix.LINUX_VER != 'centos7' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           push: ${{ inputs.push }}
           pull: true
