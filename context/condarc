@@ -2,7 +2,6 @@ auto_update_conda: False
 channels:
   - conda-forge
   - dask/label/dev
-  - gpuci
   - nvidia
   - pytorch
   - rapidsai
