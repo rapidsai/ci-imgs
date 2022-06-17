@@ -33,7 +33,7 @@ RUN case "${LINUX_VER}" in \
         ;; \
       "centos"*) \
         PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')" \
-        yum -y update \
+        && yum -y update \
         && yum -y install --setopt=install_weak_deps=False \
           cuda-gdb-${PKG_CUDA_VER} \
           wget \
