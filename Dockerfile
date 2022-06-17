@@ -24,8 +24,11 @@ RUN case "${LINUX_VER}" in \
         && apt-get upgrade -y \
         && apt-get install -y --no-install-recommends \
           cuda-gdb-${PKG_CUDA_VER} \
-          cuda-nvcc-${PKG_CUDA_VER} \
+          cuda-cudart-dev-${PKG_CUDA_VER} \
           wget \
+        && apt-get download cuda-nvcc-${PKG_CUDA_VER} \
+        && dpkg -i --ignore-depends="build-essential" ./cuda-nvcc-*.deb \
+        && rm ./cuda-nvcc-*.deb \
         && rm -rf "/var/lib/apt/lists/*"; \
         ;; \
       "centos"*) \
@@ -33,8 +36,8 @@ RUN case "${LINUX_VER}" in \
         yum -y update \
         && yum -y install --setopt=install_weak_deps=False \
           cuda-gdb-${PKG_CUDA_VER} \
-          cuda-nvcc-${PKG_CUDA_VER} \
           wget \
+        && rpm -Uvh --nodeps $(repoquery --location cuda-nvcc-${PKG_CUDA_VER}) \
         && yum clean all; \
         ;; \
       *) \
@@ -48,12 +51,13 @@ RUN wget https://github.com/rapidsai/gpuci-tools/releases/latest/download/tools.
 
 # Install CI tools using conda
 RUN gpuci_mamba_retry install -y \
-  anaconda-client \
-  awscli \
-  boa \
-  git \
-  jq \
-  ninja \
-  sccache
+    anaconda-client \
+    awscli \
+    boa \
+    git \
+    jq \
+    ninja \
+    sccache \
+  && conda clean -aipty
 
 CMD ["/bin/bash"]
