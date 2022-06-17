@@ -37,6 +37,7 @@ RUN case "${LINUX_VER}" in \
         && yum -y install --setopt=install_weak_deps=False \
           cuda-gdb-${PKG_CUDA_VER} \
           wget \
+          which \
         && rpm -Uvh --nodeps $(repoquery --location cuda-nvcc-${PKG_CUDA_VER}) \
         && yum clean all; \
         ;; \
