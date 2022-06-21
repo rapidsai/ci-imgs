@@ -35,7 +35,7 @@ RUN case "${LINUX_VER}" in \
         PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')" \
         && yum -y update \
         && yum -y install --setopt=install_weak_deps=False \
-          cuda-cudart-devel-{PKG_CUDA_VER} \
+          cuda-cudart-devel-${PKG_CUDA_VER} \
           cuda-driver-devel-${PKG_CUDA_VER} \
           cuda-gdb-${PKG_CUDA_VER} \
           wget \
