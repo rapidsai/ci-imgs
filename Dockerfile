@@ -29,7 +29,8 @@ RUN case "${LINUX_VER}" in \
         && apt-get download cuda-nvcc-${PKG_CUDA_VER} \
         && dpkg -i --ignore-depends="build-essential" ./cuda-nvcc-*.deb \
         && rm ./cuda-nvcc-*.deb \
-        && rm -rf "/var/lib/apt/lists/*"; \
+        && rm -rf "/var/lib/apt/lists/*" \
+        && sed -i 's/Depends: cuda-cudart-dev-11-5, build-essential/Depends: cuda-cudart-dev-11-5/g' /var/lib/dpkg/status; \
         ;; \
       "centos"*) \
         PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')" \
