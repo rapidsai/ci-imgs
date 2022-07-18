@@ -26,11 +26,15 @@ RUN case "${LINUX_VER}" in \
           cuda-gdb-${PKG_CUDA_VER} \
           cuda-cudart-dev-${PKG_CUDA_VER} \
           wget \
+        # ignore the build-essential package since it installs dependencies like gcc/g++
+        # we don't need them since we use conda compilers, so this keeps our images smaller
         && apt-get download cuda-nvcc-${PKG_CUDA_VER} \
         && dpkg -i --ignore-depends="build-essential" ./cuda-nvcc-*.deb \
         && rm ./cuda-nvcc-*.deb \
-        && rm -rf "/var/lib/apt/lists/*" \
-        && sed -i 's/, build-essential//g' /var/lib/dpkg/status; \
+        # apt will not work correctly if it thinks it needs the build-essential dependency
+        # so we patch it out with a sed command
+        && sed -i 's/, build-essential//g' /var/lib/dpkg/status \
+        && rm -rf "/var/lib/apt/lists/*"; \
         ;; \
       "centos"*) \
         PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')" \
