@@ -25,6 +25,7 @@ RUN case "${LINUX_VER}" in \
         && apt-get install -y --no-install-recommends \
           cuda-gdb-${PKG_CUDA_VER} \
           cuda-cudart-dev-${PKG_CUDA_VER} \
+          cuda-cupti-dev-${PKG_CUDA_VER} \
           wget \
         # ignore the build-essential package since it installs dependencies like gcc/g++
         # we don't need them since we use conda compilers, so this keeps our images smaller
@@ -43,6 +44,7 @@ RUN case "${LINUX_VER}" in \
           cuda-cudart-devel-${PKG_CUDA_VER} \
           cuda-driver-devel-${PKG_CUDA_VER} \
           cuda-gdb-${PKG_CUDA_VER} \
+          cuda-cupti-${PKG_CUDA_VER} \
           wget \
           which \
         && rpm -Uvh --nodeps $(repoquery --location cuda-nvcc-${PKG_CUDA_VER}) \
