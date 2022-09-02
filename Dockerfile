@@ -37,7 +37,7 @@ RUN case "${LINUX_VER}" in \
         && sed -i 's/, build-essential//g' /var/lib/dpkg/status \
         && rm -rf "/var/lib/apt/lists/*"; \
         ;; \
-      "centos"*) \
+      "centos"* | "rockylinux"*) \
         PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')" \
         && yum -y update \
         && yum -y install --setopt=install_weak_deps=False \
