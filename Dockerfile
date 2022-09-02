@@ -47,6 +47,7 @@ RUN case "${LINUX_VER}" in \
           cuda-cupti-${PKG_CUDA_VER} \
           wget \
           which \
+          yum-utils \
         && rpm -Uvh --nodeps $(repoquery --location cuda-nvcc-${PKG_CUDA_VER}) \
         && yum clean all; \
         ;; \
