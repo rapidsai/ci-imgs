@@ -56,12 +56,12 @@ RUN case "${LINUX_VER}" in \
         ;; \
     esac
 
-# Install gpuci-tools
-RUN wget https://github.com/rapidsai/gpuci-tools/releases/latest/download/tools.tar.gz -O - \
+# Install gha-tools
+RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
-# Install CI tools using conda
-RUN gpuci_mamba_retry install -y \
+# Install CI tools using mamba
+RUN rapids-mamba-retry install -y \
     anaconda-client \
     awscli \
     boa \
