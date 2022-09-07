@@ -72,6 +72,7 @@ RUN rapids-mamba-retry install -y \
   && conda clean -aipty
 
 # Install CI tools using pip
-RUN pip install rapids-dependency-file-generator
+RUN pip install rapids-dependency-file-generator \
+    && pip cache purge
 
 CMD ["/bin/bash"]
