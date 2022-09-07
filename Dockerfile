@@ -17,10 +17,11 @@ ENV CMAKE_C_COMPILER_LAUNCHER=sccache
 COPY condarc /opt/conda/.condarc
 
 # Install system packages depending on the LINUX_VER
-RUN case "${LINUX_VER}" in \
+RUN \
+    PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')"; \
+    case "${LINUX_VER}" in \
       "ubuntu"*) \
-        PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')" \
-        && apt-get update \
+        apt-get update \
         && apt-get upgrade -y \
         && apt-get install -y --no-install-recommends \
           cuda-gdb-${PKG_CUDA_VER} \
@@ -38,8 +39,7 @@ RUN case "${LINUX_VER}" in \
         && rm -rf "/var/lib/apt/lists/*"; \
         ;; \
       "centos"* | "rockylinux"*) \
-        PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')" \
-        && yum -y update \
+        yum -y update \
         && yum -y install --setopt=install_weak_deps=False \
           cuda-cudart-devel-${PKG_CUDA_VER} \
           cuda-driver-devel-${PKG_CUDA_VER} \
