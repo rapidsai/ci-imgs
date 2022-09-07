@@ -71,4 +71,7 @@ RUN rapids-mamba-retry install -y \
     sccache \
   && conda clean -aipty
 
+# Install CI tools using pip
+RUN pip install rapids-dependency-file-generator
+
 CMD ["/bin/bash"]
