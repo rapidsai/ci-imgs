@@ -5,8 +5,13 @@ FROM rapidsai/mambaforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 
 ARG CUDA_VER
 ARG LINUX_VER
+ARG PYTHON_VER
 
 ARG DEBIAN_FRONTEND=noninteractive
+
+# Set RAPIDS versions env variables
+ENV RAPIDS_CUDA_VER="${CUDA_VER}"
+ENV RAPIDS_PY_VER="${PYTHON_VER}"
 
 # Add sccache variables
 ENV CMAKE_CUDA_COMPILER_LAUNCHER=sccache
