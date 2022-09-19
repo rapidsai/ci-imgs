@@ -76,6 +76,8 @@ RUN rapids-mamba-retry install -y \
     sccache \
   && conda clean -aipty
 
+RUN /opt/conda/bin/git config --global --add safe.directory '*'
+
 # Install CI tools using pip
 RUN pip install rapids-dependency-file-generator \
     && pip cache purge
