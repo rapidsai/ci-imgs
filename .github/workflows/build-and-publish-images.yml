@@ -7,27 +7,45 @@ on:
         required: true
         type: boolean
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
+  compute-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      LATEST_UBUNTU_VER: ${{ steps.latest-values.outputs.LATEST_UBUNTU_VER }}
+      LATEST_CUDA_VER: ${{ steps.latest-values.outputs.LATEST_CUDA_VER }}
+      LATEST_PYTHON_VER: ${{ steps.latest-values.outputs.LATEST_PYTHON_VER }}
+      MATRIX: ${{ steps.compute-matrix.outputs.MATRIX }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Compute latest values
+        id: latest-values
+        run: |
+          set -x
+          LATEST_UBUNTU_VER=$(yq '.LINUX_VER | map(select(. == "*ubuntu*")) | sort | .[-1]' axis.yaml)
+          LATEST_CUDA_VER=$(yq '.CUDA_VER | sort | .[-1]' axis.yaml)
+          LATEST_PYTHON_VER=$(yq '.PYTHON_VER | sort | .[-1]' axis.yaml)
+
+          echo "::set-output name=LATEST_UBUNTU_VER::${LATEST_UBUNTU_VER}"
+          echo "::set-output name=LATEST_CUDA_VER::${LATEST_CUDA_VER}"
+          echo "::set-output name=LATEST_PYTHON_VER::${LATEST_PYTHON_VER}"
+      - name: Compute matrix
+        id: compute-matrix
+        run: |
+          MATRIX=$(yq -o json '.' axis.yaml | jq -c)
+          echo "::set-output name=MATRIX::${MATRIX}"
   docker:
+    needs: compute-matrix
     runs-on: ubuntu-latest
     env:
       DOCKERHUB_USERNAME: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
     strategy:
-      matrix:
-        CUDA_VER:
-          - "11.5.1"
-          - "11.4.1"
-          - "11.2.2"
-          - "11.0.3"
-        PYTHON_VER:
-          - "3.8"
-          - "3.9"
-        LINUX_VER:
-          - "ubuntu18.04"
-          - "ubuntu20.04"
-          - "centos7"
-          - "rockylinux8"
+      matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -41,17 +59,44 @@ jobs:
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
+      - name: Compute Tags
+        id: compute-tags
+        run: |
+          set -x
+          TAGS="rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}"
+
+          if [[
+            "${{ needs.compute-matrix.outputs.LATEST_UBUNTU_VER }}" == "${{ matrix.LINUX_VER }}" &&
+            "${{ needs.compute-matrix.outputs.LATEST_CUDA_VER }}" == "${{ matrix.CUDA_VER }}" &&
+            "${{ needs.compute-matrix.outputs.LATEST_PYTHON_VER }}" == "${{ matrix.PYTHON_VER }}"
+          ]]; then
+            TAGS+=",rapidsai/ci:latest"
+          fi
+          echo "::set-output name=TAGS::${TAGS}"
+      - name: Compute Platforms
+        id: compute-platforms
+        run: |
+          set -x
+          PLATFORMS="linux/amd64"
+
+          if [[
+            "${{ matrix.CUDA_VER }}" > "11.2.2" &&
+            "${{ matrix.LINUX_VER }}" != "centos7"
+          ]]; then
+            PLATFORMS+=",linux/arm64"
+          fi
+          echo "::set-output name=PLATFORMS::${PLATFORMS}"
       - name: Build and push
         timeout-minutes: 30
         uses: docker/build-push-action@v3
         with:
           context: context
           file: Dockerfile
-          platforms: ${{ matrix.CUDA_VER >= '11.2.2' && matrix.LINUX_VER != 'centos7' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ steps.compute-platforms.outputs.PLATFORMS }}
           push: ${{ inputs.push }}
           pull: true
           build-args: |
             CUDA_VER=${{ matrix.CUDA_VER }}
             LINUX_VER=${{ matrix.LINUX_VER }}
             PYTHON_VER=${{ matrix.PYTHON_VER }}
-          tags: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}
+          tags: ${{ steps.compute-tags.outputs.TAGS }}
