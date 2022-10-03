@@ -70,6 +70,7 @@ RUN rapids-mamba-retry install -y \
     anaconda-client \
     awscli \
     boa \
+    gh \
     git \
     jq \
     ninja \
