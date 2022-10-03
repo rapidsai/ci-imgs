@@ -63,7 +63,7 @@ jobs:
         id: compute-tags
         run: |
           set -x
-          TAGS="rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}"
+          TAGS="rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}"
 
           if [[
             "${{ needs.compute-matrix.outputs.LATEST_UBUNTU_VER }}" == "${{ matrix.LINUX_VER }}" &&
