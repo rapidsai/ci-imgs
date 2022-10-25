@@ -30,14 +30,14 @@ jobs:
           LATEST_CUDA_VER=$(yq '.CUDA_VER | sort | .[-1]' axis.yaml)
           LATEST_PYTHON_VER=$(yq '.PYTHON_VER | sort | .[-1]' axis.yaml)
 
-          echo "::set-output name=LATEST_UBUNTU_VER::${LATEST_UBUNTU_VER}"
-          echo "::set-output name=LATEST_CUDA_VER::${LATEST_CUDA_VER}"
-          echo "::set-output name=LATEST_PYTHON_VER::${LATEST_PYTHON_VER}"
+          echo "LATEST_UBUNTU_VER=${LATEST_UBUNTU_VER}" >> ${GITHUB_OUTPUT}
+          echo "LATEST_CUDA_VER=${LATEST_CUDA_VER}" >> ${GITHUB_OUTPUT}
+          echo "LATEST_PYTHON_VER=${LATEST_PYTHON_VER}" >> ${GITHUB_OUTPUT}
       - name: Compute matrix
         id: compute-matrix
         run: |
           MATRIX=$(yq -o json '.' axis.yaml | jq -c)
-          echo "::set-output name=MATRIX::${MATRIX}"
+          echo "MATRIX=${MATRIX}" >> ${GITHUB_OUTPUT}
   docker:
     needs: compute-matrix
     runs-on: ubuntu-latest
@@ -72,7 +72,7 @@ jobs:
           ]]; then
             TAGS+=",rapidsai/ci:latest"
           fi
-          echo "::set-output name=TAGS::${TAGS}"
+          echo "TAGS=${TAGS}" >> ${GITHUB_OUTPUT}
       - name: Compute Platforms
         id: compute-platforms
         run: |
@@ -85,7 +85,7 @@ jobs:
           ]]; then
             PLATFORMS+=",linux/arm64"
           fi
-          echo "::set-output name=PLATFORMS::${PLATFORMS}"
+          echo "PLATFORMS=${PLATFORMS}" >> ${GITHUB_OUTPUT}
       - name: Build and push
         timeout-minutes: 30
         uses: docker/build-push-action@v3
