@@ -18,9 +18,6 @@ ENV CMAKE_CUDA_COMPILER_LAUNCHER=sccache
 ENV CMAKE_CXX_COMPILER_LAUNCHER=sccache
 ENV CMAKE_C_COMPILER_LAUNCHER=sccache
 
-# Copy condarc to configure conda build
-COPY condarc /opt/conda/.condarc
-
 # Install system packages depending on the LINUX_VER
 RUN \
     PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')"; \
@@ -70,12 +67,20 @@ RUN rapids-mamba-retry install -y \
     anaconda-client \
     awscli \
     boa \
+    gettext \
     gh \
     git \
     jq \
     ninja \
     sccache \
   && conda clean -aipty
+
+# Create condarc file from env vars
+ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
+ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
+COPY condarc.tmpl /tmp/condarc.tmpl
+RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
+    rm -f /tmp/condarc.tmpl
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
