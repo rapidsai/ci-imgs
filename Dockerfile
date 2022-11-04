@@ -41,7 +41,8 @@ RUN \
         && rm -rf "/var/lib/apt/lists/*"; \
         ;; \
       "centos"* | "rockylinux"*) \
-        yum -y update \
+        # FIXME: remove `--nogpgcheck` flag when key signing issue is resolved
+        yum -y update --nogpgcheck \
         && yum -y install --setopt=install_weak_deps=False \
           cuda-cudart-devel-${PKG_CUDA_VER} \
           cuda-driver-devel-${PKG_CUDA_VER} \
