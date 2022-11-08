@@ -1,11 +1,11 @@
 auto_update_conda: False
 channels:
-  - conda-forge
-  - dask/label/dev
-  - nvidia
-  - pytorch
   - rapidsai
   - rapidsai-nightly
+  - dask/label/dev
+  - pytorch
+  - conda-forge
+  - nvidia
 conda-build:
   set_build_id: false
   root_dir: $RAPIDS_CONDA_BLD_ROOT_DIR
