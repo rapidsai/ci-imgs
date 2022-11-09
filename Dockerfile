@@ -13,10 +13,14 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 
-# Add sccache variables
+# Add sccache/build variables
+ENV CMAKE_GENERATOR=Ninja
 ENV CMAKE_CUDA_COMPILER_LAUNCHER=sccache
 ENV CMAKE_CXX_COMPILER_LAUNCHER=sccache
 ENV CMAKE_C_COMPILER_LAUNCHER=sccache
+ENV SCCACHE_BUCKET=rapids-sccache
+ENV SCCACHE_REGION=us-west-2
+ENV SCCACHE_IDLE_TIMEOUT=32768
 
 # Install system packages depending on the LINUX_VER
 RUN \
