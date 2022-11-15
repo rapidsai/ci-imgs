@@ -14,7 +14,6 @@ ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 
 # Add sccache/build variables
-ENV CMAKE_GENERATOR=Ninja
 ENV CMAKE_CUDA_COMPILER_LAUNCHER=sccache
 ENV CMAKE_CXX_COMPILER_LAUNCHER=sccache
 ENV CMAKE_C_COMPILER_LAUNCHER=sccache
@@ -75,7 +74,6 @@ RUN rapids-mamba-retry install -y \
     gh \
     git \
     jq \
-    ninja \
     sccache \
   && conda clean -aipty
 
