@@ -4,9 +4,9 @@ CUDA_VER:
   - "11.2.2"
 PYTHON_VER:
   - "3.8"
-  - "3.9"
+  - "3.10"
 LINUX_VER:
-  - "ubuntu18.04"
   - "ubuntu20.04"
+  - "ubuntu22.04"
   - "centos7"
   - "rockylinux8"
