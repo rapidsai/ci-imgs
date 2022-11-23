@@ -87,7 +87,7 @@ RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
 # Install CI tools using pip
-RUN pip install rapids-dependency-file-generator \
+RUN pip install rapids-dependency-file-generator==1 \
     && pip cache purge
 
 CMD ["/bin/bash"]
