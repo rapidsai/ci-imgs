@@ -77,6 +77,20 @@ RUN rapids-mamba-retry install -y \
     sccache \
   && conda clean -aipty
 
+# Install codecov binary
+RUN \
+  CODECOV_VERSION=v0.3.2 \
+  && curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 \
+    | gpg --no-default-keyring --keyring trustedkeys.gpg --import \
+  && curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov \
+  && curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov.SHA256SUM \
+  && curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov.SHA256SUM.sig \
+  && gpgv codecov.SHA256SUM.sig codecov.SHA256SUM \
+  && shasum -a 256 -c codecov.SHA256SUM \
+  && chmod +x codecov \
+  && mv codecov /usr/local/bin \
+  && rm -f codecov*
+
 # Create condarc file from env vars
 ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
 ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
