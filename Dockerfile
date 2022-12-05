@@ -1,7 +1,7 @@
 ARG CUDA_VER=11.5.1
 ARG LINUX_VER=ubuntu18.04
 ARG PYTHON_VER=3.8
-FROM rapidsai/mambaforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
+FROM rapidsai/mambaforge-cuda-rapids:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 
 ARG TARGETPLATFORM
 ARG CUDA_VER
