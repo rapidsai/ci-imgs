@@ -20,5 +20,3 @@ exclude:
     CUDA_VER: "11.4.1"
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.5.1"
-  - LINUX_VER: "ubuntu18.04"
-    CUDA_VER: "11.8.0"
