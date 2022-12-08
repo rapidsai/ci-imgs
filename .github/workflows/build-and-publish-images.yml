@@ -75,17 +75,10 @@ jobs:
           echo "TAGS=${TAGS}" >> ${GITHUB_OUTPUT}
       - name: Compute Platforms
         id: compute-platforms
-        run: |
-          set -x
-          PLATFORMS="linux/amd64"
-
-          if [[
-            "${{ matrix.CUDA_VER }}" > "11.2.2" &&
-            "${{ matrix.LINUX_VER }}" != "centos7"
-          ]]; then
-            PLATFORMS+=",linux/arm64"
-          fi
-          echo "PLATFORMS=${PLATFORMS}" >> ${GITHUB_OUTPUT}
+        run: ./ci/compute-arch.sh
+        env:
+          CUDA_VER: ${{ matrix.CUDA_VER }}
+          LINUX_VER: ${{ matrix.LINUX_VER }}
       - name: Build and push
         timeout-minutes: 30
         uses: docker/build-push-action@v3

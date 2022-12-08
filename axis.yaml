@@ -1,12 +1,22 @@
 CUDA_VER:
-  - "11.5.1"
-  - "11.4.1"
   - "11.2.2"
+  - "11.4.1"
+  - "11.5.1"
+  - "11.8.0"
 PYTHON_VER:
   - "3.8"
   - "3.9"
+  - "3.10"
 LINUX_VER:
   - "ubuntu18.04"
   - "ubuntu20.04"
+  - "ubuntu22.04"
   - "centos7"
   - "rockylinux8"
+exclude:
+  - LINUX_VER: "ubuntu22.04"
+    CUDA_VER: "11.2.2"
+  - LINUX_VER: "ubuntu22.04"
+    CUDA_VER: "11.4.1"
+  - LINUX_VER: "ubuntu22.04"
+    CUDA_VER: "11.5.1"
