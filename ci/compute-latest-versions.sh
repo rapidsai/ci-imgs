@@ -31,9 +31,6 @@ for KEY in "${LINUX_KEY}" "${CUDA_KEY}" "${PYTHON_KEY}"; do
   yq -ne 'env(ARRAY_VALUE) | contains([strenv(LATEST_VALUE)])'
 done
 
-
-
-
 echo "LATEST_LINUX_VER=${LATEST_LINUX_VER}" | tee --append "${GITHUB_OUTPUT:-/dev/null}"
 echo "LATEST_CUDA_VER=${LATEST_CUDA_VER}" | tee --append "${GITHUB_OUTPUT:-/dev/null}"
 echo "LATEST_PYTHON_VER=${LATEST_PYTHON_VER}" | tee --append "${GITHUB_OUTPUT:-/dev/null}"
