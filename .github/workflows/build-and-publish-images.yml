@@ -15,7 +15,7 @@ jobs:
   compute-matrix:
     runs-on: ubuntu-latest
     outputs:
-      LATEST_UBUNTU_VER: ${{ steps.latest-values.outputs.LATEST_UBUNTU_VER }}
+      LATEST_LINUX_VER: ${{ steps.latest-values.outputs.LATEST_LINUX_VER }}
       LATEST_CUDA_VER: ${{ steps.latest-values.outputs.LATEST_CUDA_VER }}
       LATEST_PYTHON_VER: ${{ steps.latest-values.outputs.LATEST_PYTHON_VER }}
       MATRIX: ${{ steps.compute-matrix.outputs.MATRIX }}
@@ -24,20 +24,10 @@ jobs:
         uses: actions/checkout@v3
       - name: Compute latest values
         id: latest-values
-        run: |
-          set -x
-          LATEST_UBUNTU_VER=$(yq '.LINUX_VER | map(select(. == "*ubuntu*")) | sort | .[-1]' axis.yaml)
-          LATEST_CUDA_VER=$(yq '.CUDA_VER | sort | .[-1]' axis.yaml)
-          LATEST_PYTHON_VER=$(yq '.PYTHON_VER | sort | .[-1]' axis.yaml)
-
-          echo "LATEST_UBUNTU_VER=${LATEST_UBUNTU_VER}" >> ${GITHUB_OUTPUT}
-          echo "LATEST_CUDA_VER=${LATEST_CUDA_VER}" >> ${GITHUB_OUTPUT}
-          echo "LATEST_PYTHON_VER=${LATEST_PYTHON_VER}" >> ${GITHUB_OUTPUT}
+        run: run: ./ci/compute-latest-versions.sh
       - name: Compute matrix
         id: compute-matrix
-        run: |
-          MATRIX=$(yq -o json '.' axis.yaml | jq -c)
-          echo "MATRIX=${MATRIX}" >> ${GITHUB_OUTPUT}
+        run: ./ci/compute-matrix.sh
   docker:
     needs: compute-matrix
     runs-on: ubuntu-latest
@@ -66,7 +56,7 @@ jobs:
           TAGS="rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}"
 
           if [[
-            "${{ needs.compute-matrix.outputs.LATEST_UBUNTU_VER }}" == "${{ matrix.LINUX_VER }}" &&
+            "${{ needs.compute-matrix.outputs.LATEST_LINUX_VER }}" == "${{ matrix.LINUX_VER }}" &&
             "${{ needs.compute-matrix.outputs.LATEST_CUDA_VER }}" == "${{ matrix.CUDA_VER }}" &&
             "${{ needs.compute-matrix.outputs.LATEST_PYTHON_VER }}" == "${{ matrix.PYTHON_VER }}"
           ]]; then

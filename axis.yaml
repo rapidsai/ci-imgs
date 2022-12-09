@@ -20,3 +20,10 @@ exclude:
     CUDA_VER: "11.4.1"
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.5.1"
+
+# Use these values to set the matrix values
+# used for the "latest" tag
+LATEST_VERSIONS:
+  CUDA_VER: "11.5.1"
+  PYTHON_VER: "3.9"
+  LINUX_VER: "ubuntu20.04"
