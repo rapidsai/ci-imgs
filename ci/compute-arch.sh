@@ -14,12 +14,12 @@ write_platforms() {
   echo "PLATFORMS=${PLATFORMS}" | tee --append "${GITHUB_OUTPUT:-/dev/null}"
 }
 
-# Ubuntu18.04 and RockyLinux8 images don't officially support arm.
-# Even though Ubuntu18.04 and RockyLinux8 images prior to CUDA 11.8.0 did
-# have arm variants, they were removed for 11.8.0.
+# Ubuntu 18.04 images don't officially support arm64.
+# Even though Ubuntu 18.04 images prior to CUDA 11.8.0 did
+# have arm64 variants, they were removed for 11.8.0.
 if [[
-  "${CUDA_VER}" == "11.8.0" &&
-  ("${LINUX_VER}" == "ubuntu18.04" || "${LINUX_VER}" == "rockylinux8")
+  ("${CUDA_VER}" == "11.8.0" || "${CUDA_VER}" == "12.0.0") &&
+  ("${LINUX_VER}" == "ubuntu18.04")
 ]]; then
   write_platforms "${PLATFORMS}"
   exit 0
