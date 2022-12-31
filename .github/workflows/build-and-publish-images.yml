@@ -70,6 +70,7 @@ jobs:
           CUDA_VER: ${{ matrix.CUDA_VER }}
           LINUX_VER: ${{ matrix.LINUX_VER }}
       - name: Build and push
+        timeout-minutes: 20
         uses: docker/build-push-action@v3
         with:
           context: context
