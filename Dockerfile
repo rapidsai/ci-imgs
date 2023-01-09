@@ -21,6 +21,7 @@ ENV CMAKE_C_COMPILER_LAUNCHER=sccache
 ENV SCCACHE_BUCKET=rapids-sccache
 ENV SCCACHE_REGION=us-west-2
 ENV SCCACHE_IDLE_TIMEOUT=32768
+ENV SCCACHE_S3_USE_SSL=true
 
 # Install system packages depending on the LINUX_VER
 RUN \
