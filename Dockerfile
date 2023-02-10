@@ -110,7 +110,7 @@ RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
 # Install CI tools using pip
-RUN pip install rapids-dependency-file-generator==1 \
+RUN pip install "rapids-dependency-file-generator==1.*" \
     && pip cache purge
 
 COPY --from=mikefarah/yq:4.30.8 /usr/bin/yq /usr/local/bin/yq
