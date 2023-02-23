@@ -18,7 +18,7 @@ write_platforms() {
 # Even though Ubuntu 18.04 images prior to CUDA 11.8.0 did
 # have arm64 variants, they were removed for 11.8.0.
 if [[
-  ("${CUDA_VER}" == "11.8.0" || "${CUDA_VER}" == "12.0.0") &&
+  ("${CUDA_VER}" == "11.8.0" || "${CUDA_VER}" == "12.0.1") &&
   ("${LINUX_VER}" == "ubuntu18.04")
 ]]; then
   write_platforms "${PLATFORMS}"
