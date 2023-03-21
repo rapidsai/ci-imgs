@@ -48,7 +48,7 @@ jobs:
       - name: Download and untar gha-tools
         run: |
           set -x
-          pip install awscli
+          sudo apt-get update -y && sudo apt-get install -y awscli git
           git clone https://github.com/sevagh/gha-tools -b feat/docker-s3 ./gha-tools
           chmod +x ./gha-tools/tools/*
           sudo cp ./gha-tools/tools/* /usr/bin/
