@@ -13,9 +13,9 @@ LINUX_VER:
   - "ubuntu22.04"
   - "centos7"
   - "rockylinux8"
-RUNNER:
-  - "ubuntu-latest"
-  - "[self-hosted, linux, arm64, cpu4]"
+RUNNER_ARCH:
+  - "amd64"
+  - "arm64"
 exclude:
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.2.2"
