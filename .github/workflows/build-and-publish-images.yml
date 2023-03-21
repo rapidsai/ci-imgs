@@ -38,8 +38,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Set up Docker Context for Buildx
+        id: buildx-context
+        run: docker context create builders
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        with:
+          endpoint: builders
+      - name: Download and untar gha-tools
+        run: |
+          set -x
+          pip install awscli
+          git clone https://github.com/sevagh/gha-tools -b feat/docker-s3 ./gha-tools
+          chmod +x ./gha-tools/tools/*
+          sudo cp ./gha-tools/tools/* /usr/bin/
       - name: Compute Tag Argument
         id: compute-tag-arg
         run: |
