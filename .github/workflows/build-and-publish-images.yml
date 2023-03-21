@@ -28,19 +28,36 @@ jobs:
       - name: Compute matrix
         id: compute-matrix
         run: ./ci/compute-matrix.sh
-  docker:
+      - name: Debug something
+        run: echo ${{ fromJSON(steps.compute-matrix.outputs.MATRIX.runner_arch != 'arm64' && '"ubuntu-latest"' || '{{"labels":["self-hosted", "linux", "arm64", "cpu4"]}}') }}
+  docker-build-per-arch:
     needs: compute-matrix
+    strategy:
+      matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
+    runs-on: ${{ fromJSON(matrix.runner_arch != 'arm64' && '"ubuntu-latest"' || '{"labels":["self-hosted", "linux", "arm64", "cpu4"]}') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Compute Tag Argument
+        id: compute-tag-arg
+        run: |
+          set -x
+          TAG_ARG="-t rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}-$(uname -m)"
+          echo "TAG_ARG=${TAG_ARG}" >> ${GITHUB_OUTPUT}
+      - name: Build and push intermediate image to s3
+        run: |
+          docker build --pull -f Dockerfile ./context --build-arg CUDA_VER=${{ matrix.CUDA_VER }} --build-arg LINUX_VER=${{ matrix.LINUX_VER }} --build-arg PYTHON_VER=${{ matrix.PYTHON_VER }} ${{ steps.compute-tag-arg.outputs.TAG_ARG }}
+  docker-assemble-push-multiarch:
+    needs: [compute-matrix, docker-build-per-arch]
     runs-on: ubuntu-latest
     env:
       DOCKERHUB_USERNAME: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
-    strategy:
-      matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
@@ -49,37 +66,19 @@ jobs:
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
+      - name: Download all images from s3
+        run: rapids-download-docker-from-s3
       - name: Compute Tags
         id: compute-tags
         run: |
           set -x
-          TAGS="rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}"
+          TAGS="-t rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}"
 
           if [[
             "${{ needs.compute-matrix.outputs.LATEST_LINUX_VER }}" == "${{ matrix.LINUX_VER }}" &&
             "${{ needs.compute-matrix.outputs.LATEST_CUDA_VER }}" == "${{ matrix.CUDA_VER }}" &&
             "${{ needs.compute-matrix.outputs.LATEST_PYTHON_VER }}" == "${{ matrix.PYTHON_VER }}"
           ]]; then
-            TAGS+=",rapidsai/ci:latest"
+            TAGS+=" -t rapidsai/ci:latest"
           fi
           echo "TAGS=${TAGS}" >> ${GITHUB_OUTPUT}
-      - name: Compute Platforms
-        id: compute-platforms
-        run: ./ci/compute-arch.sh
-        env:
-          CUDA_VER: ${{ matrix.CUDA_VER }}
-          LINUX_VER: ${{ matrix.LINUX_VER }}
-      - name: Build and push
-        timeout-minutes: 20
-        uses: docker/build-push-action@v4
-        with:
-          context: context
-          file: Dockerfile
-          platforms: ${{ steps.compute-platforms.outputs.PLATFORMS }}
-          push: ${{ inputs.push }}
-          pull: true
-          build-args: |
-            CUDA_VER=${{ matrix.CUDA_VER }}
-            LINUX_VER=${{ matrix.LINUX_VER }}
-            PYTHON_VER=${{ matrix.PYTHON_VER }}
-          tags: ${{ steps.compute-tags.outputs.TAGS }}
