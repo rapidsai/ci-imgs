@@ -13,6 +13,9 @@ LINUX_VER:
   - "ubuntu22.04"
   - "centos7"
   - "rockylinux8"
+RUNNER:
+  - "ubuntu-latest"
+  - "[self-hosted, linux, arm64, cpu4]"
 exclude:
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.2.2"
@@ -20,6 +23,12 @@ exclude:
     CUDA_VER: "11.4.1"
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.5.1"
+  # skip ARM builds for centos7
+  - LINUX_VER: "centos7"
+    RUNNER: "[self-hosted, linux, arm64, cpu4]"
+  # skip ARM builds for CUDA 11.2.2
+  - CUDA_VER: 11.2.2
+    RUNNER: "[self-hosted, linux, arm64, cpu4]"
 
 # Define the values used for the "latest" tag
 LATEST_VERSIONS:
