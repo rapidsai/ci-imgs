@@ -56,11 +56,14 @@ jobs:
         id: compute-tag-arg
         run: |
           set -x
-          TAG_ARG="-t rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}-$(uname -m)"
+          TAG="rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}-$(uname -m)"
+          TAG_ARG="-t ${TAG}"
+          echo "TAG=${TAG}" >> ${GITHUB_OUTPUT}
           echo "TAG_ARG=${TAG_ARG}" >> ${GITHUB_OUTPUT}
       - name: Build and push intermediate image to s3
         run: |
           docker build --pull -f Dockerfile ./context --build-arg CUDA_VER=${{ matrix.CUDA_VER }} --build-arg LINUX_VER=${{ matrix.LINUX_VER }} --build-arg PYTHON_VER=${{ matrix.PYTHON_VER }} ${{ steps.compute-tag-arg.outputs.TAG_ARG }}
+          rapids-upload-docker-to-s3 ${{ steps.compute-tag-arg.outputs.TAG }}
   docker-assemble-push-multiarch:
     needs: [compute-matrix, docker-build-per-arch]
     runs-on: ubuntu-latest
@@ -78,6 +81,13 @@ jobs:
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
+      - name: Download and untar gha-tools
+        run: |
+          set -x
+          sudo apt-get update -y && sudo apt-get install -y awscli git
+          git clone https://github.com/sevagh/gha-tools -b feat/docker-s3 ./gha-tools
+          chmod +x ./gha-tools/tools/*
+          sudo cp ./gha-tools/tools/* /usr/bin/
       - name: Download all images from s3
         run: rapids-download-docker-from-s3
       - name: Compute Tags

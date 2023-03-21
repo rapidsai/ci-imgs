@@ -1,18 +1,11 @@
 CUDA_VER:
   - "11.2.2"
-  - "11.4.1"
-  - "11.5.1"
-  - "11.8.0"
   - "12.0.1"
 PYTHON_VER:
   - "3.8"
-  - "3.9"
-  - "3.10"
 LINUX_VER:
-  - "ubuntu20.04"
   - "ubuntu22.04"
   - "centos7"
-  - "rockylinux8"
 RUNNER_ARCH:
   - "amd64"
   - "arm64"
@@ -32,6 +25,6 @@ exclude:
 
 # Define the values used for the "latest" tag
 LATEST_VERSIONS:
-  CUDA_VER: "11.8.0"
-  PYTHON_VER: "3.10"
+  CUDA_VER: "12.0.1"
+  PYTHON_VER: "3.8"
   LINUX_VER: "ubuntu22.04"
