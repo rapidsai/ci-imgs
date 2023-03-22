@@ -24,6 +24,21 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  actions: none
+  checks: none
+  contents: read
+  deployments: none
+  discussions: none
+  id-token: write
+  issues: none
+  packages: read
+  pages: none
+  pull-requests: read
+  repository-projects: none
+  security-events: none
+  statuses: none
+
 jobs:
   compute-matrix:
     runs-on: ubuntu-latest
@@ -51,6 +66,12 @@ jobs:
     env:
       RAPIDS_BUILD_TYPE: ${{ inputs.build_type }}
     steps:
+      - name: Get AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-duration-seconds: 43200 # 12h
       - name: Checkout
         uses: actions/checkout@v3
       - name: Standardize repository information
@@ -94,6 +115,12 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
       RAPIDS_BUILD_TYPE: ${{ inputs.build_type }}
     steps:
+      - name: Get AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-duration-seconds: 43200 # 12h
       - name: Checkout
         uses: actions/checkout@v3
       - name: Standardize repository information
