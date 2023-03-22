@@ -155,4 +155,5 @@ jobs:
         run: |
           # pass latest tag and latest tag alias as arguments
           # the image that matches LATEST_TAG will be given the latest alias
+          set -x
           rapids-docker-multiarch-from-s3 ${{ steps.compute-latest-tag.outputs.LATEST_TAG }} "rapidsai/ci:latest"
