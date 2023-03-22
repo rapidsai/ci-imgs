@@ -48,6 +48,8 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
     runs-on: ${{ fromJSON(matrix.runner_arch != 'arm64' && '"ubuntu-latest"' || '{"labels":["self-hosted", "linux", "arm64", "cpu4"]}') }}
+    env:
+      RAPIDS_BUILD_TYPE: ${{ inputs.build_type }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -90,6 +92,7 @@ jobs:
     env:
       DOCKERHUB_USERNAME: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
+      RAPIDS_BUILD_TYPE: ${{ inputs.build_type }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
