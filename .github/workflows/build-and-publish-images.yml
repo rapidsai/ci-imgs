@@ -149,7 +149,7 @@ jobs:
           set -x
           LATEST_TAG="rapidsai/ci:cuda${{ needs.compute-matrix.outputs.LATEST_CUDA_VER }}-${{ needs.compute-matrix.outputs.LATEST_LINUX_VER }}-py${{ needs.compute-matrix.outputs.LATEST_PYTHON_VER }}"
           echo "LATEST_TAG=${LATEST_TAG}" >> ${GITHUB_OUTPUT}
-      - name: Download all images from s3 and assemble multiarch
+      - name: Download images from s3 and assemble multiarch
         run: |
           set -x
           rapids-docker-multiarch-from-s3 "${{ steps.compute-latest-tag.outputs.LATEST_TAG }}" "rapidsai/ci:latest"
