@@ -88,19 +88,14 @@ jobs:
           git clone https://github.com/sevagh/gha-tools -b feat/docker-s3 ./gha-tools
           chmod +x ./gha-tools/tools/*
           sudo cp ./gha-tools/tools/* /usr/bin/
-      - name: Download all images from s3
-        run: rapids-download-docker-from-s3
-      - name: Compute Tags
-        id: compute-tags
+      - name: Compute latest tag
+        id: compute-latest-tag
         run: |
           set -x
-          TAGS="-t rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}"
-
-          if [[
-            "${{ needs.compute-matrix.outputs.LATEST_LINUX_VER }}" == "${{ matrix.LINUX_VER }}" &&
-            "${{ needs.compute-matrix.outputs.LATEST_CUDA_VER }}" == "${{ matrix.CUDA_VER }}" &&
-            "${{ needs.compute-matrix.outputs.LATEST_PYTHON_VER }}" == "${{ matrix.PYTHON_VER }}"
-          ]]; then
-            TAGS+=" -t rapidsai/ci:latest"
-          fi
-          echo "TAGS=${TAGS}" >> ${GITHUB_OUTPUT}
+          LATEST_TAG="rapidsai/ci:cuda${{ needs.compute-matrix.outputs.LATEST_CUDA_VER }}-${{ needs.compute-matrix.outputs.LATEST_LINUX_VER }}-py${{ needs.compute-matrix.outputs.LATEST_PYTHON_VER }}"
+          echo "LATEST_TAG=${LATEST_TAG}" >> ${GITHUB_OUTPUT}
+      - name: Download all images from s3 and assemble multiarch
+        run: |
+          # pass latest tag and latest tag alias as arguments
+          # the image that matches LATEST_TAG will be given the latest alias
+          rapids-docker-multiarch-from-s3 ${{ steps.compute-latest-tag.output.LATEST_TAG }} "rapidsai/ci:latest"
