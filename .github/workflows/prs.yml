@@ -14,4 +14,5 @@ jobs:
     uses: ./.github/workflows/build-and-publish-images.yml
     with:
       push: false
+      build_type: pull-request
     secrets: inherit
