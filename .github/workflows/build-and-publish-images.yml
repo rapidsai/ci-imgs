@@ -151,6 +151,5 @@ jobs:
           echo "LATEST_TAG=${LATEST_TAG}" >> ${GITHUB_OUTPUT}
       - name: Download all images from s3 and assemble multiarch
         run: |
-          # pass latest tag and latest tag alias as arguments
           set -x
           rapids-docker-multiarch-from-s3 "${{ steps.compute-latest-tag.outputs.LATEST_TAG }}" "rapidsai/ci:latest"
