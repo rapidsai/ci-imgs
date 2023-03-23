@@ -112,6 +112,11 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
       RAPIDS_BUILD_TYPE: ${{ inputs.build_type }}
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
     steps:
       - name: Get AWS credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
