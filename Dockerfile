@@ -22,6 +22,7 @@ ENV SCCACHE_BUCKET=rapids-sccache-east
 ENV SCCACHE_REGION=us-east-2
 ENV SCCACHE_IDLE_TIMEOUT=32768
 ENV SCCACHE_S3_USE_SSL=true
+ENV SCCACHE_S3_NO_CREDENTIALS=false
 
 # Install system packages depending on the LINUX_VER
 RUN \
