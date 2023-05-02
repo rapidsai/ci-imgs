@@ -36,6 +36,7 @@ RUN \
           cuda-cudart-dev-${PKG_CUDA_VER} \
           cuda-cupti-dev-${PKG_CUDA_VER} \
           file \
+          unzip \
           wget \
         # ignore the build-essential package since it installs dependencies like gcc/g++
         # we don't need them since we use conda compilers, so this keeps our images smaller
@@ -55,6 +56,7 @@ RUN \
           cuda-gdb-${PKG_CUDA_VER} \
           cuda-cupti-${PKG_CUDA_VER} \
           file \
+          unzip \
           wget \
           which \
           yum-utils \
