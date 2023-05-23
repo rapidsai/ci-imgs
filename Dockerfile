@@ -1,6 +1,6 @@
-ARG CUDA_VER=11.5.1
-ARG LINUX_VER=ubuntu20.04
-ARG PYTHON_VER=3.8
+ARG CUDA_VER=11.8.0
+ARG LINUX_VER=ubuntu22.04
+ARG PYTHON_VER=3.10
 FROM rapidsai/mambaforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 
 ARG TARGETPLATFORM
@@ -81,7 +81,7 @@ RUN rapids-mamba-retry install -y \
     gh \
     git \
     jq \
-    "sccache>=0.3.2" \
+    "sccache>=0.5.0" \
   && conda clean -aipty
 
 # Install codecov binary
