@@ -1,7 +1,7 @@
 CUDA_VER:
   - "11.2.2"
-  - "11.4.1"
-  - "11.5.1"
+  - "11.4.3"
+  - "11.5.2"
   - "11.8.0"
   - "12.0.1"
   - "12.1.1"
@@ -17,9 +17,9 @@ exclude:
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.2.2"
   - LINUX_VER: "ubuntu22.04"
-    CUDA_VER: "11.4.1"
+    CUDA_VER: "11.4.3"
   - LINUX_VER: "ubuntu22.04"
-    CUDA_VER: "11.5.1"
+    CUDA_VER: "11.5.2"
 
 # Define the values used for the "latest" tag
 LATEST_VERSIONS:
