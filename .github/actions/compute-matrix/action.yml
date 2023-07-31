@@ -1,0 +1,30 @@
+name: 'Compute Matrix Action'
+description: 'Computes matrix'
+outputs:
+  MATRIX: 
+    description: "Computed matrix"
+    value: ${{ steps.compute-matrix.outputs.MATRIX }}
+  LATEST_LINUX_VER: 
+    description: "Latest Linux version"
+    value: ${{ steps.latest-values.outputs.LATEST_LINUX_VER }}
+  LATEST_CUDA_VER: 
+    description: "Latest CUDA version"
+    value: ${{ steps.latest-values.outputs.LATEST_CUDA_VER }}
+  LATEST_PYTHON_VER: 
+    description: "Latest Python version"
+    value: ${{ steps.latest-values.outputs.LATEST_PYTHON_VER }}
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Compute latest values
+      id: latest-values
+      run: ./ci/compute-latest-versions.sh
+      shell: bash
+    - name: Compute matrix
+      id: compute-matrix
+      run: |
+        MATRIX=$(ci/compute-matrix.sh)
+        echo "MATRIX=${MATRIX}" | tee -a ${GITHUB_OUTPUT}
+      shell: bash

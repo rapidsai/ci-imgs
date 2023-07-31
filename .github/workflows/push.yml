@@ -1,18 +1,18 @@
 name: publish
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - "main"
-  workflow_dispatch:
+      - main
 
 concurrency:
-  group: "${{ github.workflow }} @ ${{ github.ref }}"
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-images:
     uses: ./.github/workflows/build-and-publish-images.yml
     with:
-      push: true
+      build_type: branch
     secrets: inherit

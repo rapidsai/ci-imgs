@@ -1,10 +1,16 @@
 #!/bin/bash
-# Computes matrix based on "axis.yaml" values. Will also
-# remove any keys (e.g. LATEST_VERSIONS) that are not used
-# for the matrix build.
-# Example Usage:
-#   ./ci/compute-matrix.sh
-set -eu
+set -euo pipefail
 
-MATRIX=$(yq -o json '. | del(.LATEST_VERSIONS)' axis.yaml | jq -c)
-echo "MATRIX=${MATRIX}" | tee --append ${GITHUB_OUTPUT:-/dev/null}
+case "${BUILD_TYPE}" in
+  pull-request)
+    export PR_NUM="${GITHUB_REF_NAME##*/}"
+    ;;
+  branch)
+    ;;
+  *)
+    echo "Invalid build type: '${BUILD_TYPE}'"
+    exit 1
+    ;;
+esac
+
+yq -o json matrix.yaml | jq -c 'include "ci/compute-matrix"; compute_matrix(.)'

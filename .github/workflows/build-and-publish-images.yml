@@ -3,9 +3,9 @@ name: build and publish imgs workflow
 on:
   workflow_call:
     inputs:
-      push:
+      build_type:
         required: true
-        type: boolean
+        type: string
 
 defaults:
   run:
@@ -15,71 +15,80 @@ jobs:
   compute-matrix:
     runs-on: ubuntu-latest
     outputs:
-      LATEST_LINUX_VER: ${{ steps.latest-values.outputs.LATEST_LINUX_VER }}
-      LATEST_CUDA_VER: ${{ steps.latest-values.outputs.LATEST_CUDA_VER }}
-      LATEST_PYTHON_VER: ${{ steps.latest-values.outputs.LATEST_PYTHON_VER }}
       MATRIX: ${{ steps.compute-matrix.outputs.MATRIX }}
+      LATEST_LINUX_VER: ${{ steps.compute-matrix.outputs.LATEST_LINUX_VER }}
+      LATEST_CUDA_VER: ${{ steps.compute-matrix.outputs.LATEST_CUDA_VER }}
+      LATEST_PYTHON_VER: ${{ steps.compute-matrix.outputs.LATEST_PYTHON_VER }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Compute latest values
         id: latest-values
-        run: ./ci/compute-latest-versions.sh
+        run: ci/compute-latest-versions.sh
       - name: Compute matrix
         id: compute-matrix
-        run: ./ci/compute-matrix.sh
+        run: |
+          MATRIX=$(ci/compute-matrix.sh)
+          echo "MATRIX=${MATRIX}" | tee -a ${GITHUB_OUTPUT}
+        env:
+          BUILD_TYPE: ${{ inputs.BUILD_TYPE }}
   docker:
+    name: docker
     needs: compute-matrix
-    runs-on: ubuntu-latest
-    env:
-      DOCKERHUB_USERNAME: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
-      DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
     strategy:
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
+      fail-fast: false
+    secrets: inherit
+    uses: ./.github/workflows/build-image.yml
+    with:
+      ARCHES: ${{ toJSON(matrix.ARCHES) }}
+      CUDA_VER: ${{ matrix.CUDA_VER }}
+      LINUX_VER: ${{ matrix.LINUX_VER }}
+      PYTHON_VER: ${{ matrix.PYTHON_VER }}
+      IMAGE_REPO: ${{ matrix.IMAGE_REPO }}
+      IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
+
+  build-multiarch-manifest:
+    name: manifest (${{ matrix.CUDA_VER }}, ${{ matrix.PYTHON_VER }}, ${{ matrix.LINUX_VER }}, ${{ matrix.IMAGE_REPO }})
+    needs: [docker, compute-matrix]
+    strategy:
+      matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
-        name: Login to DockerHub
+      - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_TOKEN }}
-      - name: Compute Tags
-        id: compute-tags
-        run: |
-          set -x
-          TAGS="rapidsai/ci:cuda${{ matrix.CUDA_VER }}-${{ matrix.LINUX_VER }}-py${{ matrix.PYTHON_VER }}"
-
-          if [[
-            "${{ needs.compute-matrix.outputs.LATEST_LINUX_VER }}" == "${{ matrix.LINUX_VER }}" &&
-            "${{ needs.compute-matrix.outputs.LATEST_CUDA_VER }}" == "${{ matrix.CUDA_VER }}" &&
-            "${{ needs.compute-matrix.outputs.LATEST_PYTHON_VER }}" == "${{ matrix.PYTHON_VER }}"
-          ]]; then
-            TAGS+=",rapidsai/ci:latest"
-          fi
-          echo "TAGS=${TAGS}" >> ${GITHUB_OUTPUT}
-      - name: Compute Platforms
-        id: compute-platforms
-        run: ./ci/compute-arch.sh
+          username: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
+          password: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
+      - name: Create multiarch manifest
         env:
+          ARCHES: ${{ toJSON(matrix.ARCHES) }}
           CUDA_VER: ${{ matrix.CUDA_VER }}
           LINUX_VER: ${{ matrix.LINUX_VER }}
-      - name: Build and push
-        timeout-minutes: 20
-        uses: docker/build-push-action@v4
-        with:
-          context: context
-          file: Dockerfile
-          platforms: ${{ steps.compute-platforms.outputs.PLATFORMS }}
-          push: ${{ inputs.push }}
-          pull: true
-          build-args: |
-            CUDA_VER=${{ matrix.CUDA_VER }}
-            LINUX_VER=${{ matrix.LINUX_VER }}
-            PYTHON_VER=${{ matrix.PYTHON_VER }}
-          tags: ${{ steps.compute-tags.outputs.TAGS }}
+          PYTHON_VER: ${{ matrix.PYTHON_VER }}
+          IMAGE_REPO: ${{ matrix.IMAGE_REPO }}
+          BUILD_TYPE: ${{ inputs.build_type }}
+          IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
+          LATEST_CUDA_VER: ${{ needs.compute-matrix.outputs.LATEST_CUDA_VER }}
+          LATEST_PYTHON_VER: ${{ needs.compute-matrix.outputs.LATEST_PYTHON_VER }}
+          LATEST_UBUNTU_VER: ${{ needs.compute-matrix.outputs.LATEST_LINUX_VER }}
+        run: ci/create-multiarch-manifest.sh
+
+  delete-temp-images:
+    needs: [compute-matrix, build-multiarch-manifest]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Remove temporary images
+        run: ci/remove-temp-images.sh
+        env:
+          GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
+          GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
+          IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
+          ARCHES: ${{ toJSON(matrix.ARCHES) }}
