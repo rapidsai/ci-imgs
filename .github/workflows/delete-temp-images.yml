@@ -1,0 +1,42 @@
+name: Delete temporary images
+
+on:
+  workflow_call:
+    inputs:
+      CUDA_VER:
+        required: true
+        type: string
+      LINUX_VER:
+        required: true
+        type: string
+      PYTHON_VER:
+        required: true
+        type: string
+      ARCHES:
+        required: true
+        type: string
+
+jobs:
+  delete-temp-images:
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Remove temporary images
+        run: |
+            HUB_TOKEN=$(
+            curl -s -H "Content-Type: application/json" \
+                -X POST \
+                -d "{\"username\": \"${{ secrets.GPUCIBOT_DOCKERHUB_USER }}\", \"password\": \"${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}\"}" \
+                https://hub.docker.com/v2/users/login/ | jq -r .token \
+            )
+
+            org="rapidsai"
+            repo="ci"
+            tag="cuda${{ inputs.CUDA_VER }}-${{ inputs.LINUX_VER }}-py${{ inputs.PYTHON_VER }}"
+
+            for arch in $(echo '${{ inputs.ARCHES }}' | jq .[] -r); do
+            curl -i -X DELETE \
+                -H "Accept: application/json" \
+                -H "Authorization: JWT $HUB_TOKEN" \
+                "https://hub.docker.com/v2/repositories/$org/$repo/tags/$tag-$arch/"
+            done
