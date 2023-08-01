@@ -1,0 +1,28 @@
+on:
+    pull_request:
+      types: [closed]
+
+jobs:
+    compute-matrix:
+      runs-on: ubuntu-latest
+      outputs:
+        MATRIX: ${{ steps.compute-matrix.outputs.MATRIX }}
+        LATEST_LINUX_VER: ${{ steps.compute-matrix.outputs.LATEST_LINUX_VER }}
+        LATEST_CUDA_VER: ${{ steps.compute-matrix.outputs.LATEST_CUDA_VER }}
+        LATEST_PYTHON_VER: ${{ steps.compute-matrix.outputs.LATEST_PYTHON_VER }}
+      steps:
+        - uses: actions/checkout@v3
+        - name: Compute Matrix Action
+          id: compute-matrix
+          uses: ./.github/actions/compute-matrix
+    delete-imgs:
+      needs: compute-matrix
+      strategy:
+        matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
+      uses: ./.github/workflows/delete-temp-images.yml
+      with:
+        ARCHES: ${{ toJSON(matrix.ARCHES) }}
+        CUDA_VER: ${{ matrix.CUDA_VER }}
+        LINUX_VER: ${{ matrix.LINUX_VER }}
+        PYTHON_VER: ${{ matrix.PYTHON_VER }}
+  
