@@ -25,6 +25,6 @@ exclude:
 
 # Define the values used for the "latest" tag
 LATEST_VERSIONS:
-  CUDA_VER: "11.8.0"
+  CUDA_VER: "12.0.1"
   PYTHON_VER: "3.10"
   LINUX_VER: "ubuntu22.04"
