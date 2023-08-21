@@ -1,5 +1,5 @@
 #!/bin/bash
-# Computes versions used for "latest" tag based on "axis.yaml"
+# Computes versions used for "latest" tag based on "matrix.yaml"
 # values. Will also check to ensure that the "latest" values are
 # included in the matrix values.
 # Example Usage:
@@ -11,14 +11,14 @@ export CUDA_KEY="CUDA_VER"
 export PYTHON_KEY="PYTHON_VER"
 
 # Get latest values
-LATEST_LINUX_VER=$(yq '.LATEST_VERSIONS.[strenv(LINUX_KEY)]' axis.yaml)
-LATEST_CUDA_VER=$(yq '.LATEST_VERSIONS.[strenv(CUDA_KEY)]' axis.yaml)
-LATEST_PYTHON_VER=$(yq '.LATEST_VERSIONS.[strenv(PYTHON_KEY)]' axis.yaml)
+LATEST_LINUX_VER=$(yq '.LATEST_VERSIONS.[strenv(LINUX_KEY)]' matrix.yaml)
+LATEST_CUDA_VER=$(yq '.LATEST_VERSIONS.[strenv(CUDA_KEY)]' matrix.yaml)
+LATEST_PYTHON_VER=$(yq '.LATEST_VERSIONS.[strenv(PYTHON_KEY)]' matrix.yaml)
 
 # Get matrix array values
-LINUX_VERS=$(yq '.[strenv(LINUX_KEY)]' axis.yaml)
-CUDA_VERS=$(yq '.[strenv(CUDA_KEY)]' axis.yaml)
-PYTHON_VERS=$(yq '.[strenv(PYTHON_KEY)]' axis.yaml)
+LINUX_VERS=$(yq '.[strenv(LINUX_KEY)]' matrix.yaml)
+CUDA_VERS=$(yq '.[strenv(CUDA_KEY)]' matrix.yaml)
+PYTHON_VERS=$(yq '.[strenv(PYTHON_KEY)]' matrix.yaml)
 
 # Ensure matrix array values contain latest values
 for KEY in "${LINUX_KEY}" "${CUDA_KEY}" "${PYTHON_KEY}"; do
