@@ -1,6 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
+logout() {
+  curl -X POST \
+    -H "Authorization: JWT $HUB_TOKEN" \
+    "https://hub.docker.com/v2/logout/"
+}
+
+trap logout EXIT
+
 HUB_TOKEN=$(
   curl -s -H "Content-Type: application/json" \
     -X POST \
@@ -18,8 +26,3 @@ for arch in $(echo "$ARCHES" | jq .[] -r); do
     -H "Authorization: JWT $HUB_TOKEN" \
     "https://hub.docker.com/v2/repositories/$full_repo_name/tags/$tag-$arch/"
 done
-
-# Logout
-curl -X POST \
-  -H "Authorization: JWT $HUB_TOKEN" \
-  "https://hub.docker.com/v2/logout/"
