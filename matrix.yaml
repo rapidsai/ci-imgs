@@ -13,6 +13,8 @@ LINUX_VER:
   - "ubuntu22.04"
   - "centos7"
   - "rockylinux8"
+IMAGE_REPO:
+  - "ci"
 exclude:
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.2.2"
