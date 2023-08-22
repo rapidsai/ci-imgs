@@ -6,4 +6,4 @@ This repository contains the Dockerfile for the CI images used by RAPIDS. These 
 
 The `latest` tag is an alias for the Docker image that has the latest CUDA version, Python version, and Ubuntu version supported by this repository at any given time.
 
-Some random text
+Some more random text
