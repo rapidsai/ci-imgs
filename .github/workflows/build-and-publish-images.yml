@@ -16,9 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       MATRIX: ${{ steps.compute-matrix.outputs.MATRIX }}
-      LATEST_LINUX_VER: ${{ steps.compute-matrix.outputs.LATEST_LINUX_VER }}
-      LATEST_CUDA_VER: ${{ steps.compute-matrix.outputs.LATEST_CUDA_VER }}
-      LATEST_PYTHON_VER: ${{ steps.compute-matrix.outputs.LATEST_PYTHON_VER }}
+      LATEST_LINUX_VER: ${{ steps.latest-values.outputs.LATEST_LINUX_VER }}
+      LATEST_CUDA_VER: ${{ steps.latest-values.outputs.LATEST_CUDA_VER }}
+      LATEST_PYTHON_VER: ${{ steps.latest-values.outputs.LATEST_PYTHON_VER }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -33,7 +33,6 @@ jobs:
         env:
           BUILD_TYPE: ${{ inputs.BUILD_TYPE }}
   docker:
-    name: docker
     needs: compute-matrix
     strategy:
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
