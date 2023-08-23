@@ -1,0 +1,18 @@
+CUDA_VER:
+  - "11.8.0"
+  - "12.0.1"
+PYTHON_VER:
+  - "3.9"
+  - "3.10"
+LINUX_VER:
+  - "ubuntu18.04"
+  - "ubuntu20.04"
+  - "centos7"
+IMAGE_REPO:
+  - "ci-wheel"
+  - "citestwheel"
+exclude:
+  - LINUX_VER: "ubuntu18.04"
+    IMAGE_REPO: "ci-wheel"
+  - LINUX_VER: "centos7"
+    IMAGE_REPO: "citestwheel"

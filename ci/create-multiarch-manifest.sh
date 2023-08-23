@@ -1,6 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+if [[ "${IMAGE_REPO}" != "ci" ]]; then
+  LATEST_CUDA_VER=$(yq '.CUDA_VER | sort | .[-1]' matrices/wheels-matrix.yaml)
+  LATEST_PYTHON_VER=$(yq -o json '.PYTHON_VER' matrices/wheels-matrix.yaml | jq -r 'max_by(split(".") | map(tonumber))')
+  LATEST_UBUNTU_VER=$(yq '.LINUX_VER | map(select(. == "*ubuntu*")) | sort | .[-1]' matrices/wheels-matrix.yaml)
+fi
+
 source_tags=()
 tag="${IMAGE_NAME}"
 for arch in $(echo "${ARCHES}" | jq .[] -r); do
