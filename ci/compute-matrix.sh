@@ -13,19 +13,20 @@ case "${BUILD_TYPE}" in
     ;;
 esac
 
-COMBINED_MATRIX_YAML=$(yq -o json '. | del(.LATEST_VERSIONS)' 'matrix.yaml')
+COMBINED_MATRIX_YAML=$(yq -o json 'matrix.yaml')
 
-# Separate CI and Wheels axes
-CI_MATRIX=$(echo "$COMBINED_MATRIX_YAML" | jq -c '{ci: .ci} | .ci | del(.LATEST_VERSIONS)')
-WHEELS_MATRIX=$(echo "$COMBINED_MATRIX_YAML" | jq -c '{wheels: .wheels} | .wheels')
+# Get all top-level keys (e.g., "ci", "wheels") from matrix.yaml
+CONFIGURATIONS=$(echo "$COMBINED_MATRIX_YAML" | jq -r 'keys[]')
 
-CI_COMPUTED=$(echo "$CI_MATRIX" | jq -c --arg type "ci" 'include "ci/compute-matrix"; compute_matrix($type; .)')
-WHEELS_COMPUTED=$(echo "$WHEELS_MATRIX" | jq -c --arg type "wheels" 'include "ci/compute-matrix"; compute_matrix($type; .)')
+COMBINED_COMPUTED='{"include": []}'
 
-# Combine CI and Wheels matrices
-COMBINED_COMPUTED=$(jq -c -n \
-  --argjson ci_matrix "$CI_COMPUTED" \
-  --argjson wheels_matrix "$WHEELS_COMPUTED" \
-  '{"include": ($ci_matrix.include + $wheels_matrix.include)}')
+# Loop through each configuration and compute matrix
+for CONFIG in $CONFIGURATIONS; do
+  CONFIG_MATRIX=$(echo "$COMBINED_MATRIX_YAML" | jq -c --arg config "$CONFIG" '.[$config] | del(.LATEST_VERSIONS)')
+  CONFIG_COMPUTED=$(echo "$CONFIG_MATRIX" | jq -c --arg type "$CONFIG" 'include "ci/compute-matrix"; compute_matrix($type; .)')
+  COMBINED_COMPUTED=$(echo "$COMBINED_COMPUTED" | jq -c \
+    --argjson config_computed "$CONFIG_COMPUTED" \
+    '{"include": (.include + $config_computed.include)}')
+done
 
 echo "$COMBINED_COMPUTED"
