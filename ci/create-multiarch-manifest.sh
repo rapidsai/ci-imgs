@@ -1,6 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
+# if IMAGE_REPO is "ci" then compute the latest versions below
+if [[ "${IMAGE_REPO}" == "ci" ]]; then
+  LATEST_CUDA_VER=$(yq '.CUDA_VER | sort | .[-1]' matrix.yaml)
+  LATEST_PYTHON_VER=$(yq -o json '.PYTHON_VER' matrix.yaml | jq -r 'max_by(split(".") | map(tonumber))')
+  LATEST_UBUNTU_VER=$(yq '.LINUX_VER | map(select(. == "*ubuntu*")) | sort | .[-1]' matrix.yaml)
+fi
+
 source_tags=()
 tag="${IMAGE_NAME}"
 for arch in $(echo "${ARCHES}" | jq .[] -r); do
