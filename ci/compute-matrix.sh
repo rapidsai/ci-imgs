@@ -13,12 +13,19 @@ case "${BUILD_TYPE}" in
     ;;
 esac
 
-CI_MATRIX=$(yq -o json '. | del(.LATEST_VERSIONS)' matrices/ci-matrix.yaml | jq -c 'include "ci/compute-ci-matrix"; compute_matrix(.)')
-WHEELS_MATRIX=$(yq -o json matrices/wheels-matrix.yaml | jq -c 'include "ci/compute-wheels-matrix"; compute_matrix(.)')
+COMBINED_MATRIX_YAML=$(yq -o json '. | del(.LATEST_VERSIONS)' 'matrix.yaml')
 
-COMBINED_MATRIX=$(jq -c -n \
-  --argjson ci_matrix "$CI_MATRIX" \
-  --argjson wheels_matrix "$WHEELS_MATRIX" \
+# Separate CI and Wheels axes
+CI_MATRIX=$(echo "$COMBINED_MATRIX_YAML" | jq -c '{ci: .ci} | .ci | del(.LATEST_VERSIONS)')
+WHEELS_MATRIX=$(echo "$COMBINED_MATRIX_YAML" | jq -c '{wheels: .wheels} | .wheels')
+
+CI_COMPUTED=$(echo "$CI_MATRIX" | jq -c --arg type "ci" 'include "ci/compute-matrix"; compute_matrix($type; .)')
+WHEELS_COMPUTED=$(echo "$WHEELS_MATRIX" | jq -c --arg type "wheels" 'include "ci/compute-matrix"; compute_matrix($type; .)')
+
+# Combine CI and Wheels matrices
+COMBINED_COMPUTED=$(jq -c -n \
+  --argjson ci_matrix "$CI_COMPUTED" \
+  --argjson wheels_matrix "$WHEELS_COMPUTED" \
   '{"include": ($ci_matrix.include + $wheels_matrix.include)}')
 
-echo "$COMBINED_MATRIX"
+echo "$COMBINED_COMPUTED"
