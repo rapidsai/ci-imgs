@@ -27,30 +27,30 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 RUN case "${LINUX_VER}" in \
     "ubuntu"*) \
-        apt update -y && apt install -y jq build-essential software-properties-common wget gcc zlib1g-dev libbz2-dev libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev protobuf-compiler autoconf automake libtool cmake && rm -rf /var/lib/apt/lists/* \
-        && add-apt-repository ppa:git-core/ppa && add-apt-repository ppa:ubuntu-toolchain-r/test && apt update -y && apt install -y git gcc-9 g++-9 && add-apt-repository -r ppa:git-core/ppa && add-apt-repository -r ppa:ubuntu-toolchain-r/test \
-        && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9 \
-      ;; \
+    apt update -y && apt install -y jq build-essential software-properties-common wget gcc zlib1g-dev libbz2-dev libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev protobuf-compiler autoconf automake libtool cmake && rm -rf /var/lib/apt/lists/* \
+    && add-apt-repository ppa:git-core/ppa && add-apt-repository ppa:ubuntu-toolchain-r/test && apt update -y && apt install -y git gcc-9 g++-9 && add-apt-repository -r ppa:git-core/ppa && add-apt-repository -r ppa:ubuntu-toolchain-r/test \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9 \
+    ;; \
     "centos"*) \
-        yum update --exclude=libnccl* -y && yum install -y epel-release wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake && yum clean all \
-        && yum remove -y git && yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm && yum install -y git jq devtoolset-11 && yum remove -y endpoint-repo \
-        && echo -e ' \
-        #!/bin/bash\n \
-        source scl_source enable devtoolset-11\n \
-        ' > /etc/profile.d/enable_devtools.sh \
-        && pushd tmp \
-        && wget https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz \
-        && tar -xzvf openssl-1.1.1k.tar.gz \
-        && cd openssl-1.1.1k \
-        && ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic \
-        && make \
-        && make install \
-        && popd \
-      ;; \
+    yum update --exclude=libnccl* -y && yum install -y epel-release wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake && yum clean all \
+    && yum remove -y git && yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm && yum install -y git jq devtoolset-11 && yum remove -y endpoint-repo \
+    && echo -e ' \
+    #!/bin/bash\n \
+    source scl_source enable devtoolset-11\n \
+    ' > /etc/profile.d/enable_devtools.sh \
+    && pushd tmp \
+    && wget https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz \
+    && tar -xzvf openssl-1.1.1k.tar.gz \
+    && cd openssl-1.1.1k \
+    && ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic \
+    && make \
+    && make install \
+    && popd \
+    ;; \
     *) \
-      echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1; \
-      ;; \
-  esac
+    echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1; \
+    ;; \
+    esac
 
 # Download and install GH CLI tool v2.32.0
 ARG GH_VERSION=2.32.0
@@ -66,10 +66,10 @@ EOF
 ARG SCCACHE_VERSION=0.5.0
 
 RUN curl -o /tmp/sccache.tar.gz \
-        -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz" && \
-        tar -C /tmp -xvf /tmp/sccache.tar.gz && \
-        mv "/tmp/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache && \
-        chmod +x /usr/bin/sccache
+    -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz" && \
+    tar -C /tmp -xvf /tmp/sccache.tar.gz && \
+    mv "/tmp/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache && \
+    chmod +x /usr/bin/sccache
 
 # Set AUDITWHEEL_* env vars for use with auditwheel
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
@@ -91,15 +91,15 @@ RUN mkdir -p /ucx-src && cd /ucx-src &&\
     cd ucx-git-repo && \
     ./autogen.sh && \
     ./contrib/configure-release \
-       --prefix=/usr               \
-       --enable-mt                 \
-       --enable-cma                \
-       --enable-numa               \
-       --with-gnu-ld               \
-       --with-sysroot              \
-       --without-verbs             \
-       --without-rdmacm            \
-       --with-cuda=/usr/local/cuda && \
+    --prefix=/usr               \
+    --enable-mt                 \
+    --enable-cma                \
+    --enable-numa               \
+    --with-gnu-ld               \
+    --with-sysroot              \
+    --without-verbs             \
+    --without-rdmacm            \
+    --with-cuda=/usr/local/cuda && \
     CPPFLAGS=-I/usr/local/cuda/include make -j && \
     make install && \
     cd / && \
@@ -114,18 +114,18 @@ RUN pyenv update
 
 RUN case "${LINUX_VER}" in \
     "ubuntu"*) \
-        pyenv install --verbose "${RAPIDS_PY_VERSION}" \
-      ;; \
+    pyenv install --verbose "${RAPIDS_PY_VERSION}" \
+    ;; \
     "centos"*) \
-        # Need to specify the openssl location because of the install from source
-        CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}" \
-      ;; \
+    # Need to specify the openssl location because of the install from source
+    CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}" \
+    ;; \
     *) \
-      echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1; \
-      ;; \
-  esac
+    echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1; \
+    ;; \
+    esac
 
-RUN pyenv global ${PYTHON_VER} && python -m pip install auditwheel patchelf twine && pyenv rehash
+RUN pyenv global ${PYTHON_VER} && python -m pip install auditwheel patchelf twine rapids-dependency-file-generator && pyenv rehash
 
 # Install latest gha-tools
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
