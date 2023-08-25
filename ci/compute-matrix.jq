@@ -1,21 +1,13 @@
 def compute_arch($x):
-  if $x.IMAGE_REPO != "ci" then
-    ["amd64"] |
-    if ["ubuntu18.04", "centos7"] | index($x.LINUX_VER) != null then
-      .
-    else
-      . + ["arm64"]
-    end |
-    $x + {ARCHES: .}
+  ["amd64"] |
+  if 
+    ($x.LINUX_VER == "ubuntu18.04" or $x.LINUX_VER == "centos7" or ($x.IMAGE_REPO == "ci" and $x.CUDA_VER <= "11.2.2"))
+   then
+    .
   else
-    ["amd64"] |
-    if $x.CUDA_VER > "11.2.2" and $x.LINUX_VER != "centos7" then
-      . + ["arm64"]
-    else
-      .
-    end |
-    $x + {ARCHES: .}
-  end;
+    . + ["arm64"]
+  end |
+  $x + {ARCHES: .};
 
 def compute_repo($x):
   if

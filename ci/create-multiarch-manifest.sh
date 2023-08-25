@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-export PREFIX="conda"
+PREFIX="conda"
 if [[ "${IMAGE_REPO}" != "ci" ]]; then
-  export PREFIX="wheels"
+  PREFIX="wheels"
 fi
 
 LATEST_CUDA_VER=$(yq -r ".$PREFIX.CUDA_VER" latest.yaml)
