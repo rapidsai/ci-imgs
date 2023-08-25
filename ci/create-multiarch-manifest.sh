@@ -1,11 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
+export PREFIX="conda"
 if [[ "${IMAGE_REPO}" != "ci" ]]; then
-  LATEST_CUDA_VER=$(yq '.CUDA_VER | sort | .[-1]' matrix.yaml)
-  LATEST_PYTHON_VER=$(yq -o json '.PYTHON_VER' matrix.yaml | jq -r 'max_by(split(".") | map(tonumber))')
-  LATEST_UBUNTU_VER=$(yq '.LINUX_VER | map(select(. == "*ubuntu*")) | sort | .[-1]' matrix.yaml)
+  export PREFIX="wheels"
 fi
+
+LATEST_CUDA_VER=$(yq -r ".$PREFIX.CUDA_VER" latest.yaml)
+LATEST_PYTHON_VER=$(yq -r ".$PREFIX.PYTHON_VER" latest.yaml)
+LATEST_UBUNTU_VER=$(yq -r ".$PREFIX.LINUX_VER" latest.yaml)
 
 source_tags=()
 tag="${IMAGE_NAME}"

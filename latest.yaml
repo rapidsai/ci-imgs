@@ -1,5 +1,9 @@
 # Define the values used for the "latest" tag
-LATEST_VERSIONS:
+conda:
   CUDA_VER: "12.0.1"
   PYTHON_VER: "3.10"
   LINUX_VER: "ubuntu22.04"
+wheels:
+  CUDA_VER: "12.0.1"
+  PYTHON_VER: "3.10"
+  LINUX_VER: "ubuntu20.04"

@@ -19,7 +19,6 @@ IMAGE_REPO:
   - "ci-wheel"
   - "citestwheel"
 exclude:
-  # original exclusions
   # ci:
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.2.2"
@@ -33,7 +32,6 @@ exclude:
   - LINUX_VER: "centos7"
     IMAGE_REPO: "citestwheel"
 
-  # NEW EXCLUSIONS AFTER MERGING THE VALUES FOR CI AND WHEELS CONFIGURATIONS
   # exclude citestwheel and ci-wheel for cuda versions other than 11.8.0 and 12.0.1
   - CUDA_VER: "11.2.2"
     IMAGE_REPO: "citestwheel"
@@ -63,7 +61,6 @@ exclude:
     IMAGE_REPO: "citestwheel"
   - LINUX_VER: "ubuntu22.04"
     IMAGE_REPO: "ci-wheel"
-
 
   # exclude ci for ubuntu18.04
   - LINUX_VER: "ubuntu18.04"
