@@ -8,4 +8,4 @@ This repository includes the following CI images for RAPIDS:
 
 ## `latest` tag
 
-The `latest` tag is an alias for the Docker image that has the latest CUDA version, Python version, and Ubuntu version supported by this repository at any given time. The latest versions are controlled by the values in `latest.yaml`.
+The `latest` image tags are controlled by the values in `latest.yaml`.
