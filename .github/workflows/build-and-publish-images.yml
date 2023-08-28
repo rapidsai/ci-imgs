@@ -40,7 +40,6 @@ jobs:
       PYTHON_VER: ${{ matrix.PYTHON_VER }}
       IMAGE_REPO: ${{ matrix.IMAGE_REPO }}
       IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
-
   build-multiarch-manifest:
     name: manifest (${{ matrix.CUDA_VER }}, ${{ matrix.PYTHON_VER }}, ${{ matrix.LINUX_VER }}, ${{ matrix.IMAGE_REPO }})
     needs: [docker, compute-matrix]
@@ -65,7 +64,6 @@ jobs:
           BUILD_TYPE: ${{ inputs.build_type }}
           IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
         run: ci/create-multiarch-manifest.sh
-
   delete-temp-images:
     needs: [compute-matrix, build-multiarch-manifest]
     runs-on: ubuntu-latest

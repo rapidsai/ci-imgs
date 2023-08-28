@@ -8,6 +8,7 @@ if [[
 ]]; then
   MANYLINUX_VER="manylinux_2_31"
 fi
+
 ARGS=(
   # common args
   "CUDA_VER=${CUDA_VER}"
@@ -18,6 +19,7 @@ ARGS=(
   "REAL_ARCH=$(arch)"
   "MANYLINUX_VER=${MANYLINUX_VER}"
 )
+
 cat <<EOF > "${GITHUB_OUTPUT:-/dev/stdout}"
 ARGS<<EOT
 $(printf "%s\n" "${ARGS[@]}")
