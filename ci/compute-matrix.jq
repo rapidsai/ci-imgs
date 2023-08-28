@@ -1,12 +1,11 @@
 def compute_arch($x):
   ["amd64"] |
-  if
-    $x.CUDA_VER > "11.2.2" and
-    $x.LINUX_VER != "centos7"
-  then
-    . + ["arm64"]
-  else
+  if 
+    (["ubuntu18.04", "centos7"] | index($x.LINUX_VER) != null) or ($x.CUDA_VER <= "11.2.2")
+   then
     .
+  else
+    . + ["arm64"]
   end |
   $x + {ARCHES: .};
 

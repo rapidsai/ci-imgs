@@ -13,4 +13,4 @@ case "${BUILD_TYPE}" in
     ;;
 esac
 
-yq -o json '. | del(.LATEST_VERSIONS)' matrix.yaml | jq -c 'include "ci/compute-matrix"; compute_matrix(.)'
+yq -o json matrix.yaml | jq -c 'include "ci/compute-matrix"; compute_matrix(.)'

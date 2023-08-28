@@ -1,6 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
+PREFIX="conda"
+if [[ "${IMAGE_REPO}" != "ci" ]]; then
+  PREFIX="wheels"
+fi
+
+LATEST_CUDA_VER=$(yq -r ".$PREFIX.CUDA_VER" latest.yaml)
+LATEST_PYTHON_VER=$(yq -r ".$PREFIX.PYTHON_VER" latest.yaml)
+LATEST_UBUNTU_VER=$(yq -r ".$PREFIX.LINUX_VER" latest.yaml)
+
 source_tags=()
 tag="${IMAGE_NAME}"
 for arch in $(echo "${ARCHES}" | jq .[] -r); do

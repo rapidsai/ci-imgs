@@ -1,7 +1,11 @@
 # ci-imgs
 
-This repository contains the Dockerfile for the CI images used by RAPIDS. These images are built from the [rapidsai/mambaforge-cuda](https://github.com/rapidsai/mambaforge-cuda) images.
+This repository includes the following CI images for RAPIDS:
+
+- `ci` images are conda CI images used for building RAPIDS.
+- `ci-wheel` images are for building manylinux-compliant wheels. They are also used to build pure-Python wheels, and for publishing wheels with twine.
+- `citestwheel` images are for running wheel tests.
 
 ## `latest` tag
 
-The `latest` tag is an alias for the Docker image that has the latest CUDA version, Python version, and Ubuntu version supported by this repository at any given time.
+The `latest` image tags are controlled by the values in `latest.yaml`.

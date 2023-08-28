@@ -9,13 +9,17 @@ PYTHON_VER:
   - "3.9"
   - "3.10"
 LINUX_VER:
+  - "ubuntu18.04"
   - "ubuntu20.04"
   - "ubuntu22.04"
   - "centos7"
   - "rockylinux8"
 IMAGE_REPO:
   - "ci"
+  - "ci-wheel"
+  - "citestwheel"
 exclude:
+  # ci:
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.2.2"
   - LINUX_VER: "ubuntu22.04"
@@ -23,8 +27,42 @@ exclude:
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.5.2"
 
-# Define the values used for the "latest" tag
-LATEST_VERSIONS:
-  CUDA_VER: "12.0.1"
-  PYTHON_VER: "3.10"
-  LINUX_VER: "ubuntu22.04"
+  # wheels:
+  - LINUX_VER: "ubuntu18.04"
+    IMAGE_REPO: "ci-wheel"
+  - LINUX_VER: "centos7"
+    IMAGE_REPO: "citestwheel"
+
+  # exclude citestwheel and ci-wheel for cuda versions other than 11.8.0 and 12.0.1
+  - CUDA_VER: "11.2.2"
+    IMAGE_REPO: "citestwheel"
+  - CUDA_VER: "11.2.2"
+    IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "11.4.3"
+    IMAGE_REPO: "citestwheel"
+  - CUDA_VER: "11.4.3"
+    IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "11.5.2"
+    IMAGE_REPO: "citestwheel"
+  - CUDA_VER: "11.5.2"
+    IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "12.1.1"
+    IMAGE_REPO: "citestwheel"
+  - CUDA_VER: "12.1.1"
+    IMAGE_REPO: "ci-wheel"
+
+  # exclude citestwheel and ci-wheel for rockylinux8
+  - LINUX_VER: "rockylinux8"
+    IMAGE_REPO: "citestwheel"
+  - LINUX_VER: "rockylinux8"
+    IMAGE_REPO: "ci-wheel"
+
+  # exclude citestwheel and ci-wheel for ubuntu22.04
+  - LINUX_VER: "ubuntu22.04"
+    IMAGE_REPO: "citestwheel"
+  - LINUX_VER: "ubuntu22.04"
+    IMAGE_REPO: "ci-wheel"
+
+  # exclude ci for ubuntu18.04
+  - LINUX_VER: "ubuntu18.04"
+    IMAGE_REPO: "ci"

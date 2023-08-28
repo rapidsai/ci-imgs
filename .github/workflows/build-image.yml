@@ -49,15 +49,21 @@ jobs:
         with:
           driver: docker
           endpoint: builders
+      - name: Generate Build Args
+        id: generate-build-args
+        run: ci/compute-build-args.sh
+        env:
+          CUDA_VER: ${{ inputs.CUDA_VER }}
+          LINUX_VER: ${{ inputs.LINUX_VER }}
+          PYTHON_VER: ${{ inputs.PYTHON_VER }}
+          ARCH: ${{ matrix.ARCH }}
       - name: Build image
         uses: docker/build-push-action@v4
         with:
           context: context
-          file: Dockerfile
+          file: ${{ inputs.IMAGE_REPO }}.Dockerfile
           push: true
           pull: true
           build-args: |
-            CUDA_VER=${{ inputs.CUDA_VER }}
-            LINUX_VER=${{ inputs.LINUX_VER }}
-            PYTHON_VER=${{ inputs.PYTHON_VER }}
+            ${{ steps.generate-build-args.outputs.ARGS }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
