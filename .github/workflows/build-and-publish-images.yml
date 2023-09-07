@@ -1,6 +1,7 @@
 name: build and publish imgs workflow
 
 on:
+  workflow_dispatch:
   workflow_call:
     inputs:
       build_type:
