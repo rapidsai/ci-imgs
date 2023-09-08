@@ -1,7 +1,15 @@
 name: publish
+run-name: "publish${{ (inputs.upstream_repository != '') && format(' - triggered by: {0}', inputs.upstream_repository) || '' }}"
 
 on:
   workflow_dispatch:
+    inputs:
+      upstream_repository:
+        required: false
+        type: string
+      upstream_job:
+        required: false
+        type: string
   push:
     branches:
       - main
