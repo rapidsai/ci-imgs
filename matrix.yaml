@@ -15,7 +15,7 @@ LINUX_VER:
   - "centos7"
   - "rockylinux8"
 IMAGE_REPO:
-  - "ci"
+  - "ci-conda"
   - "ci-wheel"
   - "citestwheel"
 exclude:
@@ -65,4 +65,4 @@ exclude:
 
   # exclude ci for ubuntu18.04
   - LINUX_VER: "ubuntu18.04"
-    IMAGE_REPO: "ci"
+    IMAGE_REPO: "ci-conda"

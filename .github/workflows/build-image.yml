@@ -21,9 +21,6 @@ on:
       IMAGE_NAME:
         required: true
         type: string
-      build_type:
-        required: true
-        type: string
 
 jobs:
   run:
@@ -65,7 +62,6 @@ jobs:
         run: ci/generate-tags.sh
         env:
           CURRENT_TAG: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
-          build_type: ${{ inputs.build_type}}
       - name: Build image
         uses: docker/build-push-action@v4
         with:
@@ -75,5 +71,4 @@ jobs:
           pull: true
           build-args: |
             ${{ steps.generate-build-args.outputs.ARGS }}
-          tags: |
-            ${{ steps.generate-additional-tag.outputs.TAGS }}
+          tags: ${{ steps.generate-additional-tag.outputs.TAG }}

@@ -1,18 +1,12 @@
 #!/bin/bash
+set -euo pipefail
 
-prefix=$(echo "$CURRENT_TAG" | awk -F':' '{print $1}')
-suffix=$(echo "$CURRENT_TAG" | awk -F':' '{print $2}')
-
-if [ "$build_type" == "branch" ]; then
-  cat <<EOF > "${GITHUB_OUTPUT:-/dev/stdout}"
-TAGS<<EOT
-$(printf "%s\n" "${prefix}:${suffix}" "${prefix}-conda:${suffix}")
-EOT
-EOF
-else
-  cat <<EOF > "${GITHUB_OUTPUT:-/dev/stdout}"
-TAGS<<EOT
-$(printf "%s\n" "$CURRENT_TAG")
-EOT
-EOF
+if [[ ! "$CURRENT_TAG" =~ "ci-conda" ]]; then
+  echo "TAG=$CURRENT_TAG" > "$GITHUB_OUTPUT"
+  exit 0
 fi
+
+CI_TAG=$(echo "$CURRENT_TAG" | sed 's/ci-conda/ci/')
+
+echo "TAG=$CURRENT_TAG,$CI_TAG" | tee --append "$GITHUB_OUTPUT"
+
