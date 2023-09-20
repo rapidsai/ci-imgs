@@ -50,8 +50,8 @@ if [[ $IMAGE_NAME =~ ci-conda ]]; then
   ]]; then
     # only create a 'latest' manifest if it is a non-PR workflow.
     if [[ "${BUILD_TYPE}" != "pull-request" ]]; then
-      docker manifest create "rapidsai/${IMAGE_REPO}:latest" "${source_tags[@]}"
-      docker manifest push "rapidsai/${IMAGE_REPO}:latest"
+      docker manifest create "rapidsai/ci:latest" "${source_tags[@]}"
+      docker manifest push "rapidsai/ci:latest"
     else
       echo "Skipping 'latest' manifest creation for PR workflow."
     fi
