@@ -63,7 +63,7 @@ rm -rf gh_*
 EOF
 
 # Install sccache
-ARG SCCACHE_VERSION=0.5.0
+ARG SCCACHE_VERSION=0.5.4
 
 RUN curl -o /tmp/sccache.tar.gz \
         -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz" && \
