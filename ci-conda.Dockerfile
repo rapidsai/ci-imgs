@@ -81,7 +81,7 @@ RUN rapids-mamba-retry install -y \
     gh \
     git \
     jq \
-    "sccache==0.4.2" \
+    "sccache==0.5.4" \
   && conda clean -aipty
 
 # Install codecov binary
