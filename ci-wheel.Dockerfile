@@ -125,7 +125,7 @@ RUN case "${LINUX_VER}" in \
       ;; \
   esac
 
-RUN pyenv global ${PYTHON_VER} && python -m pip install auditwheel patchelf twine rapids-dependency-file-generator && pyenv rehash
+RUN pyenv global ${PYTHON_VER} && python -m pip install auditwheel patchelf twine rapids-dependency-file-generator dunamai && pyenv rehash
 
 # Install latest gha-tools
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
