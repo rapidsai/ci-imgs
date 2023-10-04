@@ -88,6 +88,7 @@ RUN \
             echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1; \
             ;; \
         esac \
+        ;; \
       *) \
         echo "Skipping CUDA Toolkit installation for CUDA ${CUDA_VER}"; \
         ;; \
