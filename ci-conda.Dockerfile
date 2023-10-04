@@ -56,7 +56,7 @@ RUN \
     case "${CUDA_VER}" in \
       "11"*) \
         PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')"; \
-        echo "Installing CUDA Toolkit ${PKG_CUDA_VER}"; \
+        echo "Attempting to install CUDA Toolkit ${PKG_CUDA_VER}"; \
         case "${LINUX_VER}" in \
           "ubuntu"*) \
             apt-get update \
