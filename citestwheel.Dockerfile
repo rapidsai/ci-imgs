@@ -21,20 +21,21 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 RUN <<EOF
 set -e
-if [[ "${LINUX_VER}" == "ubuntu18.04" ]]; then
+if [[ "${LINUX_VER}" =~ "ubuntu" ]]; then
+  echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
   # update git > 2.17
-  apt-get install -y software-properties-common
   add-apt-repository ppa:git-core/ppa -y
 fi
 
-apt-get update -o APT::Update::Error-Mode=any
+apt-get update
 apt-get upgrade -y
 apt-get install -y --no-install-recommends \
   wget curl git jq ssh \
   make build-essential libssl-dev zlib1g-dev \
   libbz2-dev libreadline-dev libsqlite3-dev wget \
   curl llvm libncursesw5-dev xz-utils tk-dev unzip \
-  libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+  libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
+  software-properties-common
 rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 EOF
 
