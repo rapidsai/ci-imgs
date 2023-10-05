@@ -82,6 +82,7 @@ RUN rapids-mamba-retry install -y \
     git \
     jq \
     "sccache==0.4.2" \
+    "python=${PYTHON_VERSION}.*=*_cpython" \
   && conda clean -aipty
 
 # Install codecov binary
