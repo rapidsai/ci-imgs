@@ -29,7 +29,8 @@ RUN \
     PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')"; \
     case "${LINUX_VER}" in \
       "ubuntu"*) \
-        apt-get update \
+        echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors \
+        && apt-get update \
         && apt-get upgrade -y \
         && apt-get install -y --no-install-recommends \
           cuda-gdb-${PKG_CUDA_VER} \

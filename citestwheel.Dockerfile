@@ -21,12 +21,11 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 RUN <<EOF
 set -e
-if [[ "${LINUX_VER}" =~ "ubuntu" ]]; then
-  echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-  # update git > 2.17
-  add-apt-repository ppa:git-core/ppa -y
-fi
-
+echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+apt-get update
+apt-get install -y software-properties-common
+# update git > 2.17
+add-apt-repository ppa:git-core/ppa -y
 apt-get update
 apt-get upgrade -y
 apt-get install -y --no-install-recommends \
