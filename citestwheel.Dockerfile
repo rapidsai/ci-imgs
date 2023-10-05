@@ -33,8 +33,7 @@ apt-get install -y --no-install-recommends \
   make build-essential libssl-dev zlib1g-dev \
   libbz2-dev libreadline-dev libsqlite3-dev wget \
   curl llvm libncursesw5-dev xz-utils tk-dev unzip \
-  libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
-  software-properties-common
+  libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 EOF
 
