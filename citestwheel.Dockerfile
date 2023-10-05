@@ -19,14 +19,24 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
-RUN apt-get update \
-        && apt-get upgrade -y \
-        && apt-get install -y --no-install-recommends \
-        wget curl git jq ssh \
-        make build-essential libssl-dev zlib1g-dev \
-        libbz2-dev libreadline-dev libsqlite3-dev wget \
-        curl llvm libncursesw5-dev xz-utils tk-dev unzip \
-        libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+RUN <<EOF
+set -e
+if [[ "${LINUX_VER}" == "ubuntu18.04" ]]; then
+  # update git > 2.17
+  apt-get install -y software-properties-common
+  add-apt-repository ppa:git-core/ppa -y
+fi
+
+apt-get update -o APT::Update::Error-Mode=any
+apt-get upgrade -y
+apt-get install -y --no-install-recommends \
+  wget curl git jq ssh \
+  make build-essential libssl-dev zlib1g-dev \
+  libbz2-dev libreadline-dev libsqlite3-dev wget \
+  curl llvm libncursesw5-dev xz-utils tk-dev unzip \
+  libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+EOF
 
 # Install pyenv
 RUN curl https://pyenv.run | bash
@@ -48,9 +58,6 @@ RUN mkdir -p /aws_install && cd /aws_install && \
     ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws && \
     cd / && \
     rm -rf /aws_install
-
-# update git > 2.17
-RUN grep '18.04' /etc/issue && bash -c "apt-get install -y software-properties-common && add-apt-repository ppa:git-core/ppa -y && apt-get update && apt-get install --upgrade -y git" || true;
 
 # Install latest gha-tools
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
