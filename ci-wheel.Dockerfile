@@ -27,13 +27,34 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 RUN case "${LINUX_VER}" in \
     "ubuntu"*) \
-        apt update -y && apt install -y jq build-essential software-properties-common wget gcc zlib1g-dev libbz2-dev libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev protobuf-compiler autoconf automake libtool cmake && rm -rf /var/lib/apt/lists/* \
-        && add-apt-repository ppa:git-core/ppa && add-apt-repository ppa:ubuntu-toolchain-r/test && apt update -y && apt install -y git gcc-9 g++-9 && add-apt-repository -r ppa:git-core/ppa && add-apt-repository -r ppa:ubuntu-toolchain-r/test \
+        echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors \
+        && apt update -y \
+        && apt install -y \
+          jq build-essential software-properties-common wget gcc zlib1g-dev libbz2-dev \
+          libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
+          libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
+          protobuf-compiler autoconf automake libtool cmake \
+        && add-apt-repository ppa:git-core/ppa \
+        && add-apt-repository ppa:ubuntu-toolchain-r/test \
+        && apt update -y \
+        && apt install -y git gcc-9 g++-9 \
+        && add-apt-repository -r ppa:git-core/ppa \
+        && add-apt-repository -r ppa:ubuntu-toolchain-r/test \
         && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9 \
+        && rm -rf /var/lib/apt/lists/* \
       ;; \
     "centos"*) \
-        yum update --exclude=libnccl* -y && yum install -y epel-release wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake && yum clean all \
-        && yum remove -y git && yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm && yum install -y git jq devtoolset-11 && yum remove -y endpoint-repo \
+        yum update --exclude=libnccl* -y \
+        && yum install -y \
+          epel-release wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
+          numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel \
+          protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake \
+        && yum remove -y git \
+        && yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm \
+        && yum install -y git jq devtoolset-11 \
+        && yum remove -y endpoint-repo \
+        && yum clean all \
         && echo -e ' \
         #!/bin/bash\n \
         source scl_source enable devtoolset-11\n \

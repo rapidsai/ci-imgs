@@ -28,7 +28,8 @@ ENV SCCACHE_S3_NO_CREDENTIALS=false
 RUN \
     case "${LINUX_VER}" in \
       "ubuntu"*) \
-        apt-get update \
+        echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors \
+        && apt-get update \
         && apt-get upgrade -y \
         && apt-get install -y --no-install-recommends \
           file \
@@ -109,6 +110,7 @@ RUN rapids-mamba-retry install -y \
     git \
     jq \
     "sccache==0.4.2" \
+    "python=${PYTHON_VERSION}.*=*_cpython" \
   && conda clean -aipty
 
 # Install codecov binary
@@ -142,7 +144,7 @@ RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
 # Install CI tools using pip
-RUN pip install "rapids-dependency-file-generator==1.*" \
+RUN pip install dunamai "rapids-dependency-file-generator==1.*" \
     && pip cache purge
 
 COPY --from=mikefarah/yq:4.35.1 /usr/bin/yq /usr/local/bin/yq

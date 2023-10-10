@@ -32,7 +32,7 @@ jobs:
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
       fail-fast: false
     secrets: inherit
-    uses: ./.github/workflows/build-image.yml
+    uses: ./.github/workflows/build-image.yaml
     with:
       ARCHES: ${{ toJSON(matrix.ARCHES) }}
       CUDA_VER: ${{ matrix.CUDA_VER }}
