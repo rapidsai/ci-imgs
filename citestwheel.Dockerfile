@@ -1,7 +1,7 @@
 ARG CUDA_VER=11.8.0
 ARG LINUX_VER=ubuntu18.04
 
-ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
+ARG BASE_IMAGE=nvcr.io/nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 FROM ${BASE_IMAGE}
 
 ARG CUDA_VER
