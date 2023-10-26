@@ -28,8 +28,6 @@ exclude:
     CUDA_VER: "11.5.2"
 
   # wheels:
-  - LINUX_VER: "ubuntu18.04"
-    IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "centos7"
     IMAGE_REPO: "citestwheel"
 
