@@ -68,6 +68,30 @@ RUN case "${LINUX_VER}" in \
         && make install \
         && popd \
       ;; \
+    "rockylinux"*) \
+        dnf update -y \
+        && dnf install -y \
+          epel-release wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
+          numactl-devel openssh-clients libcudnn8-devel zip \
+          protobuf-compiler autoconf automake libtool dnf-plugins-core cmake \
+        && dnf config-manager --set-enabled powertools \
+        && dnf install -y blas-devel lapack-devel \
+        && dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++ \
+        && dnf clean all \
+        && echo -e ' \
+        #!/bin/bash\n \
+        source /opt/rh/gcc-toolset-11/enable \
+        ' > /etc/profile.d/enable_devtools.sh \
+        && pushd tmp \
+        && wget https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz \
+        && tar -xzvf openssl-1.1.1k.tar.gz \
+        && cd openssl-1.1.1k \
+        && ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic \
+        && make \
+        && make install \
+        && popd \
+      ;; \
     *) \
       echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1; \
       ;; \
@@ -139,6 +163,9 @@ RUN case "${LINUX_VER}" in \
       ;; \
     "centos"*) \
         # Need to specify the openssl location because of the install from source
+        CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}" \
+      ;; \
+    "rockylinux"*) \
         CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}" \
       ;; \
     *) \

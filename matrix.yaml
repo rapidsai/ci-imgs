@@ -54,8 +54,8 @@ exclude:
   # exclude citestwheel and ci-wheel for rockylinux8
   - LINUX_VER: "rockylinux8"
     IMAGE_REPO: "citestwheel"
-  - LINUX_VER: "rockylinux8"
-    IMAGE_REPO: "ci-wheel"
+  # - LINUX_VER: "rockylinux8"
+  #   IMAGE_REPO: "ci-wheel"
 
   # exclude citestwheel and ci-wheel for ubuntu22.04
   - LINUX_VER: "ubuntu22.04"
@@ -66,3 +66,8 @@ exclude:
   # exclude ci-conda for ubuntu18.04
   - LINUX_VER: "ubuntu18.04"
     IMAGE_REPO: "ci-conda"
+
+  # (for ci-wheel), effectively only build rockylinux8 for cuda 11.8
+  - LINUX_VER: "rockylinux8"
+    CUDA_VER: "12.0.1"
+    IMAGE_REPO: "ci-wheel"
