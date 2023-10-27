@@ -51,11 +51,9 @@ exclude:
   - CUDA_VER: "12.1.1"
     IMAGE_REPO: "ci-wheel"
 
-  # exclude citestwheel and ci-wheel for rockylinux8
+  # exclude citestwheel for rockylinux8
   - LINUX_VER: "rockylinux8"
     IMAGE_REPO: "citestwheel"
-  - LINUX_VER: "rockylinux8"
-    IMAGE_REPO: "ci-wheel"
 
   # exclude citestwheel and ci-wheel for ubuntu22.04
   - LINUX_VER: "ubuntu22.04"
