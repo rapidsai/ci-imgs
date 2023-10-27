@@ -147,6 +147,6 @@ RUN /opt/conda/bin/git config --system --add safe.directory '*'
 RUN pip install dunamai "rapids-dependency-file-generator==1.*" \
     && pip cache purge
 
-COPY --from=mikefarah/yq:4.35.1 /usr/bin/yq /usr/local/bin/yq
+COPY --from=mikefarah/yq:4.35.2 /usr/bin/yq /usr/local/bin/yq
 
 CMD ["/bin/bash"]
