@@ -7,6 +7,10 @@ if [[
   "${LINUX_VER}" == "ubuntu20.04"
 ]]; then
   MANYLINUX_VER="manylinux_2_31"
+elif [[
+  "${LINUX_VER}" == "rockylinux8"
+]]; then
+  MANYLINUX_VER="manylinux_2_28"
 fi
 
 ARGS=(
