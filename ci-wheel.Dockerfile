@@ -73,7 +73,7 @@ RUN case "${LINUX_VER}" in \
         && dnf install -y \
           epel-release wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
           sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
-          numactl-devel openssh-clients libcudnn8-devel zip \
+          numactl-devel openssh-clients libcudnn8-devel zip jq \
           protobuf-compiler autoconf automake libtool dnf-plugins-core cmake \
         && dnf config-manager --set-enabled powertools \
         && dnf install -y blas-devel lapack-devel \
