@@ -30,7 +30,8 @@ RUN case "${LINUX_VER}" in \
         echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors \
         && apt update -y \
         && apt install -y \
-          jq build-essential software-properties-common wget gcc zlib1g-dev libbz2-dev \
+          debianutils build-essential software-properties-common \
+          jq wget gcc zlib1g-dev libbz2-dev \
           libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
           libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
           protobuf-compiler autoconf automake libtool cmake \
@@ -46,7 +47,7 @@ RUN case "${LINUX_VER}" in \
     "centos"*) \
         yum update --exclude=libnccl* -y \
         && yum install -y \
-          epel-release wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          epel-release which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
           sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
           numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel \
           protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake \
@@ -71,7 +72,7 @@ RUN case "${LINUX_VER}" in \
     "rockylinux"*) \
         dnf update -y \
         && dnf install -y \
-          epel-release wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          epel-release which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
           sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
           numactl-devel openssh-clients libcudnn8-devel zip jq \
           protobuf-compiler autoconf automake libtool dnf-plugins-core cmake \
