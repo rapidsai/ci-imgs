@@ -30,7 +30,8 @@ RUN case "${LINUX_VER}" in \
         echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors \
         && apt update -y \
         && apt install -y \
-          jq build-essential software-properties-common which wget gcc zlib1g-dev libbz2-dev \
+          debianutils build-essential software-properties-common \
+          jq wget gcc zlib1g-dev libbz2-dev \
           libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
           libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
           protobuf-compiler autoconf automake libtool cmake \
