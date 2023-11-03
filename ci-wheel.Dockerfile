@@ -46,8 +46,10 @@ RUN case "${LINUX_VER}" in \
       ;; \
     "centos"*) \
         yum update --exclude=libnccl* -y \
+        && yum install -y epel-release\
+        && yum update --exclude=libnccl* -y \
         && yum install -y \
-          epel-release which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
           sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
           numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel \
           protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake \
@@ -72,8 +74,10 @@ RUN case "${LINUX_VER}" in \
       ;; \
     "rockylinux"*) \
         dnf update -y \
+        && dnf install -y epel-release \
+        && dnf update -y \
         && dnf install -y \
-          epel-release which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
           sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
           numactl-devel openssh-clients libcudnn8-devel zip jq openslide-devel \
           protobuf-compiler autoconf automake libtool dnf-plugins-core cmake \
