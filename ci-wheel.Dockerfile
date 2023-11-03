@@ -34,7 +34,7 @@ RUN case "${LINUX_VER}" in \
           jq wget gcc zlib1g-dev libbz2-dev \
           libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
           libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
-          protobuf-compiler autoconf automake libtool cmake \
+          protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev \
         && add-apt-repository ppa:git-core/ppa \
         && add-apt-repository ppa:ubuntu-toolchain-r/test \
         && apt update -y \
@@ -46,11 +46,14 @@ RUN case "${LINUX_VER}" in \
       ;; \
     "centos"*) \
         yum update --exclude=libnccl* -y \
+        && yum install -y epel-release\
+        && yum update --exclude=libnccl* -y \
         && yum install -y \
-          epel-release which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
           sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
           numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel \
           protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake \
+          yasm openslide-devel \
         && yum remove -y git \
         && yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm \
         && yum install -y git jq devtoolset-11 \
@@ -71,14 +74,17 @@ RUN case "${LINUX_VER}" in \
       ;; \
     "rockylinux"*) \
         dnf update -y \
+        && dnf install -y epel-release \
+        && dnf update -y \
         && dnf install -y \
-          epel-release which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
           sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
-          numactl-devel openssh-clients libcudnn8-devel zip jq \
+          numactl-devel openssh-clients libcudnn8-devel zip jq openslide-devel \
           protobuf-compiler autoconf automake libtool dnf-plugins-core cmake \
         && dnf config-manager --set-enabled powertools \
         && dnf install -y blas-devel lapack-devel \
         && dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++ \
+        && dnf -y install yasm \
         && dnf clean all \
         && echo -e ' \
         #!/bin/bash\n \
