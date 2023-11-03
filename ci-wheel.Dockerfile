@@ -84,7 +84,7 @@ RUN case "${LINUX_VER}" in \
         && dnf config-manager --set-enabled powertools \
         && dnf install -y blas-devel lapack-devel \
         && dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++ \
-        && dnf -y yasm \
+        && dnf -y install yasm \
         && dnf clean all \
         && echo -e ' \
         #!/bin/bash\n \
