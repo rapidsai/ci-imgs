@@ -34,7 +34,7 @@ RUN case "${LINUX_VER}" in \
           jq wget gcc zlib1g-dev libbz2-dev \
           libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
           libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
-          protobuf-compiler autoconf automake libtool cmake yasm openslide-dev \
+          protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev \
         && add-apt-repository ppa:git-core/ppa \
         && add-apt-repository ppa:ubuntu-toolchain-r/test \
         && apt update -y \
