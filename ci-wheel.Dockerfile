@@ -186,7 +186,8 @@ RUN pyenv global ${PYTHON_VER} && python -m pip install auditwheel patchelf twin
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
 
 # Install anaconda-client
-RUN pip install git+https://github.com/Anaconda-Platform/anaconda-client
+RUN pip install git+https://github.com/Anaconda-Platform/anaconda-client && \
+	pip cache purge
 
 # Install the AWS CLI
 RUN mkdir -p /aws_install && cd /aws_install && \
