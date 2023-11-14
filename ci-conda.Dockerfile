@@ -105,6 +105,7 @@ RUN rapids-mamba-retry install -y \
     anaconda-client \
     awscli \
     boa \
+    conda-verify \
     gettext \
     gh \
     git \
