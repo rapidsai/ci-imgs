@@ -12,7 +12,7 @@ ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 
 # RAPIDS pip index
-ENV PIP_EXTRA_INDEX_URL="https://pypi.k8s.rapids.ai/simple"
+ENV PIP_EXTRA_INDEX_URL="https://pypi.anaconda.org/rapidsai-wheels-nightly/simple"
 
 ARG DEBIAN_FRONTEND=noninteractive
 

@@ -20,7 +20,7 @@ ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 
 # RAPIDS pip index
-ENV PIP_EXTRA_INDEX_URL="https://pypi.k8s.rapids.ai/simple"
+ENV PIP_EXTRA_INDEX_URL="https://pypi.anaconda.org/rapidsai-wheels-nightly/simple"
 
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
@@ -184,6 +184,10 @@ RUN pyenv global ${PYTHON_VER} && python -m pip install auditwheel patchelf twin
 
 # Install latest gha-tools
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+
+# Install anaconda-client
+RUN pip install git+https://github.com/Anaconda-Platform/anaconda-client && \
+	pip cache purge
 
 # Install the AWS CLI
 RUN mkdir -p /aws_install && cd /aws_install && \
