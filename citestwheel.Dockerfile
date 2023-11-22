@@ -51,12 +51,14 @@ ENV PATH="/pyenv/versions/${PYTHON_VER}/bin/:$PATH"
 # Install the AWS CLI
 # Needed to download wheels for running tests
 # Install the AWS CLI
-RUN mkdir -p /aws_install && cd /aws_install && \
-    curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" && \
-    unzip awscli-bundle.zip && \
-    ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws && \
-    cd / && \
-    rm -rf /aws_install
+RUN <<EOF
+mkdir -p /aws_install && cd /aws_install
+curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+unzip awscli-bundle.zip
+./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+cd /
+rm -rf /aws_install
+EOF
 
 # Install latest gha-tools
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
