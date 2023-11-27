@@ -19,6 +19,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
 RUN <<EOF
 set -e
 echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors

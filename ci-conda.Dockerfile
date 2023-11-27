@@ -24,6 +24,8 @@ ENV SCCACHE_IDLE_TIMEOUT=32768
 ENV SCCACHE_S3_USE_SSL=true
 ENV SCCACHE_S3_NO_CREDENTIALS=false
 
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
 # Install system packages depending on the LINUX_VER
 RUN <<EOF
 case "${LINUX_VER}" in

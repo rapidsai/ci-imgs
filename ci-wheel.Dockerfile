@@ -25,6 +25,8 @@ ENV PIP_EXTRA_INDEX_URL="https://pypi.anaconda.org/rapidsai-wheels-nightly/simpl
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
