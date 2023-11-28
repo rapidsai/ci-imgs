@@ -103,7 +103,8 @@ case "${LINUX_VER}" in
     popd
     ;;
   *) 
-    echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
     ;;
 esac
 EOF
@@ -186,7 +187,8 @@ case "${LINUX_VER}" in
     CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
   *) 
-    echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
     ;;
 esac
 EOF

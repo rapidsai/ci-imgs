@@ -50,7 +50,8 @@ case "${LINUX_VER}" in
     yum clean all
     ;;
   *) 
-    echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
     ;;
 esac
 EOF
@@ -90,7 +91,8 @@ case "${CUDA_VER}" in
         yum clean all
         ;;
       *) 
-        echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1
+        echo "Unsupported LINUX_VER: ${LINUX_VER}"
+        exit 1
         ;;
     esac
     ;;
