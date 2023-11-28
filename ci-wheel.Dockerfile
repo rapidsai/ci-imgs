@@ -2,7 +2,7 @@ ARG CUDA_VER=11.8.0
 ARG LINUX_VER=ubuntu20.04
 ARG REAL_ARCH=x86_64
 
-ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
+ARG BASE_IMAGE=nvcr.io/nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 FROM ${BASE_IMAGE}
 
 ARG CUDA_VER
@@ -20,23 +20,75 @@ ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 
 # RAPIDS pip index
-ENV PIP_EXTRA_INDEX_URL="https://pypi.k8s.rapids.ai/simple"
+ENV PIP_EXTRA_INDEX_URL="https://pypi.anaconda.org/rapidsai-wheels-nightly/simple"
 
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 RUN case "${LINUX_VER}" in \
     "ubuntu"*) \
-        apt update -y && apt install -y jq build-essential software-properties-common wget gcc zlib1g-dev libbz2-dev libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev protobuf-compiler autoconf automake libtool cmake && rm -rf /var/lib/apt/lists/* \
-        && add-apt-repository ppa:git-core/ppa && add-apt-repository ppa:ubuntu-toolchain-r/test && apt update -y && apt install -y git gcc-9 g++-9 && add-apt-repository -r ppa:git-core/ppa && add-apt-repository -r ppa:ubuntu-toolchain-r/test \
+        echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors \
+        && apt update -y \
+        && apt install -y \
+          debianutils build-essential software-properties-common \
+          jq wget gcc zlib1g-dev libbz2-dev \
+          libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
+          libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
+          protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev \
+        && add-apt-repository ppa:git-core/ppa \
+        && add-apt-repository ppa:ubuntu-toolchain-r/test \
+        && apt update -y \
+        && apt install -y git gcc-9 g++-9 \
+        && add-apt-repository -r ppa:git-core/ppa \
+        && add-apt-repository -r ppa:ubuntu-toolchain-r/test \
         && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9 \
+        && rm -rf /var/lib/apt/lists/* \
       ;; \
     "centos"*) \
-        yum update --exclude=libnccl* -y && yum install -y epel-release wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake && yum clean all \
-        && yum remove -y git && yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm && yum install -y git jq devtoolset-11 && yum remove -y endpoint-repo \
+        yum update --exclude=libnccl* -y \
+        && yum install -y epel-release\
+        && yum update --exclude=libnccl* -y \
+        && yum install -y \
+          which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
+          numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel \
+          protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake \
+          yasm openslide-devel \
+        && yum remove -y git \
+        && yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm \
+        && yum install -y git jq devtoolset-11 \
+        && yum remove -y endpoint-repo \
+        && yum clean all \
         && echo -e ' \
         #!/bin/bash\n \
         source scl_source enable devtoolset-11\n \
+        ' > /etc/profile.d/enable_devtools.sh \
+        && pushd tmp \
+        && wget https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz \
+        && tar -xzvf openssl-1.1.1k.tar.gz \
+        && cd openssl-1.1.1k \
+        && ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic \
+        && make \
+        && make install \
+        && popd \
+      ;; \
+    "rockylinux"*) \
+        dnf update -y \
+        && dnf install -y epel-release \
+        && dnf update -y \
+        && dnf install -y \
+          which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+          sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
+          numactl-devel openssh-clients libcudnn8-devel zip jq openslide-devel \
+          protobuf-compiler autoconf automake libtool dnf-plugins-core cmake \
+        && dnf config-manager --set-enabled powertools \
+        && dnf install -y blas-devel lapack-devel \
+        && dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++ \
+        && dnf -y install yasm \
+        && dnf clean all \
+        && echo -e ' \
+        #!/bin/bash\n \
+        source /opt/rh/gcc-toolset-11/enable \
         ' > /etc/profile.d/enable_devtools.sh \
         && pushd tmp \
         && wget https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz \
@@ -120,6 +172,9 @@ RUN case "${LINUX_VER}" in \
         # Need to specify the openssl location because of the install from source
         CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}" \
       ;; \
+    "rockylinux"*) \
+        CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}" \
+      ;; \
     *) \
       echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1; \
       ;; \
@@ -129,6 +184,10 @@ RUN pyenv global ${PYTHON_VER} && python -m pip install auditwheel patchelf twin
 
 # Install latest gha-tools
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+
+# Install anaconda-client
+RUN pip install git+https://github.com/Anaconda-Platform/anaconda-client && \
+	pip cache purge
 
 # Install the AWS CLI
 COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
