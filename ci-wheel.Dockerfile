@@ -25,84 +25,89 @@ ENV PIP_EXTRA_INDEX_URL="https://pypi.anaconda.org/rapidsai-wheels-nightly/simpl
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
-RUN case "${LINUX_VER}" in \
-    "ubuntu"*) \
-        echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors \
-        && apt update -y \
-        && apt install -y \
-          debianutils build-essential software-properties-common \
-          jq wget gcc zlib1g-dev libbz2-dev \
-          libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
-          libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
-          protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev \
-        && add-apt-repository ppa:git-core/ppa \
-        && add-apt-repository ppa:ubuntu-toolchain-r/test \
-        && apt update -y \
-        && apt install -y git gcc-9 g++-9 \
-        && add-apt-repository -r ppa:git-core/ppa \
-        && add-apt-repository -r ppa:ubuntu-toolchain-r/test \
-        && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9 \
-        && rm -rf /var/lib/apt/lists/* \
-      ;; \
-    "centos"*) \
-        yum update --exclude=libnccl* -y \
-        && yum install -y epel-release\
-        && yum update --exclude=libnccl* -y \
-        && yum install -y \
-          which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
-          sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
-          numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel \
-          protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake \
-          yasm openslide-devel \
-        && yum remove -y git \
-        && yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm \
-        && yum install -y git jq devtoolset-11 \
-        && yum remove -y endpoint-repo \
-        && yum clean all \
-        && echo -e ' \
-        #!/bin/bash\n \
-        source scl_source enable devtoolset-11\n \
-        ' > /etc/profile.d/enable_devtools.sh \
-        && pushd tmp \
-        && wget https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz \
-        && tar -xzvf openssl-1.1.1k.tar.gz \
-        && cd openssl-1.1.1k \
-        && ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic \
-        && make \
-        && make install \
-        && popd \
-      ;; \
-    "rockylinux"*) \
-        dnf update -y \
-        && dnf install -y epel-release \
-        && dnf update -y \
-        && dnf install -y \
-          which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
-          sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
-          numactl-devel openssh-clients libcudnn8-devel zip jq openslide-devel \
-          protobuf-compiler autoconf automake libtool dnf-plugins-core cmake \
-        && dnf config-manager --set-enabled powertools \
-        && dnf install -y blas-devel lapack-devel \
-        && dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++ \
-        && dnf -y install yasm \
-        && dnf clean all \
-        && echo -e ' \
-        #!/bin/bash\n \
-        source /opt/rh/gcc-toolset-11/enable \
-        ' > /etc/profile.d/enable_devtools.sh \
-        && pushd tmp \
-        && wget https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz \
-        && tar -xzvf openssl-1.1.1k.tar.gz \
-        && cd openssl-1.1.1k \
-        && ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic \
-        && make \
-        && make install \
-        && popd \
-      ;; \
-    *) \
-      echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1; \
-      ;; \
-  esac
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+    apt update -y
+    apt install -y \
+      debianutils build-essential software-properties-common \
+      jq wget gcc zlib1g-dev libbz2-dev \
+      libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
+      libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
+      protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev
+    add-apt-repository ppa:git-core/ppa
+    add-apt-repository ppa:ubuntu-toolchain-r/test
+    apt update -y
+    apt install -y git gcc-9 g++-9
+    add-apt-repository -r ppa:git-core/ppa
+    add-apt-repository -r ppa:ubuntu-toolchain-r/test
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
+    rm -rf /var/lib/apt/lists/*
+    ;;
+  "centos"*)
+    yum update --exclude=libnccl* -y
+    yum install -y epel-release
+    yum update --exclude=libnccl* -y
+    yum install -y \
+      which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+      sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
+      numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel \
+      protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake \
+      yasm openslide-devel
+    yum remove -y git
+    yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
+    yum install -y git jq devtoolset-11
+    yum remove -y endpoint-repo
+    yum clean all
+    echo -e ' \
+      #!/bin/bash\n \
+      source scl_source enable devtoolset-11\n \
+    ' > /etc/profile.d/enable_devtools.sh
+    pushd tmp
+    wget https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz
+    tar -xzvf openssl-1.1.1k.tar.gz
+    cd openssl-1.1.1k
+    ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
+    make
+    make install
+    popd
+    ;;
+  "rockylinux"*)
+    dnf update -y
+    dnf install -y epel-release
+    dnf update -y
+    dnf install -y \
+      which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+      sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
+      numactl-devel openssh-clients libcudnn8-devel zip jq openslide-devel \
+      protobuf-compiler autoconf automake libtool dnf-plugins-core cmake
+    dnf config-manager --set-enabled powertools
+    dnf install -y blas-devel lapack-devel
+    dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++
+    dnf -y install yasm
+    dnf clean all
+    echo -e ' \
+      #!/bin/bash\n \
+      source /opt/rh/gcc-toolset-11/enable \
+    ' > /etc/profile.d/enable_devtools.sh
+    pushd tmp
+    wget https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz
+        tar -xzvf openssl-1.1.1k.tar.gz
+    cd openssl-1.1.1k
+    ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
+    make
+    make install
+    popd
+    ;;
+  *) 
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+EOF
 
 # Download and install GH CLI tool v2.32.0
 ARG GH_VERSION=2.32.0
@@ -117,11 +122,13 @@ EOF
 # Install sccache
 ARG SCCACHE_VERSION=0.5.4
 
-RUN curl -o /tmp/sccache.tar.gz \
-        -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz" && \
-        tar -C /tmp -xvf /tmp/sccache.tar.gz && \
-        mv "/tmp/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache && \
-        chmod +x /usr/bin/sccache
+RUN <<EOF
+curl -o /tmp/sccache.tar.gz \
+  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
+tar -C /tmp -xvf /tmp/sccache.tar.gz
+mv "/tmp/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
+chmod +x /usr/bin/sccache
+EOF
 
 # Set AUDITWHEEL_* env vars for use with auditwheel
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
@@ -138,24 +145,27 @@ ENV SCCACHE_S3_NO_CREDENTIALS=false
 
 # Install ucx
 ARG UCX_VERSION=1.14.1
-RUN mkdir -p /ucx-src && cd /ucx-src &&\
-    git clone https://github.com/openucx/ucx -b v${UCX_VERSION} ucx-git-repo &&\
-    cd ucx-git-repo && \
-    ./autogen.sh && \
-    ./contrib/configure-release \
-       --prefix=/usr               \
-       --enable-mt                 \
-       --enable-cma                \
-       --enable-numa               \
-       --with-gnu-ld               \
-       --with-sysroot              \
-       --without-verbs             \
-       --without-rdmacm            \
-       --with-cuda=/usr/local/cuda && \
-    CPPFLAGS=-I/usr/local/cuda/include make -j && \
-    make install && \
-    cd / && \
-    rm -rf /ucx-src/
+RUN <<EOF
+mkdir -p /ucx-src
+cd /ucx-src
+git clone https://github.com/openucx/ucx -b v${UCX_VERSION} ucx-git-repo
+cd ucx-git-repo
+./autogen.sh
+./contrib/configure-release \
+  --prefix=/usr               \
+  --enable-mt                 \
+  --enable-cma                \
+  --enable-numa               \
+  --with-gnu-ld               \
+  --with-sysroot              \
+  --without-verbs             \
+  --without-rdmacm            \
+  --with-cuda=/usr/local/cuda
+CPPFLAGS=-I/usr/local/cuda/include make -j
+make install
+cd /
+rm -rf /ucx-src/
+EOF
 
 # Install pyenv
 RUN curl https://pyenv.run | bash
@@ -164,30 +174,39 @@ RUN curl https://pyenv.run | bash
 # TODO: Determine if any cleanup of the pyenv layers is needed to shrink the container
 RUN pyenv update
 
-RUN case "${LINUX_VER}" in \
-    "ubuntu"*) \
-        pyenv install --verbose "${RAPIDS_PY_VERSION}" \
-      ;; \
-    "centos"*) \
-        # Need to specify the openssl location because of the install from source
-        CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}" \
-      ;; \
-    "rockylinux"*) \
-        CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}" \
-      ;; \
-    *) \
-      echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1; \
-      ;; \
-  esac
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*) 
+    pyenv install --verbose "${RAPIDS_PY_VERSION}"
+    ;;
+  "centos"*) 
+    # Need to specify the openssl location because of the install from source
+    CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
+    ;;
+  "rockylinux"*) 
+    CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
+    ;;
+  *) 
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+EOF
 
-RUN pyenv global ${PYTHON_VER} && python -m pip install auditwheel patchelf twine rapids-dependency-file-generator dunamai && pyenv rehash
+RUN <<EOF
+pyenv global ${PYTHON_VER}
+python -m pip install auditwheel patchelf twine rapids-dependency-file-generator dunamai
+pyenv rehash
+EOF
 
 # Install latest gha-tools
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
 
 # Install anaconda-client
-RUN pip install git+https://github.com/Anaconda-Platform/anaconda-client && \
-	pip cache purge
+RUN <<EOF
+pip install git+https://github.com/Anaconda-Platform/anaconda-client
+pip cache purge
+EOF
 
 # Install the AWS CLI
 COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
