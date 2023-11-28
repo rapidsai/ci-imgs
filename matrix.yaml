@@ -6,6 +6,8 @@ CUDA_VER:
 PYTHON_VER:
   - "3.9"
   - "3.10"
+  - "3.11"
+  - "3.12"
 LINUX_VER:
   - "ubuntu18.04"
   - "ubuntu20.04"
