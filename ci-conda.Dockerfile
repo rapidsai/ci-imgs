@@ -103,7 +103,6 @@ RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.ta
 # Install CI tools using mamba
 RUN rapids-mamba-retry install -y \
     anaconda-client \
-    awscli \
     boa \
     gettext \
     gh \
@@ -148,5 +147,7 @@ RUN pip install dunamai "rapids-dependency-file-generator==1.*" \
     && pip cache purge
 
 COPY --from=mikefarah/yq:4.35.2 /usr/bin/yq /usr/local/bin/yq
+COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
+COPY --from=amazon/aws-cli /usr/local/bin/ /usr/local/bin/
 
 CMD ["/bin/bash"]
