@@ -209,15 +209,8 @@ pip cache purge
 EOF
 
 # Install the AWS CLI
-RUN <<EOF
-mkdir -p /aws_install
-cd /aws_install
-curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
-unzip awscli-bundle.zip
-./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-cd /
-rm -rf /aws_install
-EOF
+COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
+COPY --from=amazon/aws-cli /usr/local/bin/ /usr/local/bin/
 
 # Mark all directories as safe for git so that GHA clones into the root don't
 # run into issues
