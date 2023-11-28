@@ -1,7 +1,5 @@
 CUDA_VER:
-  - "11.2.2"
   - "11.4.3"
-  - "11.5.2"
   - "11.8.0"
   - "12.0.1"
   - "12.1.1"
@@ -21,11 +19,7 @@ IMAGE_REPO:
 exclude:
   # ci-conda:
   - LINUX_VER: "ubuntu22.04"
-    CUDA_VER: "11.2.2"
-  - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.4.3"
-  - LINUX_VER: "ubuntu22.04"
-    CUDA_VER: "11.5.2"
 
   # wheels:
   - LINUX_VER: "ubuntu18.04"
@@ -34,17 +28,9 @@ exclude:
     IMAGE_REPO: "citestwheel"
 
   # exclude citestwheel and ci-wheel for cuda versions other than 11.8.0 and 12.0.1
-  - CUDA_VER: "11.2.2"
-    IMAGE_REPO: "citestwheel"
-  - CUDA_VER: "11.2.2"
-    IMAGE_REPO: "ci-wheel"
   - CUDA_VER: "11.4.3"
     IMAGE_REPO: "citestwheel"
   - CUDA_VER: "11.4.3"
-    IMAGE_REPO: "ci-wheel"
-  - CUDA_VER: "11.5.2"
-    IMAGE_REPO: "citestwheel"
-  - CUDA_VER: "11.5.2"
     IMAGE_REPO: "ci-wheel"
   - CUDA_VER: "12.1.1"
     IMAGE_REPO: "citestwheel"
