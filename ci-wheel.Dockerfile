@@ -102,7 +102,7 @@ case "${LINUX_VER}" in
     make install
     popd
     ;;
-  *) 
+  *)
     echo "Unsupported LINUX_VER: ${LINUX_VER}"
     exit 1
     ;;
@@ -120,7 +120,7 @@ rm -rf gh_*
 EOF
 
 # Install sccache
-ARG SCCACHE_VERSION=0.5.4
+ARG SCCACHE_VERSION=0.7.4
 
 RUN <<EOF
 curl -o /tmp/sccache.tar.gz \
@@ -176,17 +176,17 @@ RUN pyenv update
 
 RUN <<EOF
 case "${LINUX_VER}" in
-  "ubuntu"*) 
+  "ubuntu"*)
     pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
-  "centos"*) 
+  "centos"*)
     # Need to specify the openssl location because of the install from source
     CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
-  "rockylinux"*) 
+  "rockylinux"*)
     CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
-  *) 
+  *)
     echo "Unsupported LINUX_VER: ${LINUX_VER}"
     exit 1
     ;;

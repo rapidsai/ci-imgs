@@ -29,7 +29,7 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 # Install system packages depending on the LINUX_VER
 RUN <<EOF
 case "${LINUX_VER}" in
-  "ubuntu"*) 
+  "ubuntu"*)
     echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
     apt-get update
     apt-get upgrade -y
@@ -39,7 +39,7 @@ case "${LINUX_VER}" in
       wget
     rm -rf "/var/lib/apt/lists/*"
     ;;
-  "centos"* | "rockylinux"*) 
+  "centos"* | "rockylinux"*)
     yum -y update
     yum -y install --setopt=install_weak_deps=False \
       file \
@@ -49,7 +49,7 @@ case "${LINUX_VER}" in
       yum-utils
     yum clean all
     ;;
-  *) 
+  *)
     echo "Unsupported LINUX_VER: ${LINUX_VER}"
     exit 1
     ;;
@@ -59,11 +59,11 @@ EOF
 # Install CUDA packages, only for CUDA 11 (CUDA 12+ should fetch from conda)
 RUN <<EOF
 case "${CUDA_VER}" in
-  "11"*) 
+  "11"*)
     PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')"
     echo "Attempting to install CUDA Toolkit ${PKG_CUDA_VER}"
     case "${LINUX_VER}" in
-      "ubuntu"*) 
+      "ubuntu"*)
         apt-get update
         apt-get upgrade -y
         apt-get install -y --no-install-recommends \
@@ -80,7 +80,7 @@ case "${CUDA_VER}" in
         sed -i 's/, build-essential//g' /var/lib/dpkg/status
         rm -rf "/var/lib/apt/lists/*"
         ;;
-      "centos"* | "rockylinux"*) 
+      "centos"* | "rockylinux"*)
         yum -y update
         yum -y install --setopt=install_weak_deps=False \
           cuda-cudart-devel-${PKG_CUDA_VER} \
@@ -90,13 +90,13 @@ case "${CUDA_VER}" in
         rpm -Uvh --nodeps $(repoquery --location cuda-nvcc-${PKG_CUDA_VER})
         yum clean all
         ;;
-      *) 
+      *)
         echo "Unsupported LINUX_VER: ${LINUX_VER}"
         exit 1
         ;;
     esac
     ;;
-  *) 
+  *)
     echo "Skipping CUDA Toolkit installation for CUDA ${CUDA_VER}"
     ;;
 esac
@@ -115,7 +115,7 @@ rapids-mamba-retry install -y \
   gh \
   git \
   jq \
-  "sccache==0.4.2" \
+  "sccache==0.7.4" \
   "python=${PYTHON_VERSION}.*=*_cpython"
 conda clean -aipty
 EOF
@@ -123,7 +123,7 @@ EOF
 # Install codecov binary
 RUN <<EOF
 case "${TARGETPLATFORM}" in
-  "linux/amd64") 
+  "linux/amd64")
     CODECOV_VERSION=v0.3.2
     curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 \
       | gpg --no-default-keyring --keyring trustedkeys.gpg --import
@@ -136,7 +136,7 @@ case "${TARGETPLATFORM}" in
     mv codecov /usr/local/bin
     rm -f codecov*
     ;;
-  *) 
+  *)
     echo 'Codecov is only supported on "linux/amd64" machines'
     ;;
 esac
