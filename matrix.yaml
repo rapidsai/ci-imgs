@@ -33,10 +33,6 @@ exclude:
     IMAGE_REPO: "citestwheel"
   - CUDA_VER: "11.4.3"
     IMAGE_REPO: "ci-wheel"
-  - CUDA_VER: "12.1.1"
-    IMAGE_REPO: "citestwheel"
-  - CUDA_VER: "12.1.1"
-    IMAGE_REPO: "ci-wheel"
 
   # exclude citestwheel for rockylinux8
   - LINUX_VER: "rockylinux8"
