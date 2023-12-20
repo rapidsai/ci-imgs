@@ -1,6 +1,6 @@
-ARG CUDA_VER=11.8.0
-ARG LINUX_VER=ubuntu22.04
-ARG PYTHON_VER=3.10
+ARG CUDA_VER=-notset
+ARG LINUX_VER=notset
+ARG PYTHON_VER=-notset
 FROM rapidsai/miniforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 
 ARG TARGETPLATFORM
