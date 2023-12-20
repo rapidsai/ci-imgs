@@ -1,6 +1,6 @@
-ARG CUDA_VER=-notset
+ARG CUDA_VER=notset
 ARG LINUX_VER=notset
-ARG PYTHON_VER=-notset
+ARG PYTHON_VER=notset
 FROM rapidsai/miniforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 
 ARG TARGETPLATFORM
