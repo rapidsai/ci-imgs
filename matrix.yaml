@@ -18,9 +18,11 @@ IMAGE_REPO:
   - "ci-wheel"
   - "citestwheel"
 exclude:
-  # ci-conda:
+  # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.4.3"
+  - LINUX_VER: "ubuntu18.04"
+    CUDA_VER: "12.2.2"
 
   # wheels:
   - LINUX_VER: "ubuntu18.04"
