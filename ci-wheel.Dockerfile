@@ -119,7 +119,7 @@ rm -rf gh_*
 EOF
 
 # Install sccache
-ARG SCCACHE_VERSION=0.7.6
+ARG SCCACHE_VERSION=0.7.7
 
 RUN <<EOF
 curl -o /tmp/sccache.tar.gz \

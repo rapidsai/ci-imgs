@@ -115,7 +115,7 @@ rapids-mamba-retry install -y \
   gh \
   git \
   jq \
-  "sccache==0.7.6" \
+  "sccache==0.7.7" \
   "python=${PYTHON_VERSION}.*=*_cpython"
 conda clean -aipty
 EOF
