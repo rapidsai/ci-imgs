@@ -24,6 +24,12 @@ ARGS=(
   "MANYLINUX_VER=${MANYLINUX_VER}"
 )
 
+DYNAMIC_BUILD_ARGS=$(ci/fix-renovate-args.sh ${DOCKERFILE})
+IFS=' ' read -r -a dynamic_args_array <<< "$DYNAMIC_BUILD_ARGS"
+for arg in "${dynamic_args_array[@]}"; do
+  ARGS+=("$arg")
+done
+
 cat <<EOF > "${GITHUB_OUTPUT:-/dev/stdout}"
 ARGS<<EOT
 $(printf "%s\n" "${ARGS[@]}")

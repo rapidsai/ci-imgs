@@ -1,12 +1,17 @@
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
+ARG YQ
+
+FROM mikefarah/yq:${YQ} as yq
+
 FROM rapidsai/miniforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 
 ARG TARGETPLATFORM
 ARG CUDA_VER
 ARG LINUX_VER
 ARG PYTHON_VER
+ARG CODECOV
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -124,7 +129,7 @@ EOF
 RUN <<EOF
 case "${TARGETPLATFORM}" in
   "linux/amd64")
-    CODECOV_VERSION=v0.3.2
+    CODECOV_VERSION=v${CODECOV}
     curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 \
       | gpg --no-default-keyring --keyring trustedkeys.gpg --import
     curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov
@@ -155,7 +160,7 @@ RUN /opt/conda/bin/git config --system --add safe.directory '*'
 RUN pip install dunamai "rapids-dependency-file-generator==1.*" \
     && pip cache purge
 
-COPY --from=mikefarah/yq:4.40.7 /usr/bin/yq /usr/local/bin/yq
+COPY --from=yq /usr/bin/yq /usr/local/bin/yq
 COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=amazon/aws-cli /usr/local/bin/ /usr/local/bin/
 

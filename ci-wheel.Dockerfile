@@ -143,11 +143,11 @@ ENV SCCACHE_S3_USE_SSL=true
 ENV SCCACHE_S3_NO_CREDENTIALS=false
 
 # Install ucx
-ARG UCX_VERSION=1.14.1
+ARG UCX=1.14.1
 RUN <<EOF
 mkdir -p /ucx-src
 cd /ucx-src
-git clone https://github.com/openucx/ucx -b v${UCX_VERSION} ucx-git-repo
+git clone https://github.com/openucx/ucx -b v${UCX} ucx-git-repo
 cd ucx-git-repo
 ./autogen.sh
 ./contrib/configure-release \
