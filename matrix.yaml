@@ -40,7 +40,7 @@ exclude:
   - LINUX_VER: "rockylinux8"
     IMAGE_REPO: "citestwheel"
 
-  # exclude citestwheel and ci-wheel for ubuntu22.04
+  # exclude ci-wheel for ubuntu22.04
   - LINUX_VER: "ubuntu22.04"
     IMAGE_REPO: "ci-wheel"
 
