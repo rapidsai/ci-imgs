@@ -42,8 +42,6 @@ exclude:
 
   # exclude citestwheel and ci-wheel for ubuntu22.04
   - LINUX_VER: "ubuntu22.04"
-    IMAGE_REPO: "citestwheel"
-  - LINUX_VER: "ubuntu22.04"
     IMAGE_REPO: "ci-wheel"
 
   # exclude ci-conda for ubuntu18.04
