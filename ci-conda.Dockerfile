@@ -111,6 +111,7 @@ RUN <<EOF
 rapids-mamba-retry install -y \
   anaconda-client \
   boa \
+  conda-merge \
   gettext \
   gh \
   git \
@@ -152,7 +153,7 @@ RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
 # Install CI tools using pip
-RUN pip install conda-merge dunamai "rapids-dependency-file-generator==1.*" \
+RUN pip install dunamai "rapids-dependency-file-generator==1.*" \
     && pip cache purge
 
 COPY --from=mikefarah/yq:4.40.7 /usr/bin/yq /usr/local/bin/yq
