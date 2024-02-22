@@ -185,7 +185,7 @@ EOF
 
 RUN <<EOF
 pyenv global ${PYTHON_VER}
-python -m pip install auditwheel patchelf twine rapids-dependency-file-generator dunamai
+python -m pip install auditwheel patchelf twine "rapids-dependency-file-generator==1.*" dunamai
 pyenv rehash
 EOF
 
