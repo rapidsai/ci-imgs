@@ -136,15 +136,6 @@ EOF
 # Set AUDITWHEEL_* env vars for use with auditwheel
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
 
-# Set sccache env vars
-ENV CMAKE_CUDA_COMPILER_LAUNCHER=sccache
-ENV CMAKE_CXX_COMPILER_LAUNCHER=sccache
-ENV CMAKE_C_COMPILER_LAUNCHER=sccache
-ENV SCCACHE_BUCKET=rapids-sccache-east
-ENV SCCACHE_REGION=us-east-2
-ENV SCCACHE_IDLE_TIMEOUT=32768
-ENV SCCACHE_S3_USE_SSL=true
-ENV SCCACHE_S3_NO_CREDENTIALS=false
 
 # Install ucx
 ARG UCX_VER=1.14.1
@@ -198,7 +189,7 @@ EOF
 
 RUN <<EOF
 pyenv global ${PYTHON_VER}
-python -m pip install auditwheel patchelf twine rapids-dependency-file-generator dunamai
+python -m pip install auditwheel patchelf twine "rapids-dependency-file-generator==1.*" dunamai
 pyenv rehash
 EOF
 
