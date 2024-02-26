@@ -113,23 +113,23 @@ esac
 EOF
 
 # Download and install GH CLI tool v2.32.0
-ARG GH_VERSION=2.32.0
+ARG GH_CLI_VER=2.32.0
 RUN <<EOF
 set -e
-wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${CPU_ARCH}.tar.gz
+wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
 EOF
 
 # Install sccache
-ARG SCCACHE_VERSION=0.7.6
+ARG SCCACHE_VER=0.7.6
 
 RUN <<EOF
 curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
+  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
 tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
+mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
 chmod +x /usr/bin/sccache
 EOF
 
@@ -147,11 +147,11 @@ ENV SCCACHE_S3_USE_SSL=true
 ENV SCCACHE_S3_NO_CREDENTIALS=false
 
 # Install ucx
-ARG UCX=1.14.1
+ARG UCX_VER=1.14.1
 RUN <<EOF
 mkdir -p /ucx-src
 cd /ucx-src
-git clone https://github.com/openucx/ucx -b v${UCX} ucx-git-repo
+git clone https://github.com/openucx/ucx -b v${UCX_VER} ucx-git-repo
 cd ucx-git-repo
 ./autogen.sh
 ./contrib/configure-release \

@@ -1,10 +1,10 @@
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
-ARG YQ
+ARG YQ_VER
 ARG AWS_CLI_VER
 
-FROM mikefarah/yq:${YQ} as yq
+FROM mikefarah/yq:${YQ_VER} as yq
 
 FROM amazon/aws-cli:${AWS_CLI_VER} as aws-cli
 
@@ -14,7 +14,7 @@ ARG TARGETPLATFORM
 ARG CUDA_VER
 ARG LINUX_VER
 ARG PYTHON_VER
-ARG CODECOV
+ARG CODECOV_VER
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -132,12 +132,11 @@ EOF
 RUN <<EOF
 case "${TARGETPLATFORM}" in
   "linux/amd64")
-    CODECOV_VERSION=v${CODECOV}
     curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 \
       | gpg --no-default-keyring --keyring trustedkeys.gpg --import
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov.SHA256SUM
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov.SHA256SUM.sig
+    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov
+    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov.SHA256SUM
+    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov.SHA256SUM.sig
     gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
     shasum -a 256 -c codecov.SHA256SUM
     chmod +x codecov

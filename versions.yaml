@@ -1,12 +1,12 @@
 # renovate: datasource=github-releases depName=mozilla/sccache
-SCCACHE: 0.7.6
+SCCACHE_VER: 0.7.6
 # renovate: datasource=github-releases depName=cli/cli
-GH_CLI: 2.32.0
+GH_CLI_VER: 2.32.0
 # renovate: datasource=github-releases depName=codecov/uploader
-CODECOV: 0.3.2
+CODECOV_VER: 0.3.2
 # renovate: datasource=docker depName=mikefarah/yq
-YQ: 4.40.7
+YQ_VER: 4.40.7
 # renovate: datasource=github-releases depName=openucx/ucx
-UCX: 1.14.1
+UCX_VER: 1.14.1
 # renovate: datasource=docker depName=amazon/aws-cli versioning=docker
-AWS_CLI: 2.15.9
+AWS_CLI_VER: 2.15.9
