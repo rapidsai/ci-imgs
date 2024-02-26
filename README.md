@@ -9,3 +9,11 @@ This repository includes the following CI images for RAPIDS:
 ## `latest` tag
 
 The `latest` image tags are controlled by the values in `latest.yaml`.
+
+### Building the dockerfiles locally
+To easily build the dockerfiles locally, you may use the following snippets:
+```
+docker build $(ci/compute-build-args.sh) -f ci-conda.Dockerfile context/
+docker build $(ci/compute-build-args.sh) -f ci-wheel.Dockerfile context/
+docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile context/
+```
