@@ -2,6 +2,10 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 
 ARG BASE_IMAGE=nvcr.io/nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
+ARG AWS_CLI_VER
+
+FROM amazon/aws-cli:${AWS_CLI_VER} as aws-cli
+
 FROM ${BASE_IMAGE}
 
 ARG CUDA_VER
@@ -208,8 +212,8 @@ pip cache purge
 EOF
 
 # Install the AWS CLI
-COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
-COPY --from=amazon/aws-cli /usr/local/bin/ /usr/local/bin/
+COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
+COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
 # Mark all directories as safe for git so that GHA clones into the root don't
 # run into issues

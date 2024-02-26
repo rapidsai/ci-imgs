@@ -8,3 +8,5 @@ CODECOV: 0.3.2
 YQ: 4.40.7
 # renovate: datasource=github-releases depName=openucx/ucx
 UCX: 1.14.1
+# renovate: datasource=docker depName=amazon/aws-cli versioning=docker
+AWS_CLI: 2.15.9

@@ -2,8 +2,11 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
 ARG YQ
+ARG AWS_CLI_VER
 
 FROM mikefarah/yq:${YQ} as yq
+
+FROM amazon/aws-cli:${AWS_CLI_VER} as aws-cli
 
 FROM rapidsai/miniforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 
@@ -161,7 +164,7 @@ RUN pip install dunamai "rapids-dependency-file-generator==1.*" \
     && pip cache purge
 
 COPY --from=yq /usr/bin/yq /usr/local/bin/yq
-COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
-COPY --from=amazon/aws-cli /usr/local/bin/ /usr/local/bin/
+COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
+COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
 CMD ["/bin/bash"]
