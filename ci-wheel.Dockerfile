@@ -112,8 +112,8 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Download and install GH CLI tool v2.32.0
-ARG GH_CLI_VER=2.32.0
+# Download and install GH CLI tool
+ARG GH_CLI_VER=notset
 RUN <<EOF
 set -e
 wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
@@ -123,7 +123,7 @@ rm -rf gh_*
 EOF
 
 # Install sccache
-ARG SCCACHE_VER=0.7.6
+ARG SCCACHE_VER=notset
 
 RUN <<EOF
 curl -o /tmp/sccache.tar.gz \
@@ -138,7 +138,7 @@ ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${P
 
 
 # Install ucx
-ARG UCX_VER=1.14.1
+ARG UCX_VER=notset
 RUN <<EOF
 mkdir -p /ucx-src
 cd /ucx-src

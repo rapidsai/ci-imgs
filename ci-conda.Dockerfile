@@ -3,6 +3,7 @@ ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
 ARG YQ_VER
 ARG AWS_CLI_VER
+ARG SCCACHE_VER
 
 FROM mikefarah/yq:${YQ_VER} as yq
 
@@ -113,7 +114,7 @@ rapids-mamba-retry install -y \
   gh \
   git \
   jq \
-  "sccache==0.7.6" \
+  "sccache==${SCCACHE_VER}" \
   "python=${PYTHON_VERSION}.*=*_cpython"
 conda clean -aipty
 EOF

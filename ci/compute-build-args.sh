@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-CUDA_VER="${CUDA_VER:-11.8.0}"
-LINUX_VER="${LINUX_VER:-ubuntu20.04}"
-PYTHON_VER="${PYTHON_VER:-3.9}"
-ARCH="${ARCH:-x86_64}"
+if [[ -z "${CUDA_VER}" || -z "${LINUX_VER}" || -z "${PYTHON_VER}" || -z "${ARCH}" ]]; then
+  echo "Error: One or more required variables are not provided."
+  exit 1
+fi
 
 MANYLINUX_VER="manylinux_2_17"
 if [[
