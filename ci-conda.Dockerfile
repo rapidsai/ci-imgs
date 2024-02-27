@@ -14,8 +14,6 @@ ARG TARGETPLATFORM
 ARG CUDA_VER
 ARG LINUX_VER
 ARG PYTHON_VER
-ARG CODECOV_VER
-ARG SCCACHE_VER
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -102,6 +100,7 @@ esac
 EOF
 
 # Install gha-tools
+ARG SCCACHE_VER
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
@@ -120,6 +119,7 @@ conda clean -aipty
 EOF
 
 # Install codecov binary
+ARG CODECOV_VER
 RUN <<EOF
 case "${TARGETPLATFORM}" in
   "linux/amd64")
