@@ -5,7 +5,7 @@
   ],
   "regexManagers": [
     {
-      "fileMatch": "renovate.yaml",
+      "fileMatch": "versions.yaml",
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[^ ]+) depName=(?<depName>[^\\n]+)(?: versioning=(?<versioning>[^\\n]+))?\\n(?<depNameCapture>[^:]+): (?<currentValue>[^\\n]+)"
       ],
