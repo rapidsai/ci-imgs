@@ -7,7 +7,7 @@
     {
       "fileMatch": "versions.yaml",
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>[^ ]+) depName=(?<depName>[^\\n]+)(?: versioning=(?<versioning>[^\\n]+))?\\n(?<depNameCapture>[^:]+): (?<currentValue>[^\\n]+)"
+        "# renovate: datasource=(?<datasource>[^ ]+) depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\n]+))?\\n(?<depNameCapture>[^:]+): (?<currentValue>[^\\n]+)"
       ],
       "depNameTemplate": "{{depName}}",
       "datasourceTemplate": "{{datasource}}",
