@@ -2,5 +2,16 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:base"
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": "renovate.yaml",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[^ ]+) depName=(?<depName>[^\\n]+)(?: versioning=(?<versioning>[^\\n]+))?\\n(?<depNameCapture>[^:]+): (?<currentValue>[^\\n]+)"
+      ],
+      "depNameTemplate": "{{depName}}",
+      "datasourceTemplate": "{{datasource}}",
+      "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+    }
   ]
 }
