@@ -1,7 +1,7 @@
 # renovate: datasource=github-releases depName=mozilla/sccache
 SCCACHE_VER: 0.7.6
 # renovate: datasource=github-releases depName=cli/cli
-GH_CLI_VER: 2.32.0
+GH_CLI_VER: 2.45.0
 # renovate: datasource=github-releases depName=codecov/uploader
 CODECOV_VER: 0.3.2
 # renovate: datasource=docker depName=mikefarah/yq versioning=docker
