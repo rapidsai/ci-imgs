@@ -1,6 +1,13 @@
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
+ARG YQ_VER
+ARG AWS_CLI_VER
+
+FROM mikefarah/yq:${YQ_VER} as yq
+
+FROM amazon/aws-cli:${AWS_CLI_VER} as aws-cli
+
 FROM rapidsai/miniforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 
 ARG TARGETPLATFORM
@@ -93,6 +100,7 @@ esac
 EOF
 
 # Install gha-tools
+ARG SCCACHE_VER
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
@@ -105,21 +113,21 @@ rapids-mamba-retry install -y \
   gh \
   git \
   jq \
-  "sccache==0.7.6" \
+  "sccache==${SCCACHE_VER}" \
   "python=${PYTHON_VERSION}.*=*_cpython"
 conda clean -aipty
 EOF
 
 # Install codecov binary
+ARG CODECOV_VER
 RUN <<EOF
 case "${TARGETPLATFORM}" in
   "linux/amd64")
-    CODECOV_VERSION=v0.3.2
     curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 \
       | gpg --no-default-keyring --keyring trustedkeys.gpg --import
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov.SHA256SUM
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/${CODECOV_VERSION}/linux/codecov.SHA256SUM.sig
+    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov
+    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov.SHA256SUM
+    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov.SHA256SUM.sig
     gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
     shasum -a 256 -c codecov.SHA256SUM
     chmod +x codecov
@@ -145,8 +153,8 @@ RUN /opt/conda/bin/git config --system --add safe.directory '*'
 RUN pip install dunamai "rapids-dependency-file-generator==1.*" \
     && pip cache purge
 
-COPY --from=mikefarah/yq:4.41.1 /usr/bin/yq /usr/local/bin/yq
-COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
-COPY --from=amazon/aws-cli /usr/local/bin/ /usr/local/bin/
+COPY --from=yq /usr/bin/yq /usr/local/bin/yq
+COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
+COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
 CMD ["/bin/bash"]

@@ -2,6 +2,10 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 
 ARG BASE_IMAGE=nvcr.io/nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
+ARG AWS_CLI_VER
+
+FROM amazon/aws-cli:${AWS_CLI_VER} as aws-cli
+
 FROM ${BASE_IMAGE}
 
 ARG CUDA_VER
@@ -108,24 +112,24 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Download and install GH CLI tool v2.32.0
-ARG GH_VERSION=2.32.0
+# Download and install GH CLI tool
+ARG GH_CLI_VER=notset
 RUN <<EOF
 set -e
-wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${CPU_ARCH}.tar.gz
+wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
 EOF
 
 # Install sccache
-ARG SCCACHE_VERSION=0.7.6
+ARG SCCACHE_VER=notset
 
 RUN <<EOF
 curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
+  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
 tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VERSION}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
+mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
 chmod +x /usr/bin/sccache
 EOF
 
@@ -134,11 +138,11 @@ ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${P
 
 
 # Install ucx
-ARG UCX_VERSION=1.14.1
+ARG UCX_VER=notset
 RUN <<EOF
 mkdir -p /ucx-src
 cd /ucx-src
-git clone https://github.com/openucx/ucx -b v${UCX_VERSION} ucx-git-repo
+git clone https://github.com/openucx/ucx -b v${UCX_VER} ucx-git-repo
 cd ucx-git-repo
 ./autogen.sh
 ./contrib/configure-release \
@@ -199,8 +203,8 @@ pip cache purge
 EOF
 
 # Install the AWS CLI
-COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
-COPY --from=amazon/aws-cli /usr/local/bin/ /usr/local/bin/
+COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
+COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
 # Mark all directories as safe for git so that GHA clones into the root don't
 # run into issues

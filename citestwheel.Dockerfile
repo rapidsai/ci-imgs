@@ -2,6 +2,10 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 
 ARG BASE_IMAGE=nvcr.io/nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
+ARG AWS_CLI_VER
+
+FROM amazon/aws-cli:${AWS_CLI_VER} as aws-cli
+
 FROM ${BASE_IMAGE}
 
 ARG CUDA_VER
@@ -52,8 +56,8 @@ ENV PATH="/pyenv/versions/${PYTHON_VER}/bin/:$PATH"
 
 # Install the AWS CLI
 # Needed to download wheels for running tests
-COPY --from=amazon/aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
-COPY --from=amazon/aws-cli /usr/local/bin/ /usr/local/bin/
+COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
+COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
 # Install latest gha-tools
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
