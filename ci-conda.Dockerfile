@@ -121,23 +121,23 @@ EOF
 # Install codecov binary
 ARG CODECOV_VER
 RUN <<EOF
+curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+
 case "${TARGETPLATFORM}" in
-  "linux/amd64")
-    curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 \
-      | gpg --no-default-keyring --keyring trustedkeys.gpg --import
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov.SHA256SUM
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov.SHA256SUM.sig
-    gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
-    shasum -a 256 -c codecov.SHA256SUM
-    chmod +x codecov
-    mv codecov /usr/local/bin
-    rm -f codecov*
-    ;;
-  *)
-    echo 'Codecov is only supported on "linux/amd64" machines'
-    ;;
+  "linux/amd64") codecov_url="https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov" ;;
+  "linux/arm64") codecov_url="https://uploader.codecov.io/v${CODECOV_VER}/aarch64/codecov" ;;
+  *) echo 'Unsupported platform' && exit 1 ;;
 esac
+
+curl -Os --max-time 10 --retry 5 ${codecov_url}
+curl -Os --max-time 10 --retry 5 ${codecov_url}.SHA256SUM
+curl -Os --max-time 10 --retry 5 ${codecov_url}.SHA256SUM.sig
+
+gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+shasum -a 256 -c codecov.SHA256SUM
+chmod +x codecov
+mv codecov /usr/local/bin
+rm -f codecov.SHA256SUM codecov.SHA256SUM.sig
 EOF
 
 # Create condarc file from env vars
