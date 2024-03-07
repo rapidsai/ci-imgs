@@ -109,22 +109,29 @@ rapids-mamba-retry install -y \
   anaconda-client \
   boa \
   gettext \
-  gh \
   git \
   jq \
   "python=${PYTHON_VERSION}.*=*_cpython"
 conda clean -aipty
 EOF
 
+# Install sccache and gh cli
 ARG SCCACHE_VER
 ARG REAL_ARCH
 ARG GH_CLI_VER=notset
+ARG CPU_ARCH
 RUN <<EOF
+set -e
 curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
 tar -C /tmp -xvf /tmp/sccache.tar.gz
 mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
 chmod +x /usr/bin/sccache
+
+wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+tar -xf gh_*.tar.gz
+mv gh_*/bin/gh /usr/local/bin
+rm -rf gh_*
 EOF
 
 # Install codecov binary
