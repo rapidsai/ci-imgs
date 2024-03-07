@@ -121,7 +121,6 @@ ARG REAL_ARCH
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH
 RUN <<EOF
-set -e
 curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
 tar -C /tmp -xvf /tmp/sccache.tar.gz
