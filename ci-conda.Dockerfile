@@ -100,7 +100,6 @@ esac
 EOF
 
 # Install gha-tools
-ARG SCCACHE_VER
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
@@ -113,9 +112,19 @@ rapids-mamba-retry install -y \
   gh \
   git \
   jq \
-  "sccache==${SCCACHE_VER}" \
   "python=${PYTHON_VERSION}.*=*_cpython"
 conda clean -aipty
+EOF
+
+ARG SCCACHE_VER
+ARG REAL_ARCH
+ARG GH_CLI_VER=notset
+RUN <<EOF
+curl -o /tmp/sccache.tar.gz \
+  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
+tar -C /tmp -xvf /tmp/sccache.tar.gz
+mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
+chmod +x /usr/bin/sccache
 EOF
 
 # Install codecov binary
