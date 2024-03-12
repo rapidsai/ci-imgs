@@ -9,4 +9,4 @@ YQ_VER: 4.42.1
 # renovate: datasource=github-releases depName=openucx/ucx
 UCX_VER: 1.14.1
 # renovate: datasource=docker depName=amazon/aws-cli versioning=docker
-AWS_CLI_VER: 2.15.25
+AWS_CLI_VER: 2.15.28
