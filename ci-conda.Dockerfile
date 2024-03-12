@@ -100,7 +100,6 @@ esac
 EOF
 
 # Install gha-tools
-ARG SCCACHE_VER
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
@@ -110,34 +109,50 @@ rapids-mamba-retry install -y \
   anaconda-client \
   boa \
   gettext \
-  gh \
   git \
   jq \
-  "sccache==${SCCACHE_VER}" \
   "python=${PYTHON_VERSION}.*=*_cpython"
 conda clean -aipty
+EOF
+
+# Install sccache and gh cli
+ARG SCCACHE_VER
+ARG REAL_ARCH
+ARG GH_CLI_VER=notset
+ARG CPU_ARCH
+RUN <<EOF
+curl -o /tmp/sccache.tar.gz \
+  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
+tar -C /tmp -xvf /tmp/sccache.tar.gz
+mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
+chmod +x /usr/bin/sccache
+
+wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+tar -xf gh_*.tar.gz
+mv gh_*/bin/gh /usr/local/bin
+rm -rf gh_*
 EOF
 
 # Install codecov binary
 ARG CODECOV_VER
 RUN <<EOF
+curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+
 case "${TARGETPLATFORM}" in
-  "linux/amd64")
-    curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 \
-      | gpg --no-default-keyring --keyring trustedkeys.gpg --import
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov.SHA256SUM
-    curl -Os --max-time 10 --retry 5 https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov.SHA256SUM.sig
-    gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
-    shasum -a 256 -c codecov.SHA256SUM
-    chmod +x codecov
-    mv codecov /usr/local/bin
-    rm -f codecov*
-    ;;
-  *)
-    echo 'Codecov is only supported on "linux/amd64" machines'
-    ;;
+  "linux/amd64") codecov_url="https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov" ;;
+  "linux/arm64") codecov_url="https://uploader.codecov.io/v${CODECOV_VER}/aarch64/codecov" ;;
+  *) echo 'Unsupported platform' && exit 1 ;;
 esac
+
+curl -Os --max-time 10 --retry 5 ${codecov_url}
+curl -Os --max-time 10 --retry 5 ${codecov_url}.SHA256SUM
+curl -Os --max-time 10 --retry 5 ${codecov_url}.SHA256SUM.sig
+
+gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+shasum -a 256 -c codecov.SHA256SUM
+chmod +x codecov
+mv codecov /usr/local/bin
+rm -f codecov.SHA256SUM codecov.SHA256SUM.sig
 EOF
 
 # Create condarc file from env vars
