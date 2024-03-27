@@ -113,7 +113,7 @@ rapids-mamba-retry install -y \
   git \
   jq \
   "python=${PYTHON_VERSION}.*=*_cpython" \
-  rapids-dependency-file-generator
+  "rapids-dependency-file-generator==1.*"
 conda clean -aipty
 EOF
 
