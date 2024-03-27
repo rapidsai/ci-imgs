@@ -106,6 +106,7 @@ RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.ta
 # Install CI tools using mamba
 RUN <<EOF
 rapids-mamba-retry install -y \
+  -c rapidsai
   anaconda-client \
   boa \
   dunamai \
