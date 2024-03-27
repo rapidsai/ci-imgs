@@ -111,7 +111,8 @@ rapids-mamba-retry install -y \
   gettext \
   git \
   jq \
-  "python=${PYTHON_VERSION}.*=*_cpython"
+  "python=${PYTHON_VERSION}.*=*_cpython" \
+  rapids-dependency-file-generator
 conda clean -aipty
 EOF
 
@@ -163,10 +164,6 @@ RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
     rm -f /tmp/condarc.tmpl
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
-
-# Install CI tools using pip
-RUN pip install dunamai "rapids-dependency-file-generator==1.*" \
-    && pip cache purge
 
 COPY --from=yq /usr/bin/yq /usr/local/bin/yq
 COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
