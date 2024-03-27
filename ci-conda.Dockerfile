@@ -103,10 +103,16 @@ EOF
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
+# Create condarc file from env vars
+ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
+ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
+COPY condarc.tmpl /tmp/condarc.tmpl
+RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
+    rm -f /tmp/condarc.tmpl
+
 # Install CI tools using mamba
 RUN <<EOF
 rapids-mamba-retry install -y \
-  -c rapidsai \
   anaconda-client \
   boa \
   dunamai \
@@ -157,13 +163,6 @@ chmod +x codecov
 mv codecov /usr/local/bin
 rm -f codecov.SHA256SUM codecov.SHA256SUM.sig
 EOF
-
-# Create condarc file from env vars
-ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
-ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
-COPY condarc.tmpl /tmp/condarc.tmpl
-RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
-    rm -f /tmp/condarc.tmpl
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
