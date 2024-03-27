@@ -108,6 +108,7 @@ RUN <<EOF
 rapids-mamba-retry install -y \
   anaconda-client \
   boa \
+  dunamai \
   gettext \
   git \
   jq \
@@ -164,10 +165,6 @@ RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
     rm -f /tmp/condarc.tmpl
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
-
-# Install CI tools using pip
-RUN pip install dunamai \
-    && pip cache purge
 
 COPY --from=yq /usr/bin/yq /usr/local/bin/yq
 COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
