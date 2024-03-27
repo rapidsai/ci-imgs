@@ -103,6 +103,13 @@ EOF
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
+# Install prereq for envsubst
+RUN <<EOF
+rapids-mamba-retry install -y \
+  gettext
+conda clean -aipty
+EOF
+
 # Create condarc file from env vars
 ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
 ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
@@ -116,7 +123,6 @@ rapids-mamba-retry install -y \
   anaconda-client \
   boa \
   dunamai \
-  gettext \
   git \
   jq \
   "python=${PYTHON_VERSION}.*=*_cpython" \
