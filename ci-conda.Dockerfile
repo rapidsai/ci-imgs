@@ -103,15 +103,30 @@ EOF
 RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
+# Install prereq for envsubst
+RUN <<EOF
+rapids-mamba-retry install -y \
+  gettext
+conda clean -aipty
+EOF
+
+# Create condarc file from env vars
+ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
+ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
+COPY condarc.tmpl /tmp/condarc.tmpl
+RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
+    rm -f /tmp/condarc.tmpl
+
 # Install CI tools using mamba
 RUN <<EOF
 rapids-mamba-retry install -y \
   anaconda-client \
   boa \
-  gettext \
+  dunamai \
   git \
   jq \
-  "python=${PYTHON_VERSION}.*=*_cpython"
+  "python=${PYTHON_VERSION}.*=*_cpython" \
+  "rapids-dependency-file-generator==1.*"
 conda clean -aipty
 EOF
 
@@ -155,18 +170,7 @@ mv codecov /usr/local/bin
 rm -f codecov.SHA256SUM codecov.SHA256SUM.sig
 EOF
 
-# Create condarc file from env vars
-ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
-ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
-COPY condarc.tmpl /tmp/condarc.tmpl
-RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
-    rm -f /tmp/condarc.tmpl
-
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
-
-# Install CI tools using pip
-RUN pip install dunamai "rapids-dependency-file-generator==1.*" \
-    && pip cache purge
 
 COPY --from=yq /usr/bin/yq /usr/local/bin/yq
 COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
