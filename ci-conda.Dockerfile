@@ -165,6 +165,10 @@ RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
+# Install CI tools using pip
+RUN pip install dunamai \
+    && pip cache purge
+
 COPY --from=yq /usr/bin/yq /usr/local/bin/yq
 COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
