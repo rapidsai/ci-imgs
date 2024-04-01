@@ -5,7 +5,7 @@ GH_CLI_VER: 2.45.0
 # renovate: datasource=github-releases depName=codecov/uploader
 CODECOV_VER: 0.7.2
 # renovate: datasource=docker depName=mikefarah/yq versioning=docker
-YQ_VER: 4.42.1
+YQ_VER: 4.43.1
 # renovate: datasource=github-releases depName=openucx/ucx
 UCX_VER: 1.15.0
 # renovate: datasource=docker depName=amazon/aws-cli versioning=docker
