@@ -105,7 +105,7 @@ RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.ta
 
 # Install prereq for envsubst
 RUN <<EOF
-rapids-mamba-retry install -y \
+rapids-conda-retry install -y \
   gettext
 conda clean -aipty
 EOF
@@ -117,9 +117,9 @@ COPY condarc.tmpl /tmp/condarc.tmpl
 RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
     rm -f /tmp/condarc.tmpl
 
-# Install CI tools using mamba
+# Install CI tools using conda
 RUN <<EOF
-rapids-mamba-retry install -y \
+rapids-conda-retry install -y \
   anaconda-client \
   boa \
   dunamai \
