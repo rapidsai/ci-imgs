@@ -9,10 +9,8 @@ PYTHON_VER:
   - "3.11"
   - "3.12"
 LINUX_VER:
-  - "ubuntu18.04"
   - "ubuntu20.04"
   - "ubuntu22.04"
-  - "centos7"
   - "rockylinux8"
 IMAGE_REPO:
   - "ci-conda"
@@ -22,14 +20,6 @@ exclude:
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.4.3"
-  - LINUX_VER: "ubuntu18.04"
-    CUDA_VER: "12.2.2"
-
-  # wheels:
-  - LINUX_VER: "ubuntu18.04"
-    IMAGE_REPO: "ci-wheel"
-  - LINUX_VER: "centos7"
-    IMAGE_REPO: "citestwheel"
 
   # exclude citestwheel and ci-wheel for cuda versions other than 11.8.0, 12.0.1, and 12.2.2
   - CUDA_VER: "11.4.3"
@@ -44,7 +34,3 @@ exclude:
   # exclude ci-wheel for ubuntu22.04
   - LINUX_VER: "ubuntu22.04"
     IMAGE_REPO: "ci-wheel"
-
-  # exclude ci-conda for ubuntu18.04
-  - LINUX_VER: "ubuntu18.04"
-    IMAGE_REPO: "ci-conda"
