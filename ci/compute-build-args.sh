@@ -1,15 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 
-MANYLINUX_VER="manylinux_2_17"
+if [[
+  "${IMAGE_REPO}" == "ci-wheel" &&
+  "${LINUX_VER}" != "ubuntu20.04" &&
+  "${LINUX_VER}" != "rockylinux8"
+]]; then
+  echo "Unsupported LINUX_VER: ${LINUX_VER} for ci-wheel image"
+  exit 1
+fi
+
+MANYLINUX_VER="manylinux_2_28"
 if [[
   "${LINUX_VER}" == "ubuntu20.04"
 ]]; then
   MANYLINUX_VER="manylinux_2_31"
-elif [[
-  "${LINUX_VER}" == "rockylinux8"
-]]; then
-  MANYLINUX_VER="manylinux_2_28"
 fi
 
 ARGS="
