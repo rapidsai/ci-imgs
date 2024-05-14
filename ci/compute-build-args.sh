@@ -3,7 +3,6 @@ set -euo pipefail
 
 MANYLINUX_VER="manylinux_2_17"
 if [[
-  "${LINUX_VER}" == "ubuntu18.04" ||
   "${LINUX_VER}" == "ubuntu20.04"
 ]]; then
   MANYLINUX_VER="manylinux_2_31"
