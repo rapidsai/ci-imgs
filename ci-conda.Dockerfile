@@ -177,4 +177,7 @@ COPY --from=yq /usr/bin/yq /usr/local/bin/yq
 COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
+# Add pip.conf
+COPY pip.conf /etc/xdg/pip/pip.conf
+
 CMD ["/bin/bash"]

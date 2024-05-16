@@ -210,4 +210,7 @@ COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 # run into issues
 RUN git config --system --add safe.directory '*'
 
+# Add pip.conf
+COPY pip.conf /etc/xdg/pip/pip.conf
+
 CMD ["/bin/bash"]
