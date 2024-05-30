@@ -152,11 +152,11 @@ EOF
 # Install codecov binary
 ARG CODECOV_VER
 RUN <<EOF
-curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+curl https://keybase.io/codecovsecurity/pgp_keys.asc --max-time 10 --retry 5 | gpg --no-default-keyring --keyring trustedkeys.gpg --import
 
 case "${TARGETPLATFORM}" in
-  "linux/amd64") codecov_url="https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov" ;;
-  "linux/arm64") codecov_url="https://uploader.codecov.io/v${CODECOV_VER}/aarch64/codecov" ;;
+  "linux/amd64") codecov_url="https://cli.codecov.io/v${CODECOV_VER}/linux/codecov" ;;
+  "linux/arm64") codecov_url="https://cli.codecov.io/v${CODECOV_VER}/linux-arm64/codecov" ;;
   *) echo 'Unsupported platform' && exit 1 ;;
 esac
 
