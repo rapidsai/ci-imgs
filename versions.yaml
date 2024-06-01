@@ -1,5 +1,5 @@
 # renovate: datasource=github-releases depName=mozilla/sccache
-SCCACHE_VER: 0.7.7
+SCCACHE_VER: 0.8.1
 # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_VER: 2.47.0
 # renovate: datasource=github-releases depName=codecov/uploader
