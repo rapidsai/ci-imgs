@@ -34,7 +34,9 @@ case "${LINUX_VER}" in
       curl \
       file \
       unzip \
-      wget
+      wget \
+      gcc \
+      g++
     rm -rf "/var/lib/apt/lists/*"
     ;;
   "centos"* | "rockylinux"*)
@@ -44,7 +46,9 @@ case "${LINUX_VER}" in
       unzip \
       wget \
       which \
-      yum-utils
+      yum-utils \
+      gcc \
+      gcc-c++
     yum clean all
     ;;
   *)
@@ -149,26 +153,16 @@ mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
 EOF
 
-# Install codecov binary
+# Install codecov from source distribution
 ARG CODECOV_VER
 RUN <<EOF
-curl https://uploader.codecov.io/verification.gpg --max-time 10 --retry 5 | gpg --no-default-keyring --keyring trustedkeys.gpg --import
-
-case "${TARGETPLATFORM}" in
-  "linux/amd64") codecov_url="https://uploader.codecov.io/v${CODECOV_VER}/linux/codecov" ;;
-  "linux/arm64") codecov_url="https://uploader.codecov.io/v${CODECOV_VER}/aarch64/codecov" ;;
-  *) echo 'Unsupported platform' && exit 1 ;;
-esac
-
-curl -Os --max-time 10 --retry 5 ${codecov_url}
-curl -Os --max-time 10 --retry 5 ${codecov_url}.SHA256SUM
-curl -Os --max-time 10 --retry 5 ${codecov_url}.SHA256SUM.sig
-
-gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
-shasum -a 256 -c codecov.SHA256SUM
-chmod +x codecov
-mv codecov /usr/local/bin
-rm -f codecov.SHA256SUM codecov.SHA256SUM.sig
+# temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
+wget "https://files.pythonhosted.org/packages/96/73/e18aaee2b3638528cfbece0615c34a59489f9063413744a31149558a0645/codecov-cli-${CODECOV_VER}.tar.gz"
+tar -xvf codecov-cli-${CODECOV_VER}.tar.gz
+pushd codecov-cli-${CODECOV_VER}
+python setup.py install
+popd
+rm codecov-cli-${CODECOV_VER}.tar.gz
 EOF
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
