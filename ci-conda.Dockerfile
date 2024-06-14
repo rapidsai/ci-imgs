@@ -157,7 +157,7 @@ EOF
 ARG CODECOV_VER
 RUN <<EOF
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
-pip install --no-binary codecov-cli codecov-cli==${CODECOV_VER}
+pip install codecov-cli==${CODECOV_VER}
 EOF
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
