@@ -157,12 +157,7 @@ EOF
 ARG CODECOV_VER
 RUN <<EOF
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
-wget "https://files.pythonhosted.org/packages/96/73/e18aaee2b3638528cfbece0615c34a59489f9063413744a31149558a0645/codecov-cli-${CODECOV_VER}.tar.gz"
-tar -xvf codecov-cli-${CODECOV_VER}.tar.gz
-pushd codecov-cli-${CODECOV_VER}
-python setup.py install
-popd
-rm codecov-cli-${CODECOV_VER}.tar.gz
+pip install --no-binary codecov-cli codecov-cli==${CODECOV_VER}
 EOF
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
