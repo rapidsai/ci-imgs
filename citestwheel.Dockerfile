@@ -15,9 +15,6 @@ ARG PYTHON_VER
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 
-# RAPIDS pip index
-ENV PIP_EXTRA_INDEX_URL="https://pypi.anaconda.org/rapidsai-wheels-nightly/simple"
-
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV PYENV_ROOT="/pyenv"
@@ -65,5 +62,8 @@ RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.ta
 
 # git safe directory
 RUN git config --system --add safe.directory '*'
+
+# Add pip.conf
+COPY pip.conf /etc/xdg/pip/pip.conf
 
 CMD ["/bin/bash"]
