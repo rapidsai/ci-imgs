@@ -3,7 +3,7 @@ SCCACHE_VER: 0.7.7
 # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_VER: 2.51.0
 # renovate: datasource=pypi depName=codecov-cli
-CODECOV_VER: 0.7.1
+CODECOV_VER: 0.7.2
 # renovate: datasource=docker depName=mikefarah/yq versioning=docker
 YQ_VER: 4.44.2
 # renovate: datasource=github-releases depName=openucx/ucx
