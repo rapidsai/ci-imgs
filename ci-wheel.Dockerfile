@@ -133,31 +133,6 @@ EOF
 # Set AUDITWHEEL_* env vars for use with auditwheel
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
 
-
-# Install ucx
-ARG UCX_VER=notset
-RUN <<EOF
-mkdir -p /ucx-src
-cd /ucx-src
-git clone https://github.com/openucx/ucx -b v${UCX_VER} ucx-git-repo
-cd ucx-git-repo
-./autogen.sh
-./contrib/configure-release \
-  --prefix=/usr               \
-  --enable-mt                 \
-  --enable-cma                \
-  --enable-numa               \
-  --with-gnu-ld               \
-  --with-sysroot              \
-  --without-verbs             \
-  --without-rdmacm            \
-  --with-cuda=/usr/local/cuda
-CPPFLAGS=-I/usr/local/cuda/include make -j
-make install
-cd /
-rm -rf /ucx-src/
-EOF
-
 # Install pyenv
 RUN curl https://pyenv.run | bash
 
