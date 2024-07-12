@@ -31,6 +31,7 @@ RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+    apt list --installed 
     apt update -y
     apt install -y \
       debianutils build-essential software-properties-common \
@@ -48,6 +49,7 @@ case "${LINUX_VER}" in
     rm -rf /var/lib/apt/lists/*
     ;;
   "centos"*)
+    yum list installed
     yum update --exclude=libnccl* -y
     yum install -y epel-release
     yum update --exclude=libnccl* -y
@@ -76,6 +78,7 @@ case "${LINUX_VER}" in
     popd
     ;;
   "rockylinux"*)
+    dnf list installed
     dnf update -y
     dnf install -y epel-release
     dnf update -y
