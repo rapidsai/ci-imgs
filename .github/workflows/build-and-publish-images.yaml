@@ -40,6 +40,8 @@ jobs:
       PYTHON_VER: ${{ matrix.PYTHON_VER }}
       IMAGE_REPO: ${{ matrix.IMAGE_REPO }}
       IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
+      DOCKERFILE: ${{ matrix.DOCKERFILE }}
+      DOCKER_TARGET: ${{ matrix.DOCKER_TARGET }}
   build-multiarch-manifest:
     name: manifest (${{ matrix.CUDA_VER }}, ${{ matrix.PYTHON_VER }}, ${{ matrix.LINUX_VER }}, ${{ matrix.IMAGE_REPO }})
     needs: [docker, compute-matrix]

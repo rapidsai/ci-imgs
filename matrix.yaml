@@ -13,10 +13,19 @@ LINUX_VER:
   - "ubuntu20.04"
   - "ubuntu22.04"
   - "rockylinux8"
-IMAGE_REPO:
-  - "ci-conda"
-  - "ci-wheel"
-  - "citestwheel"
+CI_IMAGE_CONFIG:
+  - IMAGE_REPO: "miniforge-cuda"
+    dockerfile: ci-conda.Dockerfile
+    docker_target: cuda-base
+  - IMAGE_REPO: "ci-conda"
+    dockerfile: ci-conda.Dockerfile
+    docker_target: ""
+  - IMAGE_REPO: "ci-wheel"
+    dockerfile: ci-wheel.Dockerfile
+    docker_target: ""
+  - IMAGE_REPO: "citestwheel"
+    dockerfile: citestwheel.Dockerfile
+    docker_target: ""
 exclude:
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu22.04"

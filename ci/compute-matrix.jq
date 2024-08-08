@@ -1,13 +1,5 @@
 def compute_arch($x):
-  ["amd64"] |
-  if
-    (["ubuntu18.04", "centos7"] | index($x.LINUX_VER) != null)
-   then
-    .
-  else
-    . + ["arm64"]
-  end |
-  $x + {ARCHES: .};
+  $x + {ARCHES: ["amd64", "arm64"]};
 
 def compute_repo($x):
   if
@@ -55,6 +47,10 @@ def compute_matrix($input):
     combinations |
     lists2dict($matrix_keys; .) |
     filter_excludes(.; $excludes) |
+    .IMAGE_REPO = .CI_IMAGE_CONFIG.IMAGE_REPO |
+    .DOCKERFILE = .CI_IMAGE_CONFIG.dockerfile |
+    .DOCKER_TARGET = .CI_IMAGE_CONFIG.docker_target |
+    del(.CI_IMAGE_CONFIG) |
     compute_arch(.) |
     compute_image_name(.)
   ] |
