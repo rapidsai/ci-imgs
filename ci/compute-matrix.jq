@@ -46,10 +46,10 @@ def compute_matrix($input):
   [
     combinations |
     lists2dict($matrix_keys; .) |
-    filter_excludes(.; $excludes) |
     .IMAGE_REPO = .CI_IMAGE_CONFIG.IMAGE_REPO |
     .DOCKERFILE = .CI_IMAGE_CONFIG.dockerfile |
     .DOCKER_TARGET = .CI_IMAGE_CONFIG.docker_target |
+    filter_excludes(.; $excludes) |
     del(.CI_IMAGE_CONFIG) |
     compute_arch(.) |
     compute_image_name(.)
