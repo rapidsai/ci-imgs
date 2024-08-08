@@ -16,7 +16,7 @@ LINUX_VER:
 CI_IMAGE_CONFIG:
   - IMAGE_REPO: "miniforge-cuda"
     dockerfile: ci-conda.Dockerfile
-    docker_target: cuda-base
+    docker_target: miniforge-cuda
   - IMAGE_REPO: "ci-conda"
     dockerfile: ci-conda.Dockerfile
     docker_target: ""

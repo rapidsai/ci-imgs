@@ -4,7 +4,7 @@ ARG PYTHON_VER=notset
 ARG YQ_VER=notset
 ARG AWS_CLI_VER=notset
 
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS cuda-base
+FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
 
 ARG LINUX_VER
 ARG PYTHON_VER
@@ -75,7 +75,7 @@ FROM mikefarah/yq:${YQ_VER} AS yq
 
 FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
 
-FROM cuda-base
+FROM miniforge-cuda
 
 ARG TARGETPLATFORM
 ARG CUDA_VER
