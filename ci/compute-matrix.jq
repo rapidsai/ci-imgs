@@ -22,7 +22,9 @@ def compute_tag_prefix($x):
 def compute_image_name($x):
   compute_repo($x) as $repo |
   compute_tag_prefix($x) as $tag_prefix |
-  "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + "-" + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
+  (if $x.IMAGE_REPO == "miniforge-cuda"
+   then "-base-" else "-" end) as $base_id |
+  "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + $base_id + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
   $x + {IMAGE_NAME: .};
 
 # Checks the current entry to see if it matches the given exclude
@@ -49,8 +51,8 @@ def compute_matrix($input):
     .IMAGE_REPO = .CI_IMAGE_CONFIG.IMAGE_REPO |
     .DOCKERFILE = .CI_IMAGE_CONFIG.dockerfile |
     .DOCKER_TARGET = .CI_IMAGE_CONFIG.docker_target |
-    filter_excludes(.; $excludes) |
     del(.CI_IMAGE_CONFIG) |
+    filter_excludes(.; $excludes) |
     compute_arch(.) |
     compute_image_name(.)
   ] |
