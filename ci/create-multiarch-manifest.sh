@@ -1,17 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-if [[ "${IMAGE_REPO}" == "miniforge-cuda" ]]; then
-  PREFIX="base"
-elif [[ "${IMAGE_REPO}" == "ci-conda" ]]; then
-  PREFIX="conda"
-else
-  PREFIX="wheels"
-fi
-
-LATEST_CUDA_VER=$(yq -r ".$PREFIX.CUDA_VER" latest.yaml)
-LATEST_PYTHON_VER=$(yq -r ".$PREFIX.PYTHON_VER" latest.yaml)
-LATEST_UBUNTU_VER=$(yq -r ".$PREFIX.LINUX_VER" latest.yaml)
+LATEST_CUDA_VER=$(yq -r ".${IMAGE_REPO}.CUDA_VER" latest.yaml)
+LATEST_PYTHON_VER=$(yq -r ".${IMAGE_REPO}.PYTHON_VER" latest.yaml)
+LATEST_UBUNTU_VER=$(yq -r ".${IMAGE_REPO}.LINUX_VER" latest.yaml)
 
 source_tags=()
 tag="${IMAGE_NAME}"

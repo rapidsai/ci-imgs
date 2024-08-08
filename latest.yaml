@@ -1,13 +1,17 @@
 # Define the values used for the "latest" tag
-base:
+miniforge-cuda:
   CUDA_VER: "12.2.2"
   PYTHON_VER: "3.11"
   LINUX_VER: "ubuntu22.04"
-conda:
+ci-conda:
   CUDA_VER: "12.2.2"
   PYTHON_VER: "3.11"
   LINUX_VER: "ubuntu22.04"
-wheels:
+ci-wheel:
+  CUDA_VER: "12.2.2"
+  PYTHON_VER: "3.11"
+  LINUX_VER: "ubuntu20.04"
+citestwheel:
   CUDA_VER: "12.2.2"
   PYTHON_VER: "3.11"
   LINUX_VER: "ubuntu20.04"
