@@ -1,8 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-PREFIX="conda"
-if [[ "${IMAGE_REPO}" != "ci-conda" ]]; then
+if [[ "${IMAGE_REPO}" == "miniforge-cuda" ]]; then
+  PREFIX="base"
+elif [[ "${IMAGE_REPO}" == "ci-conda" ]]; then
+  PREFIX="conda"
+else
   PREFIX="wheels"
 fi
 

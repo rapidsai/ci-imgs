@@ -1,4 +1,8 @@
 # Define the values used for the "latest" tag
+base:
+  CUDA_VER: "12.2.2"
+  PYTHON_VER: "3.11"
+  LINUX_VER: "ubuntu22.04"
 conda:
   CUDA_VER: "12.2.2"
   PYTHON_VER: "3.11"
