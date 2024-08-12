@@ -28,7 +28,6 @@ on:
         required: false
         type: string
 
-
 jobs:
   run:
     name: build (${{ matrix.CUDA_VER }}, ${{ matrix.PYTHON_VER }}, ${{ matrix.LINUX_VER }}, ${{ matrix.ARCH }})
