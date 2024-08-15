@@ -132,7 +132,8 @@ cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_ONLY=s3 \
   -DBUILD_SHARED_LIBS=OFF \
-  -DENABLE_TESTING=OFF
+  -DENABLE_TESTING=OFF \
+  -DENABLE_UNITY_BUILD=ON
 cmake --build build/
 cmake --install build/
 popd
