@@ -4,9 +4,9 @@ ARG PYTHON_VER=notset
 ARG YQ_VER
 ARG AWS_CLI_VER
 
-FROM mikefarah/yq:${YQ_VER} as yq
+FROM mikefarah/yq:${YQ_VER} AS yq
 
-FROM amazon/aws-cli:${AWS_CLI_VER} as aws-cli
+FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
 
 FROM rapidsai/miniforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 

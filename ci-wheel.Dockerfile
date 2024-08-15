@@ -4,7 +4,7 @@ ARG LINUX_VER=notset
 ARG BASE_IMAGE=nvcr.io/nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 ARG AWS_CLI_VER
 
-FROM amazon/aws-cli:${AWS_CLI_VER} as aws-cli
+FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
 
 FROM ${BASE_IMAGE}
 
