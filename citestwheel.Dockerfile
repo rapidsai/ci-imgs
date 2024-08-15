@@ -8,8 +8,8 @@ FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
 
 FROM ${BASE_IMAGE}
 
-ARG CUDA_VER
-ARG PYTHON_VER
+ARG CUDA_VER=notset
+ARG PYTHON_VER=notset
 
 # Set RAPIDS versions env variables
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
