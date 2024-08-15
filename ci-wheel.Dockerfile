@@ -37,7 +37,7 @@ case "${LINUX_VER}" in
       jq wget gcc zlib1g-dev libbz2-dev \
       libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
       libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
-      protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev
+      protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev libcurl4-openssl-dev
     add-apt-repository ppa:git-core/ppa
     add-apt-repository ppa:ubuntu-toolchain-r/test
     apt update -y
@@ -83,7 +83,7 @@ case "${LINUX_VER}" in
       which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
       sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
       numactl-devel openssh-clients libcudnn8-devel zip jq openslide-devel \
-      protobuf-compiler autoconf automake libtool dnf-plugins-core cmake
+      protobuf-compiler autoconf automake libtool dnf-plugins-core cmake libcurl-devel
     dnf config-manager --set-enabled powertools
     dnf install -y blas-devel lapack-devel
     dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++
@@ -117,6 +117,26 @@ wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
+EOF
+
+# Download, build, and install aws-sdk-cpp
+ARG AWS_SDK_CPP_VER=notset
+RUN <<EOF
+pushd tmp
+git clone --recurse-submodules -b ${AWS_SDK_CPP_VER} https://github.com/aws/aws-sdk-cpp.git
+cd aws-sdk-cpp
+cmake \
+  -S . \
+  -B build \
+  -DCMAKE_INSTALL_PREFIX=/usr/local \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_ONLY=s3 \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DENABLE_TESTING=OFF \
+  -DENABLE_UNITY_BUILD=ON
+cmake --build build/
+cmake --install build/
+popd
 EOF
 
 # Install sccache
