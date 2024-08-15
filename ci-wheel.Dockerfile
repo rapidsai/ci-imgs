@@ -37,7 +37,7 @@ case "${LINUX_VER}" in
       jq wget gcc zlib1g-dev libbz2-dev \
       libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
       libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
-      protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev
+      protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev libcurl-dev
     add-apt-repository ppa:git-core/ppa
     add-apt-repository ppa:ubuntu-toolchain-r/test
     apt update -y
@@ -83,7 +83,7 @@ case "${LINUX_VER}" in
       which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
       sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
       numactl-devel openssh-clients libcudnn8-devel zip jq openslide-devel \
-      protobuf-compiler autoconf automake libtool dnf-plugins-core cmake
+      protobuf-compiler autoconf automake libtool dnf-plugins-core cmake libcurl-devel
     dnf config-manager --set-enabled powertools
     dnf install -y blas-devel lapack-devel
     dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++
