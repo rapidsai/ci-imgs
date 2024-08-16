@@ -1,19 +1,19 @@
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
-ARG YQ_VER
-ARG AWS_CLI_VER
+ARG YQ_VER=notset
+ARG AWS_CLI_VER=notset
 
-FROM mikefarah/yq:${YQ_VER} as yq
+FROM mikefarah/yq:${YQ_VER} AS yq
 
-FROM amazon/aws-cli:${AWS_CLI_VER} as aws-cli
+FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
 
 FROM rapidsai/miniforge-cuda:cuda${CUDA_VER}-base-${LINUX_VER}-py${PYTHON_VER}
 
-ARG TARGETPLATFORM
-ARG CUDA_VER
-ARG LINUX_VER
-ARG PYTHON_VER
+ARG TARGETPLATFORM=notset
+ARG CUDA_VER=notset
+ARG LINUX_VER=notset
+ARG PYTHON_VER=notset
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -136,10 +136,10 @@ conda clean -aipty
 EOF
 
 # Install sccache and gh cli
-ARG SCCACHE_VER
-ARG REAL_ARCH
+ARG SCCACHE_VER=notset
+ARG REAL_ARCH=notset
 ARG GH_CLI_VER=notset
-ARG CPU_ARCH
+ARG CPU_ARCH=notset
 RUN <<EOF
 curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
@@ -154,7 +154,7 @@ rm -rf gh_*
 EOF
 
 # Install codecov from source distribution
-ARG CODECOV_VER
+ARG CODECOV_VER=notset
 RUN <<EOF
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
 pip install codecov-cli==${CODECOV_VER}
