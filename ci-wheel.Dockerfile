@@ -47,34 +47,6 @@ case "${LINUX_VER}" in
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
     rm -rf /var/lib/apt/lists/*
     ;;
-  "centos"*)
-    yum update --exclude=libnccl* -y
-    yum install -y epel-release
-    yum update --exclude=libnccl* -y
-    yum install -y \
-      which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
-      sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
-      numactl-devel openssh-clients libcudnn8-devel zip blas-devel lapack-devel \
-      protobuf-compiler autoconf automake libtool centos-release-scl scl-utils cmake \
-      yasm openslide-devel
-    yum remove -y git
-    yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
-    yum install -y git jq devtoolset-11
-    yum remove -y endpoint-repo
-    yum clean all
-    echo -e ' \
-      #!/bin/bash\n \
-      source scl_source enable devtoolset-11\n \
-    ' > /etc/profile.d/enable_devtools.sh
-    pushd tmp
-    wget https://www.openssl.org/source/openssl-1.1.1k.tar.gz
-    tar -xzvf openssl-1.1.1k.tar.gz
-    cd openssl-1.1.1k
-    ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
-    make
-    make install
-    popd
-    ;;
   "rockylinux"*)
     dnf update -y
     dnf install -y epel-release
@@ -165,11 +137,8 @@ case "${LINUX_VER}" in
   "ubuntu"*)
     pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
-  "centos"*)
-    # Need to specify the openssl location because of the install from source
-    CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
-    ;;
   "rockylinux"*)
+    # Need to specify the openssl location because of the install from source
     CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
   *)

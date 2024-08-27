@@ -106,7 +106,7 @@ case "${LINUX_VER}" in
       g++
     rm -rf "/var/lib/apt/lists/*"
     ;;
-  "centos"* | "rockylinux"*)
+  "rockylinux"*)
     yum -y update
     yum -y install --setopt=install_weak_deps=False \
       file \
@@ -149,7 +149,7 @@ case "${CUDA_VER}" in
         sed -i 's/, build-essential//g' /var/lib/dpkg/status
         rm -rf "/var/lib/apt/lists/*"
         ;;
-      "centos"* | "rockylinux"*)
+      "rockylinux"*)
         yum -y update
         yum -y install --setopt=install_weak_deps=False \
           cuda-cudart-devel-${PKG_CUDA_VER} \
