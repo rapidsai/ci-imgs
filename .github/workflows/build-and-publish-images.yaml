@@ -64,19 +64,3 @@ jobs:
           BUILD_TYPE: ${{ inputs.build_type }}
           IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
         run: ci/create-multiarch-manifest.sh
-  delete-temp-images:
-    needs: [compute-matrix, build-multiarch-manifest]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
-      fail-fast: false
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Remove temporary images
-        run: ci/remove-temp-images.sh
-        env:
-          GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
-          GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
-          IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
-          ARCHES: ${{ toJSON(matrix.ARCHES) }}
