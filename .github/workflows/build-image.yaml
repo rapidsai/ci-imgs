@@ -21,6 +21,12 @@ on:
       IMAGE_NAME:
         required: true
         type: string
+      DOCKERFILE:
+        required: true
+        type: string
+      DOCKER_TARGET:
+        required: false
+        type: string
 
 jobs:
   run:
@@ -62,9 +68,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: context
-          file: ${{ inputs.IMAGE_REPO }}.Dockerfile
+          file: ${{ inputs.DOCKERFILE }}
           push: true
           pull: true
           build-args: |
             ${{ steps.generate-build-args.outputs.ARGS }}
+          target: ${{ inputs.DOCKER_TARGET }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
