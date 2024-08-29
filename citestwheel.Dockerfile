@@ -9,6 +9,7 @@ FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
 FROM ${BASE_IMAGE}
 
 ARG CUDA_VER=notset
+ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
 
 # Set RAPIDS versions env variables
@@ -24,20 +25,46 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 RUN <<EOF
 set -e
-echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-apt-get update
-apt-get install -y software-properties-common
-# update git > 2.17
-add-apt-repository ppa:git-core/ppa -y
-apt-get update
-apt-get upgrade -y
-apt-get install -y --no-install-recommends \
-  wget curl git jq ssh \
-  make build-essential libssl-dev zlib1g-dev \
-  libbz2-dev libreadline-dev libsqlite3-dev wget \
-  curl llvm libncursesw5-dev xz-utils tk-dev unzip \
-  libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
-rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+    apt-get update
+    apt-get install -y software-properties-common
+    # update git > 2.17
+    add-apt-repository ppa:git-core/ppa -y
+    apt-get update
+    apt-get upgrade -y
+    apt-get install -y --no-install-recommends \
+      wget curl git jq ssh \
+      make build-essential libssl-dev zlib1g-dev \
+      libbz2-dev libreadline-dev libsqlite3-dev wget \
+      curl llvm libncursesw5-dev xz-utils tk-dev unzip \
+      libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+    rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+    ;;
+  "rockylinux"*)
+    dnf update -y
+    dnf install -y epel-release
+    dnf update -y
+    dnf install -y \
+      which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
+      sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel \
+      jq dnf-plugins-core
+    dnf clean all
+    pushd tmp
+    wget https://www.openssl.org/source/openssl-1.1.1k.tar.gz
+        tar -xzvf openssl-1.1.1k.tar.gz
+    cd openssl-1.1.1k
+    ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
+    make
+    make install
+    popd
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
 EOF
 
 # Install pyenv
