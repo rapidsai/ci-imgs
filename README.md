@@ -19,8 +19,11 @@ export LINUX_VER=ubuntu22.04
 export CUDA_VER=12.2.2
 export PYTHON_VER=3.11
 export ARCH=amd64
+export IMAGE_REPO=ci-conda
 docker build $(ci/compute-build-args.sh) -f ci-conda.Dockerfile context/
+export IMAGE_REPO=ci-wheel
 docker build $(ci/compute-build-args.sh) -f ci-wheel.Dockerfile context/
+export IMAGE_REPO=citestwheel
 docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile context/
 ```
 
