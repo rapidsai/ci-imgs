@@ -10,5 +10,3 @@ CODECOV_VER: 0.7.3
 YQ_VER: 4.44.2
 # renovate: datasource=docker depName=amazon/aws-cli versioning=docker
 AWS_CLI_VER: 2.17.20
-# renovate: datasource=github-releases depName=aws/aws-sdk-cpp
-AWS_SDK_CPP_VER: 1.11.384

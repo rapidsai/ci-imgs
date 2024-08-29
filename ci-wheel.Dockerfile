@@ -91,26 +91,6 @@ mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
 EOF
 
-# Download, build, and install aws-sdk-cpp
-ARG AWS_SDK_CPP_VER=notset
-RUN <<EOF
-pushd tmp
-git clone --recurse-submodules -b ${AWS_SDK_CPP_VER} https://github.com/aws/aws-sdk-cpp.git
-cd aws-sdk-cpp
-cmake \
-  -S . \
-  -B build \
-  -DCMAKE_INSTALL_PREFIX=/usr/local \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_ONLY=s3 \
-  -DBUILD_SHARED_LIBS=OFF \
-  -DENABLE_TESTING=OFF \
-  -DENABLE_UNITY_BUILD=ON
-cmake --build build/
-cmake --install build/
-popd
-EOF
-
 # Install sccache
 ARG SCCACHE_VER=notset
 
