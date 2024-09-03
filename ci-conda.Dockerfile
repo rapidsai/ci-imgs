@@ -38,6 +38,19 @@ if [[ "$LINUX_VER" == "rockylinux"* ]]; then
 fi
 find /opt/conda -follow -type f -name '*.a' -delete
 find /opt/conda -follow -type f -name '*.pyc' -delete
+# Recreate missing libstdc++ symlinks.
+# This should be removed when it is fixed upstream.
+# ref: https://github.com/rapidsai/ci-imgs/issues/185
+if [[ ! -e "/opt/conda/lib/libstdc++.so.6" ]]; then
+    ln -sf \
+        "$(ls /opt/conda/lib/libstdc++.so.6.* | head -1)" \
+        /opt/conda/lib/libstdc++.so.6
+fi
+if [[ ! -e "/opt/conda/lib/libstdc++.so" ]]; then
+    ln -sf \
+        "$(ls /opt/conda/lib/libstdc++.so.6.* | head -1)" \
+        /opt/conda/lib/libstdc++.so
+fi
 conda clean -afy
 EOF
 
