@@ -27,7 +27,7 @@ jobs:
         env:
           BUILD_TYPE: ${{ inputs.BUILD_TYPE }}
   docker:
-    name: docker (${{ matrix.CUDA_VER }}, ${{ matrix.PYTHON_VER }}, ${{ matrix.LINUX_VER }}, ${{ matrix.IMAGE_REPO }})
+    name: docker (${{ matrix.IMAGE_REPO }})
     needs: compute-matrix
     strategy:
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
