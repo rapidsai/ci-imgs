@@ -29,6 +29,9 @@ RUN chmod g+ws /opt/conda
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
+# update everything before other environment changes, to ensure mixing
+# and older conda with newer packages still works well
+conda update --all -y -n base
 # install expected Python version
 conda install -y -n base "python~=${PYTHON_VERSION}.0=*_cpython"
 conda update --all -y -n base
@@ -38,19 +41,6 @@ if [[ "$LINUX_VER" == "rockylinux"* ]]; then
 fi
 find /opt/conda -follow -type f -name '*.a' -delete
 find /opt/conda -follow -type f -name '*.pyc' -delete
-# Recreate missing libstdc++ symlinks.
-# This should be removed when it is fixed upstream.
-# ref: https://github.com/rapidsai/ci-imgs/issues/185
-if [[ ! -e "/opt/conda/lib/libstdc++.so.6" ]]; then
-    ln -sf \
-        "$(ls /opt/conda/lib/libstdc++.so.6.* | head -1)" \
-        /opt/conda/lib/libstdc++.so.6
-fi
-if [[ ! -e "/opt/conda/lib/libstdc++.so" ]]; then
-    ln -sf \
-        "$(ls /opt/conda/lib/libstdc++.so.6.* | head -1)" \
-        /opt/conda/lib/libstdc++.so
-fi
 conda clean -afy
 EOF
 
