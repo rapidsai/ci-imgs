@@ -29,6 +29,9 @@ RUN chmod g+ws /opt/conda
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
+# update everything before other environment changes, to ensure mixing
+# an older conda with newer packages still works well
+conda update --all -y -n base
 # install expected Python version
 conda install -y -n base "python~=${PYTHON_VERSION}.0=*_cpython"
 conda update --all -y -n base
