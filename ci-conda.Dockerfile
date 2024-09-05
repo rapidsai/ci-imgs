@@ -39,16 +39,6 @@ fi
 find /opt/conda -follow -type f -name '*.a' -delete
 find /opt/conda -follow -type f -name '*.pyc' -delete
 # recreate missing libstdc++ symlinks
-if [[ ! -e "/opt/conda/lib/libstdc++.so.6" ]]; then
-    ln -sf \
-        "$(ls /opt/conda/lib/libstdc++.so.6.* | head -1)" \
-        /opt/conda/lib/libstdc++.so.6
-fi
-if [[ ! -e "/opt/conda/lib/libstdc++.so" ]]; then
-    ln -sf \
-        "$(ls /opt/conda/lib/libstdc++.so.6.* | head -1)" \
-        /opt/conda/lib/libstdc++.so
-fi
 conda clean -afy
 EOF
 

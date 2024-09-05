@@ -26,10 +26,6 @@ CI_IMAGE_CONFIG:
     dockerfile: citestwheel.Dockerfile
     docker_target: ""
 exclude:
-  # TODO: put all these images back
-  - IMAGE_REPO: "citestwheel"
-  - IMAGE_REPO: "ci-wheel"
-  - IMAGE_REPO: "miniforge-cuda"
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.4.3"
