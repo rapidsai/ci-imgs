@@ -41,6 +41,7 @@ if [[ "$LINUX_VER" == "rockylinux"* ]]; then
 fi
 find /opt/conda -follow -type f -name '*.a' -delete
 find /opt/conda -follow -type f -name '*.pyc' -delete
+# recreate missing libstdc++ symlinks
 conda clean -afy
 EOF
 
