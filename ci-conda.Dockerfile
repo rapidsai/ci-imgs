@@ -201,6 +201,7 @@ rapids-mamba-retry install -y \
   dunamai \
   git \
   jq \
+  packaging \
   "python=${PYTHON_VERSION}.*=*_cpython" \
   "rapids-dependency-file-generator==1.*"
 conda clean -aipty
@@ -230,9 +231,6 @@ RUN <<EOF
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
 pip install codecov-cli==${CODECOV_VER}
 EOF
-
-# Install packaging lib
-RUN pip install packaging
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
