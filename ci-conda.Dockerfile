@@ -231,6 +231,9 @@ RUN <<EOF
 pip install codecov-cli==${CODECOV_VER}
 EOF
 
+# Install packaging lib
+RUN pip install packaging
+
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
 COPY --from=yq /usr/bin/yq /usr/local/bin/yq
