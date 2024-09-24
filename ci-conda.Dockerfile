@@ -201,6 +201,7 @@ rapids-mamba-retry install -y \
   dunamai \
   git \
   jq \
+  packaging \
   "python=${PYTHON_VERSION}.*=*_cpython" \
   "rapids-dependency-file-generator==1.*"
 conda clean -aipty
