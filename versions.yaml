@@ -3,7 +3,7 @@
 # prefer sticking with a stable version until a specific reason to update arises.
 SCCACHE_VER: 0.7.7
 # renovate: datasource=github-releases depName=cli/cli
-GH_CLI_VER: 2.55.0
+GH_CLI_VER: 2.57.0
 # renovate: datasource=pypi depName=codecov-cli
 CODECOV_VER: 0.7.4
 # renovate: datasource=docker depName=mikefarah/yq versioning=docker
