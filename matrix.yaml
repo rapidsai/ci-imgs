@@ -5,7 +5,6 @@ CUDA_VER:
   - "12.2.2"
   - "12.5.1"
 PYTHON_VER:
-  - "3.9"
   - "3.10"
   - "3.11"
   - "3.12"
@@ -31,12 +30,20 @@ exclude:
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.4.3"
 
-  # exclude citestwheel and ci-wheel for cuda versions other than 11.8.0, 12.0.1, and 12.2.2
+  # Only build ci-wheel for the latest CUDA of each major version
   - CUDA_VER: "11.4.3"
-    IMAGE_REPO: "citestwheel"
-  - CUDA_VER: "11.4.3"
+    IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "12.0.1"
+    IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "12.2.2"
     IMAGE_REPO: "ci-wheel"
 
-  # exclude ci-wheel for ubuntu22.04
+  # Only build ci-wheel for the oldest glibc (rockylinux8)
+  - LINUX_VER: "ubuntu20.04"
+    IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu22.04"
     IMAGE_REPO: "ci-wheel"
+
+  # Exclude citestwheel for CUDA versions older than 11.8.0
+  - CUDA_VER: "11.4.3"
+    IMAGE_REPO: "citestwheel"
