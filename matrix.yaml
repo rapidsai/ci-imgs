@@ -11,6 +11,7 @@ PYTHON_VER:
 LINUX_VER:
   - "ubuntu20.04"
   - "ubuntu22.04"
+  - "ubuntu24.04"
   - "rockylinux8"
 CI_IMAGE_CONFIG:
   - IMAGE_REPO: "miniforge-cuda"
@@ -29,6 +30,14 @@ exclude:
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.4.3"
+  - LINUX_VER: "ubuntu24.04"
+    CUDA_VER: "11.4.3"
+  - LINUX_VER: "ubuntu24.04"
+    CUDA_VER: "11.8.0"
+  - LINUX_VER: "ubuntu24.04"
+    CUDA_VER: "12.0.1"
+  - LINUX_VER: "ubuntu24.04"
+    CUDA_VER: "12.2.2"
 
   # Only build ci-wheel for the latest CUDA of each major version
   - CUDA_VER: "11.4.3"
@@ -42,6 +51,8 @@ exclude:
   - LINUX_VER: "ubuntu20.04"
     IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu22.04"
+    IMAGE_REPO: "ci-wheel"
+  - LINUX_VER: "ubuntu24.04"
     IMAGE_REPO: "ci-wheel"
 
   # Exclude citestwheel for CUDA versions older than 11.8.0
