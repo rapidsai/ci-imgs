@@ -231,8 +231,6 @@ dpkg -i otel-cli-${CPU_ARCH}.deb
 git clone -b add-conda-build-instrumentation https://github.com/msarahan/opentelemetry-python-contrib
 pip install -e ./opentelemetry-python-contrib/instrumentation/opentelemetry-instrumentation-conda-build
 opentelemetry-bootstrap -a install
-            git clone https://github.com/msarahan/gha-tools.git -b main /tmp/gha-tools
-            echo "/tmp/gha-tools/tools" >> "${GITHUB_PATH}"
 EOF
 
 
