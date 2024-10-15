@@ -223,7 +223,17 @@ wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
+
+# Install OpenTelemetry instrumentation
+pip install opentelemetry-distro[otlp] opentelemetry-exporter-prometheus
+curl -L -o "otel-cli-${CPU_ARCH}.tar.gz" https://github.com/equinix-labs/otel-cli/releases/download/v0.4.5/otel-cli_0.4.5_linux_${CPU_ARCH}.tar.gz
+tar -zxf  "otel-cli-${CPU_ARCH}.tar.gz"
+mv otel-cli /usr/local/bin/
+git clone -b add-conda-build-instrumentation https://github.com/msarahan/opentelemetry-python-contrib
+pip install -e ./opentelemetry-python-contrib/instrumentation/opentelemetry-instrumentation-conda-build
+opentelemetry-bootstrap -a install
 EOF
+
 
 # Install codecov from source distribution
 ARG CODECOV_VER=notset
