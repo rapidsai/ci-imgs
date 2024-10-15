@@ -198,6 +198,7 @@ RUN <<EOF
 rapids-mamba-retry install -y \
   anaconda-client \
   boa \
+  conda-package-handling \
   dunamai \
   git \
   jq \
