@@ -21,6 +21,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Set RAPIDS versions env variables
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
+ENV RAPIDS_DEPENDENCIES="latest"
 
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"

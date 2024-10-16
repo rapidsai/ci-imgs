@@ -91,6 +91,7 @@ ARG DEBIAN_FRONTEND
 # Set RAPIDS versions env variables
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
+ENV RAPIDS_DEPENDENCIES="latest"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
