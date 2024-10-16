@@ -56,13 +56,21 @@ echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> ~/.bashrc
 EOF
 
 # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
+# On Ubuntu 24.04 and newer, we also need tzdata-legacy
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
+    os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
+    if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; }; then
+        tzdata_pkgs="tzdata tzdata-legacy"
+    else
+        tzdata_pkgs="tzdata"
+    fi
+
     apt-get update
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
-      tzdata
+      ${tzdata_pkgs}
     rm -rf "/var/lib/apt/lists/*"
     ;;
   "rockylinux"*)
