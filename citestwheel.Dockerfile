@@ -39,7 +39,7 @@ case "${LINUX_VER}" in
     # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
     # On Ubuntu 24.04 and newer, we also need tzdata-legacy
     os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
-    if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; }; then
+    if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
         tzdata_pkgs="tzdata tzdata-legacy"
     else
         tzdata_pkgs="tzdata"
