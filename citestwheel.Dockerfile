@@ -35,12 +35,23 @@ case "${LINUX_VER}" in
     add-apt-repository ppa:git-core/ppa -y
     apt-get update
     apt-get upgrade -y
+
+    # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
+    # On Ubuntu 24.04 and newer, we also need tzdata-legacy
+    os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
+    if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
+        tzdata_pkgs=(tzdata tzdata-legacy)
+    else
+        tzdata_pkgs=(tzdata)
+    fi
+
     apt-get install -y --no-install-recommends \
       wget curl git jq ssh \
       make build-essential libssl-dev zlib1g-dev \
       libbz2-dev libreadline-dev libsqlite3-dev wget \
       curl llvm libncursesw5-dev xz-utils tk-dev unzip \
-      libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+      libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
+      "${tzdata_pkgs[@]}"
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
