@@ -40,9 +40,9 @@ case "${LINUX_VER}" in
     # On Ubuntu 24.04 and newer, we also need tzdata-legacy
     os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
     if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
-        tzdata_pkgs="tzdata tzdata-legacy"
+        tzdata_pkgs=(tzdata tzdata-legacy)
     else
-        tzdata_pkgs="tzdata"
+        tzdata_pkgs=(tzdata)
     fi
 
     apt-get install -y --no-install-recommends \
@@ -51,7 +51,7 @@ case "${LINUX_VER}" in
       libbz2-dev libreadline-dev libsqlite3-dev wget \
       curl llvm libncursesw5-dev xz-utils tk-dev unzip \
       libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
-      ${tzdata_pkgs}
+      "${tzdata_pkgs[@]}"
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
