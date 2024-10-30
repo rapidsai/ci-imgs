@@ -2,11 +2,11 @@
 miniforge-cuda:
   CUDA_VER: "12.5.1"
   PYTHON_VER: "3.12"
-  LINUX_VER: "ubuntu22.04"
+  LINUX_VER: "ubuntu24.04"
 ci-conda:
   CUDA_VER: "12.5.1"
   PYTHON_VER: "3.12"
-  LINUX_VER: "ubuntu22.04"
+  LINUX_VER: "ubuntu24.04"
 ci-wheel:
   CUDA_VER: "12.5.1"
   PYTHON_VER: "3.12"
@@ -15,4 +15,4 @@ ci-wheel:
 citestwheel:
   CUDA_VER: "12.5.1"
   PYTHON_VER: "3.12"
-  LINUX_VER: "ubuntu22.04"
+  LINUX_VER: "ubuntu24.04"

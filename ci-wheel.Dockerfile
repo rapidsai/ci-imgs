@@ -21,6 +21,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Set RAPIDS versions env variables
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
+ENV RAPIDS_DEPENDENCIES="latest"
 
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
@@ -131,7 +132,13 @@ EOF
 RUN <<EOF
 pyenv global ${PYTHON_VER}
 python -m pip install --upgrade pip
-python -m pip install auditwheel patchelf twine "rapids-dependency-file-generator==1.*" dunamai
+python -m pip install \
+  auditwheel \
+  conda-package-handling \
+  dunamai \
+  patchelf \
+  "rapids-dependency-file-generator==1.*" \
+  twine
 pyenv rehash
 EOF
 

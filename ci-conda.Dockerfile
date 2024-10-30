@@ -21,7 +21,7 @@ usermod -g conda root
 EOF
 
 # Ownership & permissions based on https://docs.anaconda.com/anaconda/install/multi-user/#multi-user-anaconda-installation-on-linux
-COPY --from=condaforge/miniforge3:24.3.0-0 --chown=root:conda --chmod=770 /opt/conda /opt/conda
+COPY --from=condaforge/miniforge3:24.7.1-0 --chown=root:conda --chmod=770 /opt/conda /opt/conda
 
 # Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
 RUN chmod g+ws /opt/conda
@@ -56,13 +56,21 @@ echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> ~/.bashrc
 EOF
 
 # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
+# On Ubuntu 24.04 and newer, we also need tzdata-legacy
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
+    os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
+    if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
+        tzdata_pkgs=(tzdata tzdata-legacy)
+    else
+        tzdata_pkgs=(tzdata)
+    fi
+
     apt-get update
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
-      tzdata
+      "${tzdata_pkgs[@]}"
     rm -rf "/var/lib/apt/lists/*"
     ;;
   "rockylinux"*)
@@ -91,6 +99,7 @@ ARG DEBIAN_FRONTEND
 # Set RAPIDS versions env variables
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
+ENV RAPIDS_DEPENDENCIES="latest"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
@@ -198,6 +207,7 @@ RUN <<EOF
 rapids-mamba-retry install -y \
   anaconda-client \
   boa \
+  conda-package-handling \
   dunamai \
   git \
   jq \
