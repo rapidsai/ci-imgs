@@ -165,12 +165,11 @@ COPY pip.conf /etc/xdg/pip/pip.conf
 RUN <<EOF
 # Install OpenTelemetry instrumentation
 pip install opentelemetry-distro[otlp] opentelemetry-exporter-prometheus
+opentelemetry-bootstrap -a install
 curl -L -o "otel-cli-${CPU_ARCH}.tar.gz" https://github.com/equinix-labs/otel-cli/releases/download/v0.4.5/otel-cli_0.4.5_linux_${CPU_ARCH}.tar.gz
 tar -zxf  "otel-cli-${CPU_ARCH}.tar.gz"
 mv otel-cli /usr/local/bin/
-git clone -b add-conda-build-instrumentation https://github.com/msarahan/opentelemetry-python-contrib
-pip install -e ./opentelemetry-python-contrib/instrumentation/opentelemetry-instrumentation-conda-build
-opentelemetry-bootstrap -a install
+rm -rf  "otel-cli-${CPU_ARCH}.tar.gz"
 EOF
 
 CMD ["/bin/bash"]
