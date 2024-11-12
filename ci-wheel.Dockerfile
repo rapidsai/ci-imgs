@@ -138,7 +138,7 @@ python -m pip install \
   dunamai \
   patchelf \
   'pydistcheck==0.8.*' \
-  "rapids-dependency-file-generator==1.*" \
+  'rapids-dependency-file-generator==1.*' \
   twine
 pyenv rehash
 EOF
