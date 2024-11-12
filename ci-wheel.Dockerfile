@@ -163,4 +163,14 @@ RUN git config --system --add safe.directory '*'
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
 
+RUN <<EOF
+# Install OpenTelemetry instrumentation
+pip install opentelemetry-distro[otlp] opentelemetry-exporter-prometheus
+opentelemetry-bootstrap -a install
+curl -L -o "otel-cli-${CPU_ARCH}.tar.gz" https://github.com/equinix-labs/otel-cli/releases/download/v0.4.5/otel-cli_0.4.5_linux_${CPU_ARCH}.tar.gz
+tar -zxf  "otel-cli-${CPU_ARCH}.tar.gz"
+mv otel-cli /usr/local/bin/
+rm -rf  "otel-cli-${CPU_ARCH}.tar.gz"
+EOF
+
 CMD ["/bin/bash"]

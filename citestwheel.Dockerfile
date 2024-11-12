@@ -11,6 +11,7 @@ FROM ${BASE_IMAGE}
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
+ARG CPU_ARCH=notset
 
 # Set RAPIDS versions env variables
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
@@ -101,6 +102,16 @@ pyenv global ${PYTHON_VER}
 python -m pip install --upgrade pip
 python -m pip install "rapids-dependency-file-generator==1.*"
 pyenv rehash
+EOF
+
+RUN <<EOF
+# Install OpenTelemetry instrumentation
+pip install opentelemetry-distro[otlp] opentelemetry-exporter-prometheus
+opentelemetry-bootstrap -a install
+curl -L -o "otel-cli-${CPU_ARCH}.tar.gz" https://github.com/equinix-labs/otel-cli/releases/download/v0.4.5/otel-cli_0.4.5_linux_${CPU_ARCH}.tar.gz
+tar -zxf  "otel-cli-${CPU_ARCH}.tar.gz"
+mv otel-cli /usr/local/bin/
+rm -rf  "otel-cli-${CPU_ARCH}.tar.gz"
 EOF
 
 # Install latest gha-tools
