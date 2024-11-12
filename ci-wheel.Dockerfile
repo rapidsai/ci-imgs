@@ -137,6 +137,7 @@ python -m pip install \
   conda-package-handling \
   dunamai \
   patchelf \
+  'pydistcheck==0.8.*' \
   "rapids-dependency-file-generator==1.*" \
   twine
 pyenv rehash
