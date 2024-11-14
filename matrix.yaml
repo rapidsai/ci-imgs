@@ -42,8 +42,6 @@ exclude:
   # Only build ci-wheel for the latest CUDA of each major version
   - CUDA_VER: "11.4.3"
     IMAGE_REPO: "ci-wheel"
-  - CUDA_VER: "12.0.1"
-    IMAGE_REPO: "ci-wheel"
   - CUDA_VER: "12.2.2"
     IMAGE_REPO: "ci-wheel"
 
