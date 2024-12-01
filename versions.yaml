@@ -7,6 +7,6 @@ GH_CLI_VER: 2.60.1
 # renovate: datasource=pypi depName=codecov-cli
 CODECOV_VER: 0.8.0
 # renovate: datasource=docker depName=mikefarah/yq versioning=docker
-YQ_VER: 4.44.3
+YQ_VER: 4.44.5
 # renovate: datasource=docker depName=amazon/aws-cli versioning=docker
 AWS_CLI_VER: 2.19.0
