@@ -33,7 +33,7 @@ umask 002
 # an older conda with newer packages still works well
 conda update --all -y -n base
 # install expected Python version
-conda install -y -n base "python~=${PYTHON_VERSION}.0=*_cpython"
+conda install -y -n base "python=${PYTHON_VERSION}=*_cpython"
 conda update --all -y -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   yum install -y findutils
