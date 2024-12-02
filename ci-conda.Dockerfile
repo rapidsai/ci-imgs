@@ -8,6 +8,7 @@ FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
 
 ARG LINUX_VER
 ARG PYTHON_VER
+ARG PYTHON_VER_UPPER_BOUND
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PATH=/opt/conda/bin:$PATH
 ENV PYTHON_VERSION=${PYTHON_VER}
@@ -33,7 +34,7 @@ umask 002
 # an older conda with newer packages still works well
 conda update --all -y -n base
 # install expected Python version
-conda install -y -n base "python~=${PYTHON_VERSION}.0=*_cpython"
+conda install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_VER_UPPER_BOUND}=*_cpython"
 conda update --all -y -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   yum install -y findutils
@@ -93,6 +94,7 @@ ARG TARGETPLATFORM=notset
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
+ARG PYTHON_VER_UPPER_BOUND=notset
 
 ARG DEBIAN_FRONTEND
 
@@ -212,7 +214,7 @@ rapids-mamba-retry install -y \
   git \
   jq \
   packaging \
-  "python=${PYTHON_VERSION}.*=*_cpython" \
+  "python>=${PYTHON_VERSION},<${PYTHON_VER_UPPER_BOUND}=*_cpython" \
   "rapids-dependency-file-generator==1.*"
 conda clean -aipty
 EOF
