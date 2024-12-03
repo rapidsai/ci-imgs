@@ -3,10 +3,10 @@
 # prefer sticking with a stable version until a specific reason to update arises.
 SCCACHE_VER: 0.7.7
 # renovate: datasource=github-releases depName=cli/cli
-GH_CLI_VER: 2.60.1
+GH_CLI_VER: 2.63.0
 # renovate: datasource=pypi depName=codecov-cli
 CODECOV_VER: 9.0.4
 # renovate: datasource=docker depName=mikefarah/yq versioning=docker
-YQ_VER: 4.44.3
+YQ_VER: 4.44.5
 # renovate: datasource=docker depName=amazon/aws-cli versioning=docker
-AWS_CLI_VER: 2.19.0
+AWS_CLI_VER: 2.22.8
