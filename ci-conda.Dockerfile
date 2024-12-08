@@ -8,7 +8,6 @@ FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
 
 ARG LINUX_VER
 ARG PYTHON_VER
-ARG PYTHON_VER_UPPER_BOUND
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PATH=/opt/conda/bin:$PATH
 ENV PYTHON_VERSION=${PYTHON_VER}
@@ -34,7 +33,17 @@ umask 002
 # an older conda with newer packages still works well
 conda update --all -y -n base
 # install expected Python version
-conda install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_VER_UPPER_BOUND}=*_cpython"
+PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
+PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
+PYTHON_UPPER_BOUND="${PYTHON_MAJOR_VERSION}.$((PYTHON_MINOR_VERSION+1)).0a0"
+PYTHON_MINOR_PADDED=$(printf "%02d" "$PYTHON_MINOR_VERSION")
+PYTHON_VERSION_PADDED="${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_PADDED}"
+if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
+    PYTHON_ABI_TAG="cp${PYTHON_MAJOR_VERSION}${PYTHON_MINOR_VERSION}"
+else
+    PYTHON_ABI_TAG="cpython"
+fi
+conda install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
 conda update --all -y -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   yum install -y findutils
@@ -94,7 +103,6 @@ ARG TARGETPLATFORM=notset
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
-ARG PYTHON_VER_UPPER_BOUND=notset
 
 ARG DEBIAN_FRONTEND
 
@@ -206,6 +214,16 @@ RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
 
 # Install CI tools using mamba
 RUN <<EOF
+PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
+PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
+PYTHON_UPPER_BOUND="${PYTHON_MAJOR_VERSION}.$((PYTHON_MINOR_VERSION+1)).0a0"
+PYTHON_MINOR_PADDED=$(printf "%02d" "$PYTHON_MINOR_VERSION")
+PYTHON_VERSION_PADDED="${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_PADDED}"
+if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
+    PYTHON_ABI_TAG="cp${PYTHON_MAJOR_VERSION}${PYTHON_MINOR_VERSION}"
+else
+    PYTHON_ABI_TAG="cpython"
+fi
 rapids-mamba-retry install -y \
   anaconda-client \
   boa \
@@ -214,7 +232,7 @@ rapids-mamba-retry install -y \
   git \
   jq \
   packaging \
-  "python>=${PYTHON_VERSION},<${PYTHON_VER_UPPER_BOUND}=*_cpython" \
+  "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}" \
   "rapids-dependency-file-generator==1.*"
 conda clean -aipty
 EOF
