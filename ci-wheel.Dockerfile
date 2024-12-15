@@ -134,6 +134,7 @@ pyenv global ${PYTHON_VER}
 python -m pip install --upgrade pip
 python -m pip install \
   auditwheel \
+  certifi \
   conda-package-handling \
   dunamai \
   patchelf \

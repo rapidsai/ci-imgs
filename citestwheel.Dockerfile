@@ -99,7 +99,9 @@ COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 RUN <<EOF
 pyenv global ${PYTHON_VER}
 python -m pip install --upgrade pip
-python -m pip install "rapids-dependency-file-generator==1.*"
+python -m pip install \
+  certifi \
+  'rapids-dependency-file-generator==1.*'
 pyenv rehash
 EOF
 
