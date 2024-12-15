@@ -209,6 +209,7 @@ RUN <<EOF
 rapids-mamba-retry install -y \
   anaconda-client \
   boa \
+  certifi \
   conda-package-handling \
   dunamai \
   git \
