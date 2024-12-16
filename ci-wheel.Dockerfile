@@ -139,7 +139,8 @@ python -m pip install \
   patchelf \
   'pydistcheck==0.8.*' \
   'rapids-dependency-file-generator==1.*' \
-  twine
+  twine \
+  wheel
 pyenv rehash
 EOF
 
