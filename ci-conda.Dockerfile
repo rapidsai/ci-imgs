@@ -113,6 +113,7 @@ case "${LINUX_VER}" in
     apt-get update
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
+      ca-certificates \
       curl \
       file \
       unzip \
@@ -124,6 +125,7 @@ case "${LINUX_VER}" in
   "rockylinux"*)
     yum -y update
     yum -y install --setopt=install_weak_deps=False \
+      ca-certificates \
       file \
       unzip \
       wget \
@@ -209,6 +211,7 @@ RUN <<EOF
 rapids-mamba-retry install -y \
   anaconda-client \
   boa \
+  ca-certificates \
   certifi \
   conda-package-handling \
   dunamai \

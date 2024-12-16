@@ -34,11 +34,36 @@ case "${LINUX_VER}" in
     echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
     apt update -y
     apt install -y \
-      debianutils build-essential software-properties-common \
-      jq wget gcc zlib1g-dev libbz2-dev \
-      libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
-      libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
-      protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev libcurl4-openssl-dev
+      autoconf \
+      automake \
+      build-essential \
+      ca-certificates \
+      cmake \
+      curl \
+      debianutils \
+      gcc \
+      git \
+      jq \
+      libbz2-dev \
+      libcudnn8-dev \
+      libcurl4-openssl-dev \
+      libffi-dev \
+      liblapack-dev \
+      libncurses5-dev \
+      libnuma-dev \
+      libopenblas-dev \
+      libopenslide-dev \
+      libreadline-dev \
+      libsqlite3-dev \
+      libssl-dev \
+      libtool \
+      openssh-client \
+      protobuf-compiler \
+      software-properties-common \
+      wget \
+      yasm \
+      zip \
+      zlib1g-dev
     add-apt-repository ppa:git-core/ppa
     add-apt-repository ppa:ubuntu-toolchain-r/test
     apt update -y
@@ -53,10 +78,35 @@ case "${LINUX_VER}" in
     dnf install -y epel-release
     dnf update -y
     dnf install -y \
-      which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
-      sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
-      numactl-devel openssh-clients libcudnn8-devel zip jq openslide-devel \
-      protobuf-compiler autoconf automake libtool dnf-plugins-core cmake libcurl-devel
+      autoconf \
+      automake \
+      bzip2 \
+      bzip2-devel \
+      cmake \
+      curl \
+      dnf-plugins-core \
+      gcc \
+      git \
+      jq \
+      libcudnn8-devel \
+      libcurl-devel \
+      libffi-devel \
+      libtool \
+      ncurses-devel \
+      numactl \
+      numactl-devel \
+      openslide-devel \
+      openssh-clients \
+      protobuf-compiler \
+      readline-devel \
+      sqlite \
+      sqlite-devel \
+      wget \
+      which \
+      xz \
+      xz-devel \
+      zip \
+      zlib-devel
     dnf config-manager --set-enabled powertools
     dnf install -y blas-devel lapack-devel
     dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++
