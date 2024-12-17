@@ -46,12 +46,30 @@ case "${LINUX_VER}" in
     fi
 
     apt-get install -y --no-install-recommends \
-      wget curl git jq ssh \
-      make build-essential libssl-dev zlib1g-dev \
-      libbz2-dev libreadline-dev libsqlite3-dev wget \
-      curl llvm libncursesw5-dev xz-utils tk-dev unzip \
-      libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
-      "${tzdata_pkgs[@]}"
+      "${tzdata_pkgs[@]}" \
+      build-essential \
+      ca-certificates \
+      curl \
+      git \
+      jq \
+      libbz2-dev \
+      libffi-dev \
+      liblzma-dev \
+      libncursesw5-dev \
+      libreadline-dev \
+      libsqlite3-dev \
+      libssl-dev \
+      libxml2-dev \
+      libxmlsec1-dev \
+      llvm \
+      make \
+      ssh \
+      tk-dev \
+      unzip \
+      wget \
+      xz-utils \
+      zlib1g-dev
+    update-ca-certificates
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
@@ -59,9 +77,25 @@ case "${LINUX_VER}" in
     dnf install -y epel-release
     dnf update -y
     dnf install -y \
-      which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
-      sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel \
-      jq dnf-plugins-core
+      bzip2 \
+      bzip2-devel \
+      ca-certificates \
+      curl \
+      dnf-plugins-core \
+      gcc \
+      git \
+      jq \
+      libffi-devel \
+      ncurses-devel \
+      readline-devel \
+      sqlite \
+      sqlite-devel \
+      wget \
+      which \
+      xz \
+      xz-devel \
+      zlib-devel
+    update-ca-trust extract
     dnf clean all
     pushd tmp
     wget https://www.openssl.org/source/openssl-1.1.1k.tar.gz
@@ -99,7 +133,9 @@ COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 RUN <<EOF
 pyenv global ${PYTHON_VER}
 python -m pip install --upgrade pip
-python -m pip install "rapids-dependency-file-generator==1.*"
+python -m pip install \
+  certifi \
+  'rapids-dependency-file-generator==1.*'
 pyenv rehash
 EOF
 
