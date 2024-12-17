@@ -64,6 +64,7 @@ case "${LINUX_VER}" in
       yasm \
       zip \
       zlib1g-dev
+    update-ca-certificates
     add-apt-repository ppa:git-core/ppa
     add-apt-repository ppa:ubuntu-toolchain-r/test
     apt update -y
@@ -71,7 +72,7 @@ case "${LINUX_VER}" in
     add-apt-repository -r ppa:git-core/ppa
     add-apt-repository -r ppa:ubuntu-toolchain-r/test
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     dnf update -y
@@ -82,6 +83,7 @@ case "${LINUX_VER}" in
       automake \
       bzip2 \
       bzip2-devel \
+      ca-certificates \
       cmake \
       curl \
       dnf-plugins-core \
@@ -107,6 +109,7 @@ case "${LINUX_VER}" in
       xz-devel \
       zip \
       zlib-devel
+    update-ca-trust extract
     dnf config-manager --set-enabled powertools
     dnf install -y blas-devel lapack-devel
     dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++

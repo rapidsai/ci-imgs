@@ -120,7 +120,8 @@ case "${LINUX_VER}" in
       wget \
       gcc \
       g++
-    rm -rf "/var/lib/apt/lists/*"
+    update-ca-certificates
+    rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     yum -y update
@@ -133,6 +134,7 @@ case "${LINUX_VER}" in
       yum-utils \
       gcc \
       gcc-c++
+    update-ca-trust extract
     yum clean all
     ;;
   *)
@@ -164,7 +166,7 @@ case "${CUDA_VER}" in
         # apt will not work correctly if it thinks it needs the build-essential dependency
         # so we patch it out with a sed command
         sed -i 's/, build-essential//g' /var/lib/dpkg/status
-        rm -rf "/var/lib/apt/lists/*"
+        rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
         ;;
       "rockylinux"*)
         yum -y update

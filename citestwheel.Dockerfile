@@ -69,6 +69,7 @@ case "${LINUX_VER}" in
       wget \
       xz-utils \
       zlib1g-dev
+    update-ca-certificates
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
@@ -94,6 +95,7 @@ case "${LINUX_VER}" in
       xz \
       xz-devel \
       zlib-devel
+    update-ca-trust extract
     dnf clean all
     pushd tmp
     wget https://www.openssl.org/source/openssl-1.1.1k.tar.gz
