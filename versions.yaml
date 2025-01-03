@@ -9,4 +9,4 @@ CODECOV_VER: 9.0.4
 # renovate: datasource=docker depName=mikefarah/yq versioning=docker
 YQ_VER: 4.44.5
 # renovate: datasource=docker depName=amazon/aws-cli versioning=docker
-AWS_CLI_VER: 2.22.8
+AWS_CLI_VER: 2.22.28
