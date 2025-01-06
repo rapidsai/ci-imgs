@@ -13,4 +13,12 @@ conda-build:
   output_folder: $RAPIDS_CONDA_BLD_OUTPUT_DIR
 number_channel_notices: 0
 always_yes: true
-quiet: true
+
+# threads to use when downloading and reading repodata
+repodata_threads: 1
+
+# threads to use when downloading packages
+fetch_threads: 1
+
+# default for all other multi-threaded operations
+default_threads: 1
