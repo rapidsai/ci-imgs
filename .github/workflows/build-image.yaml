@@ -32,7 +32,7 @@ jobs:
   run:
     name: build (${{ matrix.CUDA_VER }}, ${{ matrix.PYTHON_VER }}, ${{ matrix.LINUX_VER }}, ${{ matrix.ARCH }})
     strategy:
-      max-parallel: 100
+      max-parallel: 50
       matrix:
         ARCH: ${{ fromJSON(inputs.ARCHES) }}
         CUDA_VER: ["${{ inputs.CUDA_VER }}"]
