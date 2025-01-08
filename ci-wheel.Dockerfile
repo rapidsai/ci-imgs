@@ -34,11 +34,37 @@ case "${LINUX_VER}" in
     echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
     apt update -y
     apt install -y \
-      debianutils build-essential software-properties-common \
-      jq wget gcc zlib1g-dev libbz2-dev \
-      libssl-dev libreadline-dev libsqlite3-dev libffi-dev curl git libncurses5-dev \
-      libnuma-dev openssh-client libcudnn8-dev zip libopenblas-dev liblapack-dev \
-      protobuf-compiler autoconf automake libtool cmake yasm libopenslide-dev libcurl4-openssl-dev
+      autoconf \
+      automake \
+      build-essential \
+      ca-certificates \
+      cmake \
+      curl \
+      debianutils \
+      gcc \
+      git \
+      jq \
+      libbz2-dev \
+      libcudnn8-dev \
+      libcurl4-openssl-dev \
+      libffi-dev \
+      liblapack-dev \
+      libncurses5-dev \
+      libnuma-dev \
+      libopenblas-dev \
+      libopenslide-dev \
+      libreadline-dev \
+      libsqlite3-dev \
+      libssl-dev \
+      libtool \
+      openssh-client \
+      protobuf-compiler \
+      software-properties-common \
+      wget \
+      yasm \
+      zip \
+      zlib1g-dev
+    update-ca-certificates
     add-apt-repository ppa:git-core/ppa
     add-apt-repository ppa:ubuntu-toolchain-r/test
     apt update -y
@@ -46,17 +72,44 @@ case "${LINUX_VER}" in
     add-apt-repository -r ppa:git-core/ppa
     add-apt-repository -r ppa:ubuntu-toolchain-r/test
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     dnf update -y
     dnf install -y epel-release
     dnf update -y
     dnf install -y \
-      which wget gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite \
-      sqlite-devel xz xz-devel libffi-devel curl git ncurses-devel numactl \
-      numactl-devel openssh-clients libcudnn8-devel zip jq openslide-devel \
-      protobuf-compiler autoconf automake libtool dnf-plugins-core cmake libcurl-devel
+      autoconf \
+      automake \
+      bzip2 \
+      bzip2-devel \
+      ca-certificates \
+      cmake \
+      curl \
+      dnf-plugins-core \
+      gcc \
+      git \
+      jq \
+      libcudnn8-devel \
+      libcurl-devel \
+      libffi-devel \
+      libtool \
+      ncurses-devel \
+      numactl \
+      numactl-devel \
+      openslide-devel \
+      openssh-clients \
+      protobuf-compiler \
+      readline-devel \
+      sqlite \
+      sqlite-devel \
+      wget \
+      which \
+      xz \
+      xz-devel \
+      zip \
+      zlib-devel
+    update-ca-trust extract
     dnf config-manager --set-enabled powertools
     dnf install -y blas-devel lapack-devel
     dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++
@@ -134,6 +187,7 @@ pyenv global ${PYTHON_VER}
 python -m pip install --upgrade pip
 python -m pip install \
   auditwheel \
+  certifi \
   conda-package-handling \
   dunamai \
   patchelf \
