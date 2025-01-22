@@ -186,7 +186,7 @@ RUN <<EOF
 pyenv global ${PYTHON_VER}
 python -m pip install --upgrade pip
 python -m pip install \
-  auditwheel \
+  'auditwheel>=6.2.0' \
   certifi \
   conda-package-handling \
   dunamai \
