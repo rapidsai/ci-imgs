@@ -32,7 +32,7 @@ jobs:
     name: ${{ matrix.IMAGE_REPO }}
     needs: compute-matrix
     strategy:
-      max-parallel: 150
+      max-parallel: 50
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
       fail-fast: false
     secrets: inherit

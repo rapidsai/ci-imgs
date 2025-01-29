@@ -121,17 +121,20 @@ case "${LINUX_VER}" in
     apt-get update
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
+      ca-certificates \
       curl \
       file \
       unzip \
       wget \
       gcc \
       g++
-    rm -rf "/var/lib/apt/lists/*"
+    update-ca-certificates
+    rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     yum -y update
     yum -y install --setopt=install_weak_deps=False \
+      ca-certificates \
       file \
       unzip \
       wget \
@@ -139,6 +142,7 @@ case "${LINUX_VER}" in
       yum-utils \
       gcc \
       gcc-c++
+    update-ca-trust extract
     yum clean all
     ;;
   *)
@@ -170,7 +174,7 @@ case "${CUDA_VER}" in
         # apt will not work correctly if it thinks it needs the build-essential dependency
         # so we patch it out with a sed command
         sed -i 's/, build-essential//g' /var/lib/dpkg/status
-        rm -rf "/var/lib/apt/lists/*"
+        rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
         ;;
       "rockylinux"*)
         yum -y update
@@ -227,6 +231,8 @@ fi
 rapids-mamba-retry install -y \
   anaconda-client \
   boa \
+  ca-certificates \
+  certifi \
   conda-package-handling \
   dunamai \
   git \
