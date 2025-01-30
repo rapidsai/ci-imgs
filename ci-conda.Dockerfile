@@ -221,7 +221,9 @@ rapids-mamba-retry install -y \
   jq \
   packaging \
   "python>=${PYTHON_VERSION},<${PYTHON_VER_UPPER_BOUND}=*_cpython" \
-  "rapids-dependency-file-generator==1.*"
+  "rapids-dependency-file-generator==1.*" \
+  rattler-build \
+;
 conda clean -aipty
 EOF
 
