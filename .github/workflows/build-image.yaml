@@ -31,6 +31,7 @@ on:
 jobs:
   run:
     name: build (${{ matrix.CUDA_VER }}, ${{ matrix.PYTHON_VER }}, ${{ matrix.LINUX_VER }}, ${{ matrix.ARCH }})
+    timeout-minutes: 30
     strategy:
       max-parallel: 50
       matrix:
