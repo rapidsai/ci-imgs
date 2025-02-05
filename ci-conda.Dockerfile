@@ -212,7 +212,6 @@ RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
 RUN <<EOF
 rapids-mamba-retry install -y \
   anaconda-client \
-  boa \
   ca-certificates \
   certifi \
   conda-package-handling \
