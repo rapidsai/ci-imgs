@@ -215,7 +215,9 @@ rapids-mamba-retry install -y \
   boa \
   ca-certificates \
   certifi \
+  conda-build \
   conda-package-handling \
+  conda-verify \
   dunamai \
   git \
   jq \
