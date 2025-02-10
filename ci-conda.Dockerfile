@@ -95,7 +95,7 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
 ARG PYTHON_VER_UPPER_BOUND=notset
-ARG CPU_ARCH=notset
+ARG CONDA_ARCH=notset
 
 ARG DEBIAN_FRONTEND
 
@@ -103,7 +103,7 @@ ARG DEBIAN_FRONTEND
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 ENV RAPIDS_DEPENDENCIES="latest"
-ENV RAPIDS_ARCH="${CPU_ARCH}"
+ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
 
 # Conda expects one of `linux64` (amd64) or `aarch64` (arm64)
 RUN RAPIDS_CONDA_ARCH=$(echo $RAPIDS_ARCH | sed 's#amd64#linux64#' | sed 's#arm64#aarch64#') && export RAPIDS_CONDA_ARCH
@@ -237,6 +237,7 @@ EOF
 ARG SCCACHE_VER=notset
 ARG REAL_ARCH=notset
 ARG GH_CLI_VER=notset
+ARG CPU_ARCH=notset
 RUN <<EOF
 curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
