@@ -22,6 +22,10 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 ENV RAPIDS_DEPENDENCIES="latest"
+ENV RAPIDS_ARCH="${CPU_ARCH}"
+
+# Conda expects one of `linux64` (amd64) or `aarch64` (arm64)
+RUN RAPIDS_CONDA_ARCH=$(echo $RAPIDS_ARCH | sed 's#amd64#linux64#' | sed 's#arm64#aarch64#') && export RAPIDS_CONDA_ARCH
 
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"

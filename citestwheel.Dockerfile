@@ -11,11 +11,16 @@ FROM ${BASE_IMAGE}
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
+ARG CPU_ARCH=notset
 
 # Set RAPIDS versions env variables
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 ENV RAPIDS_DEPENDENCIES="latest"
+ENV RAPIDS_ARCH="${CPU_ARCH}"
+
+# Conda expects one of `linux64` (amd64) or `aarch64` (arm64)
+RUN RAPIDS_CONDA_ARCH=$(echo $RAPIDS_ARCH | sed 's#amd64#linux64#' | sed 's#arm64#aarch64#') && export RAPIDS_CONDA_ARCH
 
 ARG DEBIAN_FRONTEND=noninteractive
 
