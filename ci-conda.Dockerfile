@@ -220,6 +220,7 @@ rapids-mamba-retry install -y \
   conda-build \
   conda-package-handling \
   dunamai \
+  gh \
   git \
   jq \
   packaging \
