@@ -29,12 +29,6 @@ CI_IMAGE_CONFIG:
     dockerfile: citestwheel.Dockerfile
     docker_target: ""
 exclude:
-  # Python 3.13 isn't ready for conda yet (needs support in the conda package)
-  - PYTHON_VER: "3.13"
-    IMAGE_REPO: "miniforge-cuda"
-  - PYTHON_VER: "3.13"
-    IMAGE_REPO: "ci-conda"
-
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu22.04"
     CUDA_VER: "11.4.3"
