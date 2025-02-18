@@ -17,6 +17,9 @@ if [[
   MANYLINUX_VER="manylinux_2_31"
 fi
 
+# translate ARCH to conda-equivalent string values
+CONDA_ARCH=$(echo "$ARCH" | sed 's#amd64#linux64#' | sed 's#arm64#aarch64#')
+
 ARGS="
 CUDA_VER: ${CUDA_VER}
 LINUX_VER: ${LINUX_VER}
@@ -24,6 +27,7 @@ PYTHON_VER: ${PYTHON_VER}
 CPU_ARCH: ${ARCH}
 REAL_ARCH: $(arch)
 MANYLINUX_VER: ${MANYLINUX_VER}
+CONDA_ARCH: ${CONDA_ARCH}
 "
 export ARGS
 
