@@ -17,11 +17,6 @@ if [[
   MANYLINUX_VER="manylinux_2_31"
 fi
 
-# compute upper bound, e.g. "3.11 -> 3.12.0a0"
-PYTHON_VER_MAJOR="${PYTHON_VER%%.*}"
-PYTHON_VER_MINOR="${PYTHON_VER#*.}"
-PYTHON_VER_UPPER_BOUND="${PYTHON_VER_MAJOR}.$(( PYTHON_VER_MINOR + 1)).0a0"
-
 # translate ARCH to conda-equivalent string values
 CONDA_ARCH=$(echo "$ARCH" | sed 's#amd64#linux64#' | sed 's#arm64#aarch64#')
 
@@ -29,7 +24,6 @@ ARGS="
 CUDA_VER: ${CUDA_VER}
 LINUX_VER: ${LINUX_VER}
 PYTHON_VER: ${PYTHON_VER}
-PYTHON_VER_UPPER_BOUND: ${PYTHON_VER_UPPER_BOUND}
 CPU_ARCH: ${ARCH}
 REAL_ARCH: $(arch)
 MANYLINUX_VER: ${MANYLINUX_VER}
