@@ -95,6 +95,7 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
 ARG PYTHON_VER_UPPER_BOUND=notset
+ARG CONDA_ARCH=notset
 
 ARG DEBIAN_FRONTEND
 
@@ -102,6 +103,7 @@ ARG DEBIAN_FRONTEND
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 ENV RAPIDS_DEPENDENCIES="latest"
+ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
@@ -214,6 +216,7 @@ rapids-mamba-retry install -y \
   anaconda-client \
   ca-certificates \
   certifi \
+  conda-build \
   conda-package-handling \
   dunamai \
   git \
@@ -237,6 +240,7 @@ curl -o /tmp/sccache.tar.gz \
 tar -C /tmp -xvf /tmp/sccache.tar.gz
 mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
 chmod +x /usr/bin/sccache
+rm -rf /tmp/sccache.tar.gz "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl"
 
 wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
@@ -249,6 +253,7 @@ ARG CODECOV_VER=notset
 RUN <<EOF
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
 pip install codecov-cli==${CODECOV_VER}
+pip cache purge
 EOF
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'

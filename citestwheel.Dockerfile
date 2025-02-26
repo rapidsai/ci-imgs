@@ -10,12 +10,15 @@ FROM ${BASE_IMAGE}
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
+ARG CPU_ARCH=notset
 ARG PYTHON_VER=notset
+ARG CONDA_ARCH=notset
 
 # Set RAPIDS versions env variables
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 ENV RAPIDS_DEPENDENCIES="latest"
+ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -111,6 +114,16 @@ case "${LINUX_VER}" in
     exit 1
     ;;
 esac
+EOF
+
+# Download and install GH CLI tool
+ARG GH_CLI_VER=notset
+RUN <<EOF
+set -e
+wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+tar -xf gh_*.tar.gz
+mv gh_*/bin/gh /usr/local/bin
+rm -rf gh_*
 EOF
 
 # Install pyenv
