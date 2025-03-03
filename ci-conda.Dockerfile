@@ -233,7 +233,6 @@ else
 fi
 rapids-mamba-retry install -y \
   anaconda-client \
-  boa \
   ca-certificates \
   certifi \
   conda-build \
