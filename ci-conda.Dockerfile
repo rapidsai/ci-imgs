@@ -5,12 +5,12 @@ ARG YQ_VER=notset
 ARG AWS_CLI_VER=notset
 ARG MINIFORGE_VER=notset
 
+FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
 
 ARG LINUX_VER
 ARG PYTHON_VER
 ARG PYTHON_VER_UPPER_BOUND
-ARG MINIFORGE_VER=notset
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PATH=/opt/conda/bin:$PATH
 ENV PYTHON_VERSION=${PYTHON_VER}
@@ -24,7 +24,7 @@ usermod -g conda root
 EOF
 
 # Ownership & permissions based on https://docs.anaconda.com/anaconda/install/multi-user/#multi-user-anaconda-installation-on-linux
-COPY --from=condaforge/miniforge3:${MINIFORGE_VER} --chown=root:conda --chmod=770 /opt/conda /opt/conda
+COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/conda
 
 # Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
 RUN chmod g+ws /opt/conda
