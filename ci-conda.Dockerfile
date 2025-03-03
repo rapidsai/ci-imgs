@@ -244,6 +244,7 @@ rapids-mamba-retry install -y \
   "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}" \
   "rapids-dependency-file-generator==1.*" \
   rattler-build \
+  rust \
 ;
 conda clean -aipty
 EOF
