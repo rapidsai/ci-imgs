@@ -10,3 +10,5 @@ CODECOV_VER: 9.1.1
 YQ_VER: 4.44.6
 # renovate: datasource=docker depName=amazon/aws-cli versioning=docker
 AWS_CLI_VER: 2.22.28
+# renovate: datasource=docker depName=condaforge/miniforge3 versioning=docker
+MINIFORGE_VER: 24.11.3-0
