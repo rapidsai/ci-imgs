@@ -231,6 +231,8 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
+
+# rust is needed for source builds of codecov-cli -- binaries are not available for Python 3.13 yet.
 rapids-mamba-retry install -y \
   anaconda-client \
   ca-certificates \
