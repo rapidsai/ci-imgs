@@ -279,7 +279,7 @@ rapids-mamba-retry install -y rust
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
 pip install codecov-cli==${CODECOV_VER}
 pip cache purge
-rapids-mamba-retry uninstall rust
+rapids-mamba-retry uninstall -n base -y rust
 conda clean -aiptfy
 EOF
 
