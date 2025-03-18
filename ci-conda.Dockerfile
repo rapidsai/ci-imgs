@@ -234,7 +234,6 @@ else
     PYTHON_ABI_TAG="cpython"
 fi
 
-# rust is needed for source builds of codecov-cli -- binaries are not available for Python 3.13 yet.
 rapids-mamba-retry install -y \
   anaconda-client \
   ca-certificates \
@@ -248,7 +247,6 @@ rapids-mamba-retry install -y \
   "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}" \
   "rapids-dependency-file-generator==1.*" \
   rattler-build \
-  rust \
 ;
 conda clean -aiptfy
 EOF
@@ -275,9 +273,14 @@ EOF
 # Install codecov from source distribution
 ARG CODECOV_VER=notset
 RUN <<EOF
+# rust is needed for source builds of codecov-cli -- binaries are not available for Python 3.13 yet.
+# We must also remove rust in this step because it ships 750MB of documentation files.
+rapids-mamba-retry install -y rust
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
 pip install codecov-cli==${CODECOV_VER}
 pip cache purge
+rapids-mamba-retry uninstall rust
+conda clean -aiptfy
 EOF
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
