@@ -211,7 +211,7 @@ RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.ta
 RUN <<EOF
 rapids-mamba-retry install -y \
   gettext
-conda clean -aipty
+conda clean -aiptfy
 EOF
 
 # Create condarc file from env vars
@@ -250,7 +250,7 @@ rapids-mamba-retry install -y \
   rattler-build \
   rust \
 ;
-conda clean -aipty
+conda clean -aiptfy
 EOF
 
 # Install sccache and gh cli
