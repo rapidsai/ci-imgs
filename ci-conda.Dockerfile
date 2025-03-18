@@ -54,7 +54,7 @@ fi
 find /opt/conda -follow -type f -name '*.a' -delete
 find /opt/conda -follow -type f -name '*.pyc' -delete
 # recreate missing libstdc++ symlinks
-conda clean -afy
+conda clean -aiptfy
 EOF
 
 # Reassign root's primary group to root
