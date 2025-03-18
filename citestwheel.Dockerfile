@@ -101,7 +101,7 @@ case "${LINUX_VER}" in
     update-ca-trust extract
     dnf clean all
     pushd tmp
-    wget https://www.openssl.org/source/openssl-1.1.1k.tar.gz
+    wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
         tar -xzvf openssl-1.1.1k.tar.gz
     cd openssl-1.1.1k
     ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
@@ -120,7 +120,7 @@ EOF
 ARG GH_CLI_VER=notset
 RUN <<EOF
 set -e
-wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
@@ -153,7 +153,7 @@ pyenv rehash
 EOF
 
 # Install latest gha-tools
-RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+RUN -q wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
 # git safe directory
