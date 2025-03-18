@@ -153,7 +153,7 @@ pyenv rehash
 EOF
 
 # Install latest gha-tools
-RUN -q wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
 # git safe directory
