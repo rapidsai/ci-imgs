@@ -130,9 +130,11 @@ EOF
 RUN curl https://pyenv.run | bash
 
 # Create pyenvs
-RUN pyenv update && pyenv install ${PYTHON_VER}
-
-RUN pyenv global ${PYTHON_VER} && python --version
+RUN <<EOF
+  pyenv install ${PYTHON_VER}
+  pyenv global ${PYTHON_VER}
+  python --version
+EOF
 
 # add bin to path
 ENV PATH="/pyenv/versions/${PYTHON_VER}/bin/:$PATH"

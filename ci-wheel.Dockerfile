@@ -165,10 +165,6 @@ ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${P
 # Install pyenv
 RUN curl https://pyenv.run | bash
 
-# Create pyenvs
-# TODO: Determine if any cleanup of the pyenv layers is needed to shrink the container
-RUN pyenv update
-
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
