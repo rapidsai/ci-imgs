@@ -54,7 +54,7 @@ fi
 find /opt/conda -follow -type f -name '*.a' -delete
 find /opt/conda -follow -type f -name '*.pyc' -delete
 # recreate missing libstdc++ symlinks
-conda clean -afy
+conda clean -aiptfy
 EOF
 
 # Reassign root's primary group to root
@@ -204,14 +204,14 @@ esac
 EOF
 
 # Install gha-tools
-RUN wget https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
   | tar -xz -C /usr/local/bin
 
 # Install prereq for envsubst
 RUN <<EOF
 rapids-mamba-retry install -y \
   gettext
-conda clean -aipty
+conda clean -aiptfy
 EOF
 
 # Create condarc file from env vars
@@ -234,7 +234,6 @@ else
     PYTHON_ABI_TAG="cpython"
 fi
 
-# rust is needed for source builds of codecov-cli -- binaries are not available for Python 3.13 yet.
 rapids-mamba-retry install -y \
   anaconda-client \
   ca-certificates \
@@ -248,9 +247,8 @@ rapids-mamba-retry install -y \
   "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}" \
   "rapids-dependency-file-generator==1.*" \
   rattler-build \
-  rust \
 ;
-conda clean -aipty
+conda clean -aiptfy
 EOF
 
 # Install sccache and gh cli
@@ -266,7 +264,7 @@ mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr
 chmod +x /usr/bin/sccache
 rm -rf /tmp/sccache.tar.gz "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl"
 
-wget https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
@@ -275,9 +273,14 @@ EOF
 # Install codecov from source distribution
 ARG CODECOV_VER=notset
 RUN <<EOF
+# rust is needed for source builds of codecov-cli -- binaries are not available for Python 3.13 yet.
+# We must also remove rust in this step because it ships 750MB of documentation files.
+rapids-mamba-retry install -y rust
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
 pip install codecov-cli==${CODECOV_VER}
 pip cache purge
+rapids-mamba-retry uninstall -n base -y rust
+conda clean -aiptfy
 EOF
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
