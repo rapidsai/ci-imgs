@@ -210,6 +210,9 @@ EOF
 COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
+# Create output directory for wheel builds
+RUN mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
+
 # Mark all directories as safe for git so that GHA clones into the root don't
 # run into issues
 RUN git config --system --add safe.directory '*'
