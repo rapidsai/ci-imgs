@@ -33,6 +33,7 @@ RUN <<EOF
 umask 002
 
 # Temporary workaround for unstable libxml2 packages
+# xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
