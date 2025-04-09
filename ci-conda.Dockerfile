@@ -31,6 +31,10 @@ RUN chmod g+ws /opt/conda
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
+
+# Temporary workaround for unstable libxml2 packages
+echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
+
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
 conda update --all -y -n base
