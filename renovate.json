@@ -6,6 +6,15 @@
   "schedule": [
     "before 7am on the first day of the month"
   ],
+  "packageRules": [
+    {
+      "description": "Update low-risk CLI tools together",
+      "matchPackagePatterns": [
+        "^(amazon/aws-cli|cli/cli|codecov-cli|mikefarah/yq)$"
+      ],
+      "groupName": "cli-tools"
+    }
+  ],
   "customManagers": [
     {
       "customType": "regex",
