@@ -17,15 +17,45 @@ if [[
   MANYLINUX_VER="manylinux_2_31"
 fi
 
-# translate ARCH to conda-equivalent string values
-CONDA_ARCH=$(echo "$ARCH" | sed 's#amd64#linux64#' | sed 's#arm64#aarch64#')
+
+# Set BASE_IMAGE based on LINUX_VER
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    BASE_IMAGE="ubuntu:${LINUX_VER#ubuntu}"
+    ;;
+  "rockylinux"*)
+    BASE_IMAGE="rockylinux:${LINUX_VER#rockylinux}"
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+
+# Translate ARCH to equivalent string values for NVARCH and CONDA_ARCH
+case "${ARCH}" in
+  "amd64")
+    NVARCH="x86_64"
+    CONDA_ARCH="linux64"
+    ;;
+  "arm64")
+    NVARCH="sbsa"
+    CONDA_ARCH="aarch64"
+    ;;
+  *)
+    echo "Unsupported ARCH: ${ARCH}"
+    exit 1
+    ;;
+esac
 
 ARGS="
 CUDA_VER: ${CUDA_VER}
 LINUX_VER: ${LINUX_VER}
+BASE_IMAGE: ${BASE_IMAGE}
 PYTHON_VER: ${PYTHON_VER}
 CPU_ARCH: ${ARCH}
 REAL_ARCH: $(arch)
+NVARCH: ${NVARCH}
 MANYLINUX_VER: ${MANYLINUX_VER}
 CONDA_ARCH: ${CONDA_ARCH}
 "

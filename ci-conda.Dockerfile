@@ -1,20 +1,91 @@
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
+ARG BASE_IMAGE=notset
 ARG PYTHON_VER=notset
 ARG YQ_VER=notset
 ARG AWS_CLI_VER=notset
 ARG MINIFORGE_VER=notset
+ARG CPU_ARCH=notset
+ARG NVARCH=notset
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
+FROM ${BASE_IMAGE} AS miniforge-cuda
 
 ARG LINUX_VER
 ARG PYTHON_VER
+ARG CUDA_VER
+ARG CPU_ARCH
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PATH=/opt/conda/bin:$PATH
 ENV PYTHON_VERSION=${PYTHON_VER}
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Install CUDA based on the nvidia/cuda templates
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    # Extract Ubuntu version number using bash variable expansion
+    UBUNTU_VERSION=${LINUX_VER#ubuntu}
+    UBUNTU_VERSION=${UBUNTU_VERSION//./}
+    CUDA_VER_DASHED=$(echo ${CUDA_VER} | tr '.' '-' | cut -d'-' -f1-2)
+
+    # Install CUDA for Ubuntu
+    apt-get update && apt-get install -y --no-install-recommends gnupg2 curl ca-certificates
+    curl -fsSL "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${UBUNTU_VERSION}/${NVARCH}/3bf863cc.pub" | apt-key add -
+    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${UBUNTU_VERSION}/${NVARCH} /" > /etc/apt/sources.list.d/cuda.list
+    apt-get purge --autoremove -y curl
+    apt-get update && apt-get install -y --no-install-recommends \
+      cuda-cudart-${CUDA_VER_DASHED} \
+      cuda-compat-${CUDA_VER_DASHED}
+    rm -rf /var/lib/apt/lists/*
+    ;;
+  "rockylinux"*)
+    # Install CUDA for Rocky Linux
+    ROCKY_VERSION=${LINUX_VER#rockylinux}
+    CUDA_VER_DASHED=$(echo ${CUDA_VER} | tr '.' '-' | cut -d'-' -f1-2)
+
+    # Add NVIDIA GPG key with verification
+    NVIDIA_GPGKEY_SUM=d0664fbbdb8c32356d45de36c5984617217b2d0bef41b93ccecd326ba3b80c87 && \
+    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/rhel${ROCKY_VERSION}/${NVARCH}/D42D0685.pub | \
+      sed '/^Version/d' > /etc/pki/rpm-gpg/RPM-GPG-KEY-NVIDIA && \
+      echo "$NVIDIA_GPGKEY_SUM  /etc/pki/rpm-gpg/RPM-GPG-KEY-NVIDIA" | \
+      sha256sum -c --strict -
+
+    # Create CUDA repository configuration file
+    cat > /etc/yum.repos.d/cuda.repo << EOL
+[cuda]
+name=cuda
+baseurl=https://developer.download.nvidia.com/compute/cuda/repos/rhel${ROCKY_VERSION}/${NVARCH}
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-NVIDIA
+EOL
+
+    # Install CUDA
+    dnf -y install \
+      cuda-cudart-${CUDA_VER_DASHED} \
+      cuda-compat-${CUDA_VER_DASHED}
+    dnf clean all
+    rm -rf /var/cache/yum/*
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1
+    ;;
+esac
+EOF
+
+# Set environment variables to match nvidia/cuda image
+ENV CUDA_VERSION=${CUDA_VER}
+ENV PATH=/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64
+
+# Required for nvidia-docker v1
+RUN echo "/usr/local/cuda/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+
+# nvidia-container-runtime
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 # Create a conda group and assign it as root's primary group
 RUN <<EOF
