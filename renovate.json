@@ -9,10 +9,10 @@
   "packageRules": [
     {
       "description": "Update low-risk CLI tools together",
-      "matchPackagePatterns": [
-        "^(amazon/aws-cli|cli/cli|codecov-cli|mikefarah/yq)$"
-      ],
-      "groupName": "cli-tools"
+      "groupName": "cli-tools",
+      "matchPackageNames": [
+        "/^(amazon/aws-cli|cli/cli|codecov-cli|mikefarah/yq)$/"
+      ]
     }
   ],
   "customManagers": [
