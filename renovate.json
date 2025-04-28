@@ -1,9 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
-  "schedule": ["before 7am on the first day of the month"],
-  "regexManagers": [
+  "extends": [
+    "config:recommended"
+  ],
+  "schedule": [
+    "before 7am on the first day of the month"
+  ],
+  "customManagers": [
     {
+      "customType": "regex",
       "fileMatch": "versions.yaml",
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[^ ]+) depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\n]+))?\\n(?<depNameCapture>[^:]+): (?<currentValue>[^\\n]+)"
