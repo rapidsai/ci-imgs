@@ -15,11 +15,15 @@ ARG LINUX_VER
 ARG PYTHON_VER
 ARG CUDA_VER
 ARG CPU_ARCH
+ARG NVARCH
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PATH=/opt/conda/bin:$PATH
 ENV PYTHON_VERSION=${PYTHON_VER}
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+ENV NVARCH=${NVARCH}
+ENV CUDA_VERSION=${CUDA_VER}
 
 # Install CUDA based on the nvidia/cuda templates
 RUN <<EOF
@@ -28,7 +32,7 @@ case "${LINUX_VER}" in
     # Extract Ubuntu version number using bash variable expansion
     UBUNTU_VERSION=${LINUX_VER#ubuntu}
     UBUNTU_VERSION=${UBUNTU_VERSION//./}
-    CUDA_VER_DASHED=$(echo ${CUDA_VER} | tr '.' '-' | cut -d'-' -f1-2)
+    PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')"
 
     # Install CUDA for Ubuntu
     apt-get update && apt-get install -y --no-install-recommends gnupg2 curl ca-certificates
@@ -36,14 +40,14 @@ case "${LINUX_VER}" in
     echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${UBUNTU_VERSION}/${NVARCH} /" > /etc/apt/sources.list.d/cuda.list
     apt-get purge --autoremove -y curl
     apt-get update && apt-get install -y --no-install-recommends \
-      cuda-cudart-${CUDA_VER_DASHED} \
-      cuda-compat-${CUDA_VER_DASHED}
+      cuda-cudart-${PKG_CUDA_VER} \
+      cuda-compat-${PKG_CUDA_VER}
     rm -rf /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     # Install CUDA for Rocky Linux
     ROCKY_VERSION=${LINUX_VER#rockylinux}
-    CUDA_VER_DASHED=$(echo ${CUDA_VER} | tr '.' '-' | cut -d'-' -f1-2)
+    PKG_CUDA_VER="$(echo ${CUDA_VER} | cut -d '.' -f1,2 | tr '.' '-')"
 
     # Add NVIDIA GPG key with verification
     NVIDIA_GPGKEY_SUM=d0664fbbdb8c32356d45de36c5984617217b2d0bef41b93ccecd326ba3b80c87 && \
@@ -64,8 +68,8 @@ EOL
 
     # Install CUDA
     dnf -y install \
-      cuda-cudart-${CUDA_VER_DASHED} \
-      cuda-compat-${CUDA_VER_DASHED}
+      cuda-cudart-${PKG_CUDA_VER} \
+      cuda-compat-${PKG_CUDA_VER}
     dnf clean all
     rm -rf /var/cache/yum/*
     ;;
@@ -76,7 +80,6 @@ esac
 EOF
 
 # Set environment variables to match nvidia/cuda image
-ENV CUDA_VERSION=${CUDA_VER}
 ENV PATH=/usr/local/cuda/bin:${PATH}
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64
 
