@@ -19,18 +19,22 @@ fi
 
 
 # Set BASE_IMAGE based on LINUX_VER
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    BASE_IMAGE="ubuntu:${LINUX_VER#ubuntu}"
-    ;;
-  "rockylinux"*)
-    BASE_IMAGE="rockylinux:${LINUX_VER#rockylinux}"
-    ;;
-  *)
-    echo "Unsupported LINUX_VER: ${LINUX_VER}"
-    exit 1
-    ;;
-esac
+if [[ "${IMAGE_REPO}" == "ci-conda" ]]; then
+  case "${LINUX_VER}" in
+    "ubuntu"*)
+      BASE_IMAGE="ubuntu:${LINUX_VER#ubuntu}"
+      ;;
+    "rockylinux"*)
+      BASE_IMAGE="rockylinux:${LINUX_VER#rockylinux}"
+      ;;
+    *)
+      echo "Unsupported LINUX_VER: ${LINUX_VER}"
+      exit 1
+      ;;
+  esac
+else
+  BASE_IMAGE="nvcr.io/nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}"
+fi
 
 # Translate ARCH to equivalent string values for NVARCH and CONDA_ARCH
 case "${ARCH}" in
