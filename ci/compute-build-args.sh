@@ -3,7 +3,6 @@ set -euo pipefail
 
 if [[
   "${IMAGE_REPO}" == "ci-wheel" &&
-  "${LINUX_VER}" != "ubuntu20.04" &&
   "${LINUX_VER}" != "rockylinux8"
 ]]; then
   echo "Unsupported LINUX_VER: ${LINUX_VER} for ci-wheel image"
