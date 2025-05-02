@@ -18,7 +18,7 @@ fi
 
 
 # Set BASE_IMAGE based on LINUX_VER
-if [[ "${IMAGE_REPO}" == "ci-conda" ]]; then
+if [[ "${IMAGE_REPO}" == "miniforge-cuda" || "${IMAGE_REPO}" == "ci-conda" ]]; then
   case "${LINUX_VER}" in
     "ubuntu"*)
       BASE_IMAGE="ubuntu:${LINUX_VER#ubuntu}"
