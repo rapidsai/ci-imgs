@@ -16,7 +16,7 @@ To build the dockerfiles locally, you may use the following snippets:
 
 ```sh
 export LINUX_VER=ubuntu24.04
-export CUDA_VER=12.8.0
+export CUDA_VER=12.9.0
 export PYTHON_VER=3.12
 export ARCH=amd64
 export IMAGE_REPO=ci-conda
