@@ -190,7 +190,7 @@ python -m pip install \
   conda-package-handling \
   dunamai \
   patchelf \
-  'pydistcheck==0.8.*' \
+  'pydistcheck==0.9.*' \
   'rapids-dependency-file-generator==1.*' \
   twine \
   wheel
