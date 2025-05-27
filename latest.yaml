@@ -1,3 +1,4 @@
+# Copyright (c) 2023-2025, NVIDIA CORPORATION.
 # Define the values used for the "latest" tag
 miniforge-cuda:
   CUDA_VER: "12.8.0"

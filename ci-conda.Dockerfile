@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2025, NVIDIA CORPORATION.
+
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
