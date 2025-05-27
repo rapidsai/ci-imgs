@@ -59,6 +59,7 @@ case "${LINUX_VER}" in
       libffi-dev \
       liblzma-dev \
       libncursesw5-dev \
+      libnuma1 \
       libreadline-dev \
       libsqlite3-dev \
       libssl-dev \
