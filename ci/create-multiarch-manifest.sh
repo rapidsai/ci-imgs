@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (c) 2023-2025, NVIDIA CORPORATION.
 set -euo pipefail
 
 LATEST_CUDA_VER=$(yq -r ".${IMAGE_REPO}.CUDA_VER" latest.yaml)

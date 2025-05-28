@@ -1,0 +1,27 @@
+# Copyright (c) 2025, NVIDIA CORPORATION.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: ["--severity=warning"]
+  - repo: https://github.com/rapidsai/pre-commit-hooks
+    rev: v0.6.0
+    hooks:
+      - id: verify-copyright
+        args: [--fix, --main-branch=main]
+        files: |
+          (?x)
+              [.](jq|py|sh|toml|yml|yaml)$|
+              Dockerfile$

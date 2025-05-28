@@ -1,3 +1,4 @@
+# Copyright (c) 2023-2025, NVIDIA CORPORATION.
 CUDA_VER:
   - "11.4.3"
   - "11.8.0"
