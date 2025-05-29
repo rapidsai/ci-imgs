@@ -2,9 +2,7 @@ auto_update_conda: False
 channels:
   - rapidsai
   - rapidsai-nightly
-  - dask/label/dev
   - conda-forge
-  - nvidia
 conda-build:
   pkg_format: '2'
   set_build_id: false
@@ -12,6 +10,7 @@ conda-build:
   output_folder: $RAPIDS_CONDA_BLD_OUTPUT_DIR
 number_channel_notices: 0
 always_yes: true
+channel_priority: strict
 
 # threads to use when downloading and reading repodata
 repodata_threads: 1
