@@ -78,7 +78,7 @@ case "${LINUX_VER}" in
     update-ca-certificates
 
     # Downgrade cuda-compat on CUDA 12.8 due to an upstream bug
-    if [[ "${RAPIDS_CUDA_VERSION}" == "12.8"* ]]; then
+    if [[ "${CUDA_VER}" == "12.8"* ]]; then
       apt-get install -y cuda-compat-12-8=570.148.08-0ubuntu1
     fi
 

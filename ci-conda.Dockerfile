@@ -90,6 +90,12 @@ case "${LINUX_VER}" in
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
       "${tzdata_pkgs[@]}"
+
+    # Downgrade cuda-compat on CUDA 12.8 due to an upstream bug
+    if [[ "${CUDA_VER}" == "12.8"* ]]; then
+      apt-get install -y cuda-compat-12-8=570.148.08-0ubuntu1
+    fi
+
     rm -rf "/var/lib/apt/lists/*"
     ;;
   "rockylinux"*)
