@@ -10,6 +10,7 @@ ARG MINIFORGE_VER=notset
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
 
+ARG CUDA_VER
 ARG LINUX_VER
 ARG PYTHON_VER
 ARG DEBIAN_FRONTEND=noninteractive
