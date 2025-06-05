@@ -76,6 +76,12 @@ case "${LINUX_VER}" in
       xz-utils \
       zlib1g-dev
     update-ca-certificates
+
+    # Downgrade cuda-compat on CUDA 12.8 due to an upstream bug
+    if [[ "${CUDA_VER}" == "12.8"* ]]; then
+      apt-get install -y --allow-downgrades cuda-compat-12-8=570.148.08-0ubuntu1
+    fi
+
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
