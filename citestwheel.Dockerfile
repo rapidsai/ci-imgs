@@ -80,6 +80,7 @@ case "${LINUX_VER}" in
     # Downgrade cuda-compat on CUDA 12.8 due to an upstream bug
     if [[ "${CUDA_VER}" == "12.8"* ]]; then
       apt-get install -y --allow-downgrades cuda-compat-12-8=570.148.08-0ubuntu1
+      apt-mark hold cuda-compat-12-8
     fi
 
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
