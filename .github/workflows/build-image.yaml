@@ -78,3 +78,5 @@ jobs:
             ${{ steps.generate-build-args.outputs.ARGS }}
           target: ${{ inputs.DOCKER_TARGET }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
+          # Enable zstd compression (gzip is default)
+          outputs: type=image,compression=zstd
