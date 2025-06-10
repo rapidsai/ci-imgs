@@ -1,7 +1,5 @@
 # Copyright (c) 2023-2025, NVIDIA CORPORATION.
 CUDA_VER:
-  - "11.4.3"
-  - "11.8.0"
   - "12.0.1"
   - "12.2.2"
   - "12.8.0"
@@ -31,23 +29,17 @@ CI_IMAGE_CONFIG:
     docker_target: ""
 exclude:
   # Exclusions from CUDA's OS support matrix
-  - LINUX_VER: "ubuntu22.04"
-    CUDA_VER: "11.4.3"
-  - LINUX_VER: "ubuntu24.04"
-    CUDA_VER: "11.4.3"
-  - LINUX_VER: "ubuntu24.04"
-    CUDA_VER: "11.8.0"
   - LINUX_VER: "ubuntu24.04"
     CUDA_VER: "12.0.1"
   - LINUX_VER: "ubuntu24.04"
     CUDA_VER: "12.2.2"
 
   # Only build ci-wheel for the latest CUDA of each major version
-  - CUDA_VER: "11.4.3"
-    IMAGE_REPO: "ci-wheel"
   - CUDA_VER: "12.0.1"
     IMAGE_REPO: "ci-wheel"
   - CUDA_VER: "12.2.2"
+    IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "12.8.0"
     IMAGE_REPO: "ci-wheel"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)
@@ -57,7 +49,3 @@ exclude:
     IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu24.04"
     IMAGE_REPO: "ci-wheel"
-
-  # Exclude citestwheel for CUDA versions older than 11.8.0
-  - CUDA_VER: "11.4.3"
-    IMAGE_REPO: "citestwheel"
