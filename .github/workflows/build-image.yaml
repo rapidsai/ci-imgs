@@ -72,11 +72,10 @@ jobs:
         with:
           context: context
           file: ${{ inputs.DOCKERFILE }}
-          push: true
           pull: true
           build-args: |
             ${{ steps.generate-build-args.outputs.ARGS }}
           target: ${{ inputs.DOCKER_TARGET }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
           # Enable zstd compression (gzip is default)
-          outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true
+          outputs: type=registry,compression=zstd,force-compression=true,oci-mediatypes=true
