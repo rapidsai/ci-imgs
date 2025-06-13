@@ -1,5 +1,7 @@
 #!/bin/bash
-# Copyright (c) 2023-2025, NVIDIA CORPORATION.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES.
+# All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
 LATEST_CUDA_VER=$(yq -r ".${IMAGE_REPO}.CUDA_VER" latest.yaml)
