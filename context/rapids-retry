@@ -1,0 +1,92 @@
+#!/bin/bash
+#
+# rapids-retry
+#
+# retries a command 3 times after a non-zero exit, waiting 10 seconds
+# between attempts. 3 times and 10 seconds are default values which can be
+# configured with env vars described below.
+#
+#   NOTE: source this file to update your bash environment with the settings
+#   below. Keep in mind that the calling environment will be modified, so do not
+#   set or change the environment here unless the caller expects that.  Also
+#   remember that "exit" will exit the calling shell!  Consider rewriting this
+#   as a callable script if the functionality below needs to make changes to its
+#   environment as a side-effect.
+#
+# Example usage:
+# $ rapids-retry [--quiet] <command>
+# $ rapids-retry conda install python
+#
+# To capture the output of the command rather than displaying it:
+# $ output=$(rapids-retry --quiet gh run list --repo "myrepo/myproject")
+#
+# Configurable options are set using the following env vars:
+#
+# RAPIDS_RETRY_MAX       - set to a positive integer to set the max number of retry
+#                          attempts (attempts after the initial try).
+#                          Default is 3 retries
+#
+# RAPIDS_RETRY_SLEEP     - set to a positive integer to set the duration, in
+#                          seconds, to wait between retries.
+#                          Default is a 10 second sleep
+#
+# Additional options:
+#
+# --quiet                - when specified as the first argument after the command,
+#                          captures the command's output instead of sending it to stdout.
+#                          Logger messages are redirected to stderr.
+#                          Returns the output of the command on success.
+#
+function rapids-retry {
+    # Handle the --quiet flag if it's the first argument
+    quiet=false
+    if [[ "$1" == "--quiet" ]]; then
+        quiet=true
+        shift
+    fi
+    command=$1
+    shift
+    max_retries=${RAPIDS_RETRY_MAX:=3}
+    retries=0
+    sleep_interval=${RAPIDS_RETRY_SLEEP:=10}
+
+    # Choose rapids-logger FD based on quiet mode: stderr (FD 2) if quiet, stdout (FD 1) otherwise
+    logger_fd="1"
+    if [[ "$quiet" == "true" ]]; then
+        logger_fd="2"
+    fi
+
+    local output
+    local retcode
+
+    if [[ "$quiet" == "true" ]]; then
+        output=$("${command}" "$@")
+    else
+        ${command} "$@"
+    fi
+    retcode=$?
+
+    # Retry loop
+    while (( retcode != 0 )) && (( retries < max_retries )); do
+        ((retries++))
+
+        rapids-logger "rapids-retry: retry ${retries} of ${max_retries} | exit code: (${retcode}) -> sleeping for ${sleep_interval} seconds..." >&"${logger_fd}"
+        sleep "${sleep_interval}"
+        rapids-logger "rapids-retry: sleep done -> retrying..." >&"${logger_fd}"
+
+        # Execute command based on quiet mode
+        if [[ "$quiet" == "true" ]]; then
+            output=$("${command}" "$@")
+        else
+            ${command} "$@"
+        fi
+        retcode=$?
+    done
+
+    # Output captured result if in quiet mode and successful
+    [[ "$quiet" == "true" && $retcode -eq 0 ]] && echo "${output}"
+
+    return ${retcode}
+}
+
+rapids-retry "$@"

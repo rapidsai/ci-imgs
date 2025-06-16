@@ -33,8 +33,8 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Install latest gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+# Install bundled `rapids-retry`
+COPY rapids-retry /usr/local/bin
 
 RUN <<EOF
 case "${LINUX_VER}" in
@@ -142,6 +142,9 @@ case "${LINUX_VER}" in
     ;;
 esac
 EOF
+
+# Install latest gha-tools (after removing bundled `rapids-retry`)
+RUN rm /usr/local/bin/rapids-retry && wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
 
 # Download and install GH CLI tool
 ARG GH_CLI_VER=notset

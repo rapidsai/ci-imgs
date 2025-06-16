@@ -31,9 +31,8 @@ COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/co
 # Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
 RUN chmod g+ws /opt/conda
 
-# Install gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
-  | tar -xz -C /usr/local/bin
+# Install bundled `rapids-retry`
+COPY rapids-retry /usr/local/bin
 
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
@@ -45,7 +44,7 @@ echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
-rapids-conda-retry update --all -y -n base
+conda update --all -y -n base
 # install expected Python version
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
 PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
@@ -57,8 +56,8 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
-rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-rapids-conda-retry update --all -y -n base
+conda install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+conda update --all -y -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   rapids-retry yum install -y findutils
   yum clean all
@@ -175,6 +174,10 @@ case "${LINUX_VER}" in
     ;;
 esac
 EOF
+
+# Install latest gha-tools (after removing bundled `rapids-retry`)
+RUN rm /usr/local/bin/rapids-retry && wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+  | tar -xz -C /usr/local/bin
 
 # Install CUDA packages, only for CUDA 11 (CUDA 12+ should fetch from conda)
 RUN <<EOF

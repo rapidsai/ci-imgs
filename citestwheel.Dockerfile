@@ -29,9 +29,7 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Install latest gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
-  | tar -xz -C /usr/local/bin
+COPY rapids-retry /usr/local/bin
 
 RUN <<EOF
 set -e
@@ -83,7 +81,7 @@ case "${LINUX_VER}" in
 
     # Downgrade cuda-compat on CUDA 12.8 due to an upstream bug
     if [[ "${CUDA_VER}" == "12.8"* ]]; then
-      apt-get install -y --allow-downgrades cuda-compat-12-8=570.148.08-0ubuntu1
+      rapids-retry apt-get install -y --allow-downgrades cuda-compat-12-8=570.148.08-0ubuntu1
       apt-mark hold cuda-compat-12-8
     fi
 
@@ -129,6 +127,11 @@ case "${LINUX_VER}" in
     ;;
 esac
 EOF
+
+
+# Install latest gha-tools (after removing bundled `rapids-retry`)
+RUN rm /usr/local/bin/rapids-retry && wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+  | tar -xz -C /usr/local/bin
 
 # Download and install GH CLI tool
 ARG GH_CLI_VER=notset
