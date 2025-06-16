@@ -31,6 +31,10 @@ COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/co
 # Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
 RUN chmod g+ws /opt/conda
 
+# Install gha-tools
+RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+  | tar -xz -C /usr/local/bin
+
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
@@ -41,7 +45,7 @@ echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
-conda update --all -y -n base
+rapids-conda-retry update --all -y -n base
 # install expected Python version
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
 PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
@@ -53,10 +57,10 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
-conda install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-conda update --all -y -n base
+rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+rapids-conda-retry update --all -y -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
-  yum install -y findutils
+  rapids-retry yum install -y findutils
   yum clean all
 fi
 find /opt/conda -follow -type f -name '*.a' -delete
@@ -87,9 +91,9 @@ case "${LINUX_VER}" in
         tzdata_pkgs=(tzdata)
     fi
 
-    apt-get update
-    apt-get upgrade -y
-    apt-get install -y --no-install-recommends \
+    rapids-retry apt-get update
+    rapids-retry apt-get upgrade -y
+    rapids-retry apt-get install -y --no-install-recommends \
       "${tzdata_pkgs[@]}"
 
     # Downgrade cuda-compat on CUDA 12.8 due to an upstream bug
@@ -101,7 +105,7 @@ case "${LINUX_VER}" in
     rm -rf "/var/lib/apt/lists/*"
     ;;
   "rockylinux"*)
-    yum update -y
+    rapids-retry yum update -y
     yum clean all
     ;;
   *)
@@ -138,9 +142,9 @@ RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    apt-get update
-    apt-get upgrade -y
-    apt-get install -y --no-install-recommends \
+    rapids-retry apt-get update
+    rapids-retry apt-get upgrade -y
+    rapids-retry apt-get install -y --no-install-recommends \
       ca-certificates \
       curl \
       file \
@@ -152,8 +156,8 @@ case "${LINUX_VER}" in
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
-    yum -y update
-    yum -y install --setopt=install_weak_deps=False \
+    rapids-retry yum -y update
+    rapids-retry yum -y install --setopt=install_weak_deps=False \
       ca-certificates \
       file \
       unzip \
@@ -180,15 +184,15 @@ case "${CUDA_VER}" in
     echo "Attempting to install CUDA Toolkit ${PKG_CUDA_VER}"
     case "${LINUX_VER}" in
       "ubuntu"*)
-        apt-get update
-        apt-get upgrade -y
-        apt-get install -y --no-install-recommends \
+        rapids-retry apt-get update
+        rapids-retry apt-get upgrade -y
+        rapids-retry apt-get install -y --no-install-recommends \
           cuda-gdb-${PKG_CUDA_VER} \
           cuda-cudart-dev-${PKG_CUDA_VER} \
           cuda-cupti-dev-${PKG_CUDA_VER}
         # ignore the build-essential package since it installs dependencies like gcc/g++
         # we don't need them since we use conda compilers, so this keeps our images smaller
-        apt-get download cuda-nvcc-${PKG_CUDA_VER}
+        rapids-retry apt-get download cuda-nvcc-${PKG_CUDA_VER}
         dpkg -i --ignore-depends="build-essential" ./cuda-nvcc-*.deb
         rm ./cuda-nvcc-*.deb
         # apt will not work correctly if it thinks it needs the build-essential dependency
@@ -197,13 +201,13 @@ case "${CUDA_VER}" in
         rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
         ;;
       "rockylinux"*)
-        yum -y update
-        yum -y install --setopt=install_weak_deps=False \
+        rapids-retry yum -y update
+        rapids-retry yum -y install --setopt=install_weak_deps=False \
           cuda-cudart-devel-${PKG_CUDA_VER} \
           cuda-driver-devel-${PKG_CUDA_VER} \
           cuda-gdb-${PKG_CUDA_VER} \
           cuda-cupti-${PKG_CUDA_VER}
-        rpm -Uvh --nodeps $(repoquery --location cuda-nvcc-${PKG_CUDA_VER})
+        rapids-retry rpm -Uvh --nodeps $(repoquery --location cuda-nvcc-${PKG_CUDA_VER})
         yum clean all
         ;;
       *)
@@ -217,10 +221,6 @@ case "${CUDA_VER}" in
     ;;
 esac
 EOF
-
-# Install gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
-  | tar -xz -C /usr/local/bin
 
 # Install prereq for envsubst
 RUN <<EOF
@@ -272,14 +272,14 @@ ARG REAL_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
 RUN <<EOF
-curl -o /tmp/sccache.tar.gz \
+rapids-retry curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
 tar -C /tmp -xvf /tmp/sccache.tar.gz
 mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
 chmod +x /usr/bin/sccache
 rm -rf /tmp/sccache.tar.gz "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl"
 
-wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
@@ -292,7 +292,7 @@ RUN <<EOF
 # We must also remove rust in this step because it ships 750MB of documentation files.
 rapids-mamba-retry install -y rust
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
-pip install codecov-cli==${CODECOV_VER}
+rapids-pip-retry install codecov-cli==${CODECOV_VER}
 pip cache purge
 rapids-mamba-retry uninstall -n base -y rust
 conda clean -aiptfy

@@ -29,17 +29,21 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Install latest gha-tools
+RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+  | tar -xz -C /usr/local/bin
+
 RUN <<EOF
 set -e
 case "${LINUX_VER}" in
   "ubuntu"*)
     echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    apt-get update
-    apt-get install -y software-properties-common
+    rapids-retry apt-get update
+    rapids-retry apt-get install -y software-properties-common
     # update git > 2.17
-    add-apt-repository ppa:git-core/ppa -y
-    apt-get update
-    apt-get upgrade -y
+    rapids-retry add-apt-repository ppa:git-core/ppa -y
+    rapids-retry apt-get update
+    rapids-retry apt-get upgrade -y
 
     # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
     # On Ubuntu 24.04 and newer, we also need tzdata-legacy
@@ -50,7 +54,7 @@ case "${LINUX_VER}" in
         tzdata_pkgs=(tzdata)
     fi
 
-    apt-get install -y --no-install-recommends \
+    rapids-retry apt-get install -y --no-install-recommends \
       "${tzdata_pkgs[@]}" \
       build-essential \
       ca-certificates \
@@ -86,10 +90,10 @@ case "${LINUX_VER}" in
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
-    dnf update -y
-    dnf install -y epel-release
-    dnf update -y
-    dnf install -y \
+    rapids-retry dnf update -y
+    rapids-retry dnf install -y epel-release
+    rapids-retry dnf update -y
+    rapids-retry dnf install -y \
       bzip2 \
       bzip2-devel \
       ca-certificates \
@@ -111,7 +115,7 @@ case "${LINUX_VER}" in
     update-ca-trust extract
     dnf clean all
     pushd tmp
-    wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
+    rapids-retry wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
         tar -xzvf openssl-1.1.1k.tar.gz
     cd openssl-1.1.1k
     ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
@@ -130,14 +134,14 @@ EOF
 ARG GH_CLI_VER=notset
 RUN <<EOF
 set -e
-wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
 EOF
 
 # Install pyenv
-RUN curl https://pyenv.run | bash
+RUN rapids-retry curl https://pyenv.run | bash
 
 # Create pyenvs
 RUN <<EOF
@@ -157,16 +161,14 @@ COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 # update pip and install build tools
 RUN <<EOF
 pyenv global ${PYTHON_VER}
-python -m pip install --upgrade pip
-python -m pip install \
+# `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
+# use so should be compatible with `pyenv`
+rapids-pip-retry install --upgrade pip
+rapids-pip-retry install \
   certifi \
   'rapids-dependency-file-generator==1.*'
 pyenv rehash
 EOF
-
-# Install latest gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
-  | tar -xz -C /usr/local/bin
 
 # git safe directory
 RUN git config --system --add safe.directory '*'

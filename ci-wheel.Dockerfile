@@ -33,12 +33,15 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Install latest gha-tools
+RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    apt update -y
-    apt install -y \
+    rapids-retry apt update -y
+    rapids-retry apt install -y \
       autoconf \
       automake \
       build-essential \
@@ -70,20 +73,20 @@ case "${LINUX_VER}" in
       zip \
       zlib1g-dev
     update-ca-certificates
-    add-apt-repository ppa:git-core/ppa
-    add-apt-repository ppa:ubuntu-toolchain-r/test
-    apt update -y
-    apt install -y git gcc-9 g++-9
-    add-apt-repository -r ppa:git-core/ppa
-    add-apt-repository -r ppa:ubuntu-toolchain-r/test
+    rapids-retry add-apt-repository ppa:git-core/ppa
+    rapids-retry add-apt-repository ppa:ubuntu-toolchain-r/test
+    rapids-retry apt update -y
+    rapids-retry apt install -y git gcc-9 g++-9
+    rapids-retry add-apt-repository -r ppa:git-core/ppa
+    rapids-retry add-apt-repository -r ppa:ubuntu-toolchain-r/test
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
-    dnf update -y
-    dnf install -y epel-release
-    dnf update -y
-    dnf install -y \
+    rapids-retry dnf update -y
+    rapids-retry dnf install -y epel-release
+    rapids-retry dnf update -y
+    rapids-retry dnf install -y \
       autoconf \
       automake \
       bzip2 \
@@ -116,16 +119,16 @@ case "${LINUX_VER}" in
       zlib-devel
     update-ca-trust extract
     dnf config-manager --set-enabled powertools
-    dnf install -y blas-devel lapack-devel
-    dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++
-    dnf -y install yasm
+    rapids-retry dnf install -y blas-devel lapack-devel
+    rapids-retry dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++
+    rapids-retry dnf -y install yasm
     dnf clean all
     echo -e ' \
       #!/bin/bash\n \
       source /opt/rh/gcc-toolset-11/enable \
     ' > /etc/profile.d/enable_devtools.sh
     pushd tmp
-    wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
+    rapids-retry wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
         tar -xzvf openssl-1.1.1k.tar.gz
     cd openssl-1.1.1k
     ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
@@ -144,7 +147,7 @@ EOF
 ARG GH_CLI_VER=notset
 RUN <<EOF
 set -e
-wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
@@ -154,7 +157,7 @@ EOF
 ARG SCCACHE_VER=notset
 
 RUN <<EOF
-curl -o /tmp/sccache.tar.gz \
+rapids-retry curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
 tar -C /tmp -xvf /tmp/sccache.tar.gz
 mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
@@ -165,7 +168,7 @@ EOF
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
 
 # Install pyenv
-RUN curl https://pyenv.run | bash
+RUN rapids-retry curl https://pyenv.run | bash
 
 RUN <<EOF
 case "${LINUX_VER}" in
@@ -185,8 +188,10 @@ EOF
 
 RUN <<EOF
 pyenv global ${PYTHON_VER}
-python -m pip install --upgrade pip
-python -m pip install \
+# `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
+# use so should be compatible with `pyenv`
+rapids-pip-retry install --upgrade pip
+rapids-pip-retry install \
   'auditwheel>=6.2.0' \
   certifi \
   conda-package-handling \
@@ -199,12 +204,9 @@ python -m pip install \
 pyenv rehash
 EOF
 
-# Install latest gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-
 # Install anaconda-client
 RUN <<EOF
-pip install git+https://github.com/Anaconda-Platform/anaconda-client
+rapids-pip-retry install git+https://github.com/Anaconda-Platform/anaconda-client
 pip cache purge
 EOF
 
