@@ -23,7 +23,7 @@ if [[
   "${LATEST_PYTHON_VER}" == "${PYTHON_VER}"
 ]]; then
   # only create a 'latest' manifest if it is a non-PR workflow.
-  MANIFEST_TAG="${RAPIDS_VERSION}-latest"
+  MANIFEST_TAG="${RAPIDS_VERSION_MAJOR_MINOR}-latest"
   if [[ "${BUILD_TYPE}" != "pull-request" ]]; then
     docker manifest create "rapidsai/${IMAGE_REPO}:${MANIFEST_TAG}" "${source_tags[@]}"
     docker manifest push "rapidsai/${IMAGE_REPO}:${MANIFEST_TAG}"
