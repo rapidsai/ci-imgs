@@ -14,9 +14,7 @@ case "${BUILD_TYPE}" in
     ;;
 esac
 
-RAPIDS_VERSION=$(cat VERSION)
-RAPIDS_VERSION_MAJOR_MINOR=$(echo "${RAPIDS_VERSION}" | cut -d. -f1,2)
-export RAPIDS_VERSION
+RAPIDS_VERSION_MAJOR_MINOR=$(rapids-version-major-minor)
 export RAPIDS_VERSION_MAJOR_MINOR
 
 yq -o json matrix.yaml | jq -c 'include "ci/compute-matrix"; compute_matrix(.)'

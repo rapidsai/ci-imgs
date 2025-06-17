@@ -2,8 +2,7 @@
 # Copyright (c) 2023-2025, NVIDIA CORPORATION.
 set -euo pipefail
 
-RAPIDS_VERSION=$(cat VERSION)
-RAPIDS_VERSION_MAJOR_MINOR=$(echo "${RAPIDS_VERSION}" | cut -d. -f1,2)
+RAPIDS_VERSION_MAJOR_MINOR=$(rapids-version-major-minor)
 
 LATEST_CUDA_VER=$(yq -r ".${IMAGE_REPO}.CUDA_VER" latest.yaml)
 LATEST_PYTHON_VER=$(yq -r ".${IMAGE_REPO}.PYTHON_VER" latest.yaml)
