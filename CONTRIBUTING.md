@@ -7,8 +7,8 @@ We love your input! We want to make contributing to this project as easy and tra
 - Submitting a fix
 - Proposing new features
 
-## We Develop with Github
-We use github to host code, to track issues and feature requests, as well as accept pull requests.
+## We Develop with GitHub
+We use GitHub to host code, track issues and feature requests, and accept pull requests.
 
 ## Report a bug or request a feature
 The best way to get in touch is by [opening an issue](https://github.com/rapidsai/ci-imgs/issues/new/choose).
@@ -18,7 +18,7 @@ The best way to get in touch is by [opening an issue](https://github.com/rapidsa
 2. Make your changes.
 3. If you've changed APIs, update the documentation.
 4. Make sure your code lints.
-5. Issue that pull request!
+5. Create a pull request!
 
 ## Developer Certificate of Origin
 All contributions to this project must be accompanied by a sign-off indicating that the contribution is made pursuant to the Developer Certificate of Origin (DCO). This is a lightweight way for contributors to certify that they wrote or otherwise have the right to submit the code they are contributing to the project.
