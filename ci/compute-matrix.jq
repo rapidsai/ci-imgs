@@ -15,9 +15,9 @@ def compute_tag_prefix($x):
   if
     env.BUILD_TYPE == "branch"
   then
-    ""
+    env.RAPIDS_VERSION + "-"
   else
-    $x.IMAGE_REPO + "-" + env.PR_NUM + "-"
+    env.RAPIDS_VERSION + "-" + $x.IMAGE_REPO + "-" + env.PR_NUM + "-"
   end;
 
 def compute_image_name($x):
