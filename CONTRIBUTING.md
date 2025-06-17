@@ -16,9 +16,7 @@ The best way to get in touch is by [opening an issue](https://github.com/rapidsa
 ## To make a code contribution
 1. Fork the repo and create your branch from `main`.
 2. Make your changes.
-3. If you've changed APIs, update the documentation.
-4. Make sure your code lints.
-5. Create a pull request!
+3. Create a pull request!
 
 ## Developer Certificate of Origin
 All contributions to this project must be accompanied by a sign-off indicating that the contribution is made pursuant to the Developer Certificate of Origin (DCO). This is a lightweight way for contributors to certify that they wrote or otherwise have the right to submit the code they are contributing to the project.
