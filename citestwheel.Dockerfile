@@ -47,7 +47,7 @@ EOF
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
-    apt-get update && apt-get install -y wget
+    rapids-retry apt-get update -y && apt-get install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
@@ -69,11 +69,11 @@ RUN <<EOF
 set -e
 case "${LINUX_VER}" in
   "ubuntu"*)
-    apt-get update
+    rapids-retry apt-get update -y
     apt-get install -y software-properties-common
     # update git > 2.17
     add-apt-repository ppa:git-core/ppa -y
-    apt-get update
+    rapids-retry apt-get update -y
     apt-get upgrade -y
 
     # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
