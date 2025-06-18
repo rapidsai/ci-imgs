@@ -20,6 +20,8 @@ ENV PYTHON_VERSION=${PYTHON_VER}
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Set apt policy configurations
+# We bump up the number of retries and the timeouts for `apt`
+# Note that `dnf` defaults to 10 retries, so no additional configuration is required here
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
