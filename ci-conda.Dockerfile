@@ -19,6 +19,42 @@ ENV PYTHON_VERSION=${PYTHON_VER}
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Set apt policy configurations
+# We bump up the number of retries and the timeouts for `apt`
+# Note that `dnf` defaults to 10 retries, so no additional configuration is required here
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
+    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
+    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
+    ;;
+esac
+EOF
+
+# Install latest gha-tools
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    apt-get update && apt-get install -y wget
+    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    apt-get purge -y wget && apt-get autoremove -y
+    rm -rf /var/lib/apt/lists/*
+    ;;
+  "rockylinux"*)
+    dnf install -y wget
+    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    dnf remove -y wget
+    dnf clean all
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+EOF
+
 # Create a conda group and assign it as root's primary group
 RUN <<EOF
 groupadd conda
@@ -41,7 +77,7 @@ echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
-conda update --all -y -n base
+rapids-mamba-retry update --all -y -n base
 # install expected Python version
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
 PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
@@ -53,11 +89,11 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
-conda install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-conda update --all -y -n base
+rapids-mamba-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+rapids-mamba-retry update --all -y -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
-  yum install -y findutils
-  yum clean all
+  dnf install -y findutils
+  dnf clean all
 fi
 find /opt/conda -follow -type f -name '*.a' -delete
 find /opt/conda -follow -type f -name '*.pyc' -delete
@@ -101,8 +137,8 @@ case "${LINUX_VER}" in
     rm -rf "/var/lib/apt/lists/*"
     ;;
   "rockylinux"*)
-    yum update -y
-    yum clean all
+    dnf update -y
+    dnf clean all
     ;;
   *)
     echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1
@@ -137,10 +173,6 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
-    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
-    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
-    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
     apt-get update
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
@@ -155,8 +187,8 @@ case "${LINUX_VER}" in
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
-    yum -y update
-    yum -y install --setopt=install_weak_deps=False \
+    dnf -y update
+    dnf -y install --setopt=install_weak_deps=False \
       ca-certificates \
       file \
       unzip \
@@ -166,7 +198,7 @@ case "${LINUX_VER}" in
       gcc \
       gcc-c++
     update-ca-trust extract
-    yum clean all
+    dnf clean all
     ;;
   *)
     echo "Unsupported LINUX_VER: ${LINUX_VER}"
@@ -200,14 +232,14 @@ case "${CUDA_VER}" in
         rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
         ;;
       "rockylinux"*)
-        yum -y update
-        yum -y install --setopt=install_weak_deps=False \
+        dnf -y update
+        dnf -y install --setopt=install_weak_deps=False \
           cuda-cudart-devel-${PKG_CUDA_VER} \
           cuda-driver-devel-${PKG_CUDA_VER} \
           cuda-gdb-${PKG_CUDA_VER} \
           cuda-cupti-${PKG_CUDA_VER}
-        rpm -Uvh --nodeps $(repoquery --location cuda-nvcc-${PKG_CUDA_VER})
-        yum clean all
+        rapids-retry rpm -Uvh --nodeps $(repoquery --location cuda-nvcc-${PKG_CUDA_VER})
+        dnf clean all
         ;;
       *)
         echo "Unsupported LINUX_VER: ${LINUX_VER}"
@@ -220,10 +252,6 @@ case "${CUDA_VER}" in
     ;;
 esac
 EOF
-
-# Install gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
-  | tar -xz -C /usr/local/bin
 
 # Install prereq for envsubst
 RUN <<EOF
@@ -275,14 +303,14 @@ ARG REAL_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
 RUN <<EOF
-curl -o /tmp/sccache.tar.gz \
+rapids-retry curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
 tar -C /tmp -xvf /tmp/sccache.tar.gz
 mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
 chmod +x /usr/bin/sccache
 rm -rf /tmp/sccache.tar.gz "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl"
 
-wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
@@ -295,7 +323,7 @@ RUN <<EOF
 # We must also remove rust in this step because it ships 750MB of documentation files.
 rapids-mamba-retry install -y rust
 # temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
-pip install codecov-cli==${CODECOV_VER}
+rapids-pip-retry install codecov-cli==${CODECOV_VER}
 pip cache purge
 rapids-mamba-retry uninstall -n base -y rust
 conda clean -aiptfy
