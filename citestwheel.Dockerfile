@@ -47,7 +47,8 @@ EOF
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
-    apt-get update -y && apt-get install -y wget
+    until apt-get update -y; do sleep 10; done
+    apt-get install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
