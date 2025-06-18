@@ -30,8 +30,26 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Install latest gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
-  | tar -xz -C /usr/local/bin
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    apt-get update && apt-get install -y wget
+    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    apt-get purge -y wget && apt-get autoremove -y
+    rm -rf /var/lib/apt/lists/*
+    ;;
+  "rockylinux"*)
+    dnf install -y wget
+    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    dnf remove -y wget
+    dnf clean all
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+EOF
 
 RUN <<EOF
 set -e
@@ -118,7 +136,7 @@ case "${LINUX_VER}" in
     update-ca-trust extract
     dnf clean all
     pushd tmp
-    wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
+    rapids-retry wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
         tar -xzvf openssl-1.1.1k.tar.gz
     cd openssl-1.1.1k
     ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
@@ -133,18 +151,18 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Download and install GH CLI tool
+# Download and install gh CLI tool
 ARG GH_CLI_VER=notset
 RUN <<EOF
 set -e
-wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
 EOF
 
 # Install pyenv
-RUN curl https://pyenv.run | bash
+RUN rapids-retry curl https://pyenv.run | bash
 
 # Create pyenvs
 RUN <<EOF
@@ -164,6 +182,8 @@ COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 # update pip and install build tools
 RUN <<EOF
 pyenv global ${PYTHON_VER}
+# `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
+# use so should be compatible with `pyenv`
 rapids-pip-retry install --upgrade pip
 rapids-pip-retry install \
   certifi \

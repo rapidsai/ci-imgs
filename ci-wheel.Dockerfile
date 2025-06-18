@@ -34,8 +34,26 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Install latest gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
-  | tar -xz -C /usr/local/bin
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    apt-get update && apt-get install -y wget
+    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    apt-get purge -y wget && apt-get autoremove -y
+    rm -rf /var/lib/apt/lists/*
+    ;;
+  "rockylinux"*)
+    dnf install -y wget
+    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    dnf remove -y wget
+    dnf clean all
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+EOF
 
 RUN <<EOF
 case "${LINUX_VER}" in
@@ -44,8 +62,8 @@ case "${LINUX_VER}" in
     echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
     echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
     echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
-    apt update -y
-    apt install -y \
+    apt-get update -y
+    apt-get install -y \
       autoconf \
       automake \
       build-essential \
@@ -79,8 +97,8 @@ case "${LINUX_VER}" in
     update-ca-certificates
     add-apt-repository ppa:git-core/ppa
     add-apt-repository ppa:ubuntu-toolchain-r/test
-    apt update -y
-    apt install -y git gcc-9 g++-9
+    apt-get update -y
+    apt-get install -y git gcc-9 g++-9
     add-apt-repository -r ppa:git-core/ppa
     add-apt-repository -r ppa:ubuntu-toolchain-r/test
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
@@ -132,7 +150,7 @@ case "${LINUX_VER}" in
       source /opt/rh/gcc-toolset-11/enable \
     ' > /etc/profile.d/enable_devtools.sh
     pushd tmp
-    wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
+    rapids-retry wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
         tar -xzvf openssl-1.1.1k.tar.gz
     cd openssl-1.1.1k
     ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
@@ -147,11 +165,11 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Download and install GH CLI tool
+# Download and install gh CLI tool
 ARG GH_CLI_VER=notset
 RUN <<EOF
 set -e
-wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
@@ -161,7 +179,7 @@ EOF
 ARG SCCACHE_VER=notset
 
 RUN <<EOF
-curl -o /tmp/sccache.tar.gz \
+rapids-retry curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
 tar -C /tmp -xvf /tmp/sccache.tar.gz
 mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
@@ -172,7 +190,7 @@ EOF
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
 
 # Install pyenv
-RUN curl https://pyenv.run | bash
+RUN rapids-retry curl https://pyenv.run | bash
 
 RUN <<EOF
 case "${LINUX_VER}" in
@@ -192,6 +210,8 @@ EOF
 
 RUN <<EOF
 pyenv global ${PYTHON_VER}
+# `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
+# use so should be compatible with `pyenv`
 rapids-pip-retry install --upgrade pip
 rapids-pip-retry install \
   'auditwheel>=6.2.0' \
