@@ -29,6 +29,18 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Set apt policy configurations
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
+    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
+    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
+    ;;
+esac
+EOF
+
 # Install latest gha-tools
 RUN <<EOF
 case "${LINUX_VER}" in
@@ -55,10 +67,6 @@ RUN <<EOF
 set -e
 case "${LINUX_VER}" in
   "ubuntu"*)
-    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
-    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
-    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
     apt-get update
     apt-get install -y software-properties-common
     # update git > 2.17

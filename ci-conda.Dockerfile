@@ -19,6 +19,18 @@ ENV PYTHON_VERSION=${PYTHON_VER}
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Set apt policy configurations
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
+    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
+    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
+    ;;
+esac
+EOF
+
 # Install latest gha-tools
 RUN <<EOF
 case "${LINUX_VER}" in
@@ -109,9 +121,9 @@ case "${LINUX_VER}" in
         tzdata_pkgs=(tzdata)
     fi
 
-    rapids-retry apt-get update
-    rapids-retry apt-get upgrade -y
-    rapids-retry apt-get install -y --no-install-recommends \
+    apt-get update
+    apt-get upgrade -y
+    apt-get install -y --no-install-recommends \
       "${tzdata_pkgs[@]}"
 
     # Downgrade cuda-compat on CUDA 12.8 due to an upstream bug
@@ -159,10 +171,6 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
-    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
-    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
-    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
     apt-get update
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
