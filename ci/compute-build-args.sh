@@ -10,12 +10,15 @@ if [[
   exit 1
 fi
 
+RAPIDS_VERSION_MAJOR_MINOR=$(rapids-version-major-minor)
+
 MANYLINUX_VER="manylinux_2_28"
 
 # translate ARCH to conda-equivalent string values
 CONDA_ARCH=$(echo "$ARCH" | sed 's#amd64#linux64#' | sed 's#arm64#aarch64#')
 
 ARGS="
+RAPIDS_VERSION_MAJOR_MINOR: ${RAPIDS_VERSION_MAJOR_MINOR}
 CUDA_VER: ${CUDA_VER}
 LINUX_VER: ${LINUX_VER}
 PYTHON_VER: ${PYTHON_VER}
