@@ -10,6 +10,7 @@ ARG MINIFORGE_VER=notset
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
 
+ARG CUDA_VER
 ARG LINUX_VER
 ARG PYTHON_VER
 ARG DEBIAN_FRONTEND=noninteractive
@@ -90,6 +91,13 @@ case "${LINUX_VER}" in
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
       "${tzdata_pkgs[@]}"
+
+    # Downgrade cuda-compat on CUDA 12.8 due to an upstream bug
+    if [[ "${CUDA_VER}" == "12.8"* ]]; then
+      apt-get install -y --allow-downgrades cuda-compat-12-8=570.148.08-0ubuntu1
+      apt-mark hold cuda-compat-12-8
+    fi
+
     rm -rf "/var/lib/apt/lists/*"
     ;;
   "rockylinux"*)
