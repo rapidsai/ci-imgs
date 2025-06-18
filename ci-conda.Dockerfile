@@ -138,6 +138,9 @@ RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
+    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
+    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
     apt-get update
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
