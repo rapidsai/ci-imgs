@@ -273,14 +273,8 @@ EOF
 # Install codecov from source distribution
 ARG CODECOV_VER=notset
 RUN <<EOF
-# rust is needed for source builds of codecov-cli -- binaries are not available for Python 3.13 yet.
-# We must also remove rust in this step because it ships 750MB of documentation files.
-rapids-mamba-retry install -y rust
-# temporary workaround for discovered codecov binary install issue. See rapidsai/ci-imgs/issues/142
 rapids-pip-retry install codecov-cli==${CODECOV_VER}
 pip cache purge
-rapids-mamba-retry uninstall -n base -y rust
-conda clean -aiptfy
 EOF
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'

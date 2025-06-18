@@ -10,7 +10,6 @@ PYTHON_VER:
   - "3.12"
   - "3.13"
 LINUX_VER:
-  - "ubuntu20.04"
   - "ubuntu22.04"
   - "ubuntu24.04"
   - "rockylinux8"
@@ -43,8 +42,6 @@ exclude:
     IMAGE_REPO: "ci-wheel"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)
-  - LINUX_VER: "ubuntu20.04"
-    IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu22.04"
     IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu24.04"
