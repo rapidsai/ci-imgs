@@ -33,6 +33,10 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Install latest gha-tools
+RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+  | tar -xz -C /usr/local/bin
+
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
@@ -188,8 +192,8 @@ EOF
 
 RUN <<EOF
 pyenv global ${PYTHON_VER}
-python -m pip install --upgrade pip
-python -m pip install \
+rapids-pip-retry install --upgrade pip
+rapids-pip-retry install \
   'auditwheel>=6.2.0' \
   certifi \
   conda-package-handling \
@@ -202,13 +206,10 @@ python -m pip install \
 pyenv rehash
 EOF
 
-# Install latest gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-
 # Install anaconda-client
 RUN <<EOF
-pip install git+https://github.com/Anaconda-Platform/anaconda-client
-pip cache purge
+rapids-pip-retry install git+https://github.com/Anaconda-Platform/anaconda-client
+rapids-pip-retry cache purge
 EOF
 
 # Install the AWS CLI

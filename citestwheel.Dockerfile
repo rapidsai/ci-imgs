@@ -29,6 +29,10 @@ ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Install latest gha-tools
+RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+  | tar -xz -C /usr/local/bin
+
 RUN <<EOF
 set -e
 case "${LINUX_VER}" in
@@ -160,16 +164,12 @@ COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 # update pip and install build tools
 RUN <<EOF
 pyenv global ${PYTHON_VER}
-python -m pip install --upgrade pip
-python -m pip install \
+rapids-pip-retry install --upgrade pip
+rapids-pip-retry install \
   certifi \
   'rapids-dependency-file-generator==1.*'
 pyenv rehash
 EOF
-
-# Install latest gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
-  | tar -xz -C /usr/local/bin
 
 # git safe directory
 RUN git config --system --add safe.directory '*'

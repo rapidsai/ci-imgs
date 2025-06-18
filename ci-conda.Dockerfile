@@ -19,6 +19,10 @@ ENV PYTHON_VERSION=${PYTHON_VER}
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Install latest gha-tools
+RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
+  | tar -xz -C /usr/local/bin
+
 # Create a conda group and assign it as root's primary group
 RUN <<EOF
 groupadd conda
@@ -41,7 +45,7 @@ echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
-conda update --all -y -n base
+rapids-mamba-retry update --all -y -n base
 # install expected Python version
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
 PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
@@ -53,8 +57,8 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
-conda install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-conda update --all -y -n base
+rapids-mamba-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+rapids-mamba-retry update --all -y -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   yum install -y findutils
   yum clean all
@@ -220,10 +224,6 @@ case "${CUDA_VER}" in
     ;;
 esac
 EOF
-
-# Install gha-tools
-RUN wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - \
-  | tar -xz -C /usr/local/bin
 
 # Install prereq for envsubst
 RUN <<EOF
