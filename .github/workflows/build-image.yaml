@@ -56,8 +56,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: docker-container
           endpoint: builders
+          buildkitd-flags: --debug --config /etc/buildkit/buildkitd.toml
       - name: Generate Build Args
         id: generate-build-args
         run: ci/compute-build-args.sh
