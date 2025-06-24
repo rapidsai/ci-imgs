@@ -51,7 +51,8 @@ EOF
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
-    apt-get update && apt-get install -y wget
+    i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
+    apt-get install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
@@ -72,7 +73,7 @@ EOF
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
-    apt-get update -y
+    rapids-retry apt-get update -y
     apt-get install -y \
       autoconf \
       automake \
@@ -107,7 +108,7 @@ case "${LINUX_VER}" in
     update-ca-certificates
     add-apt-repository ppa:git-core/ppa
     add-apt-repository ppa:ubuntu-toolchain-r/test
-    apt-get update -y
+    rapids-retry apt-get update -y
     apt-get install -y git gcc-9 g++-9
     add-apt-repository -r ppa:git-core/ppa
     add-apt-repository -r ppa:ubuntu-toolchain-r/test

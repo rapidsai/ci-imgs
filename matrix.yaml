@@ -2,8 +2,7 @@
 CUDA_VER:
   - "12.0.1"
   - "12.2.2"
-  - "12.8.0"
-  - "12.9.0"
+  - "12.9.1"
 PYTHON_VER:
   - "3.10"
   - "3.11"
@@ -37,8 +36,6 @@ exclude:
   - CUDA_VER: "12.0.1"
     IMAGE_REPO: "ci-wheel"
   - CUDA_VER: "12.2.2"
-    IMAGE_REPO: "ci-wheel"
-  - CUDA_VER: "12.8.0"
     IMAGE_REPO: "ci-wheel"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)
