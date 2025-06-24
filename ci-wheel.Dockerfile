@@ -241,6 +241,7 @@ EOF
 RUN <<EOF
 rapids-pip-retry install git+https://github.com/Anaconda-Platform/anaconda-client
 rapids-pip-retry cache purge
+pyenv rehash
 EOF
 
 # Install the AWS CLI
