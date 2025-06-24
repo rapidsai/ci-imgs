@@ -78,4 +78,6 @@ jobs:
           target: ${{ inputs.DOCKER_TARGET }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
           # Enable zstd compression (gzip is default)
-          outputs: type=registry,compression=zstd,force-compression=true,oci-mediatypes=true,compression-level=18
+          # Compression level 15 is rough based on empirical testing
+          # https://github.com/rapidsai/ci-imgs/pull/281#issuecomment-3001509856
+          outputs: type=registry,compression=zstd,force-compression=true,oci-mediatypes=true,compression-level=15
