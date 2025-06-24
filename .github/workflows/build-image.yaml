@@ -78,4 +78,4 @@ jobs:
           target: ${{ inputs.DOCKER_TARGET }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
           # Enable zstd compression (gzip is default)
-          outputs: type=registry,compression=zstd,force-compression=true,oci-mediatypes=true,compression-level=20
+          outputs: type=registry,compression=zstd,force-compression=true,oci-mediatypes=true,compression-level=18
