@@ -48,7 +48,7 @@ RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
-    apt-get install -y wget
+    apt-get install -y --no-install-recommends wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
@@ -112,12 +112,6 @@ case "${LINUX_VER}" in
       xz-utils \
       zlib1g-dev
     update-ca-certificates
-
-    # Downgrade cuda-compat on CUDA 12.8 due to an upstream bug
-    if [[ "${CUDA_VER}" == "12.8"* ]]; then
-      apt-get install -y --allow-downgrades cuda-compat-12-8=570.148.08-0ubuntu1
-      apt-mark hold cuda-compat-12-8
-    fi
 
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
