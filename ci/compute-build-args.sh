@@ -6,24 +6,21 @@ set -euo pipefail
 
 if [[
   "${IMAGE_REPO}" == "ci-wheel" &&
-  "${LINUX_VER}" != "ubuntu20.04" &&
   "${LINUX_VER}" != "rockylinux8"
 ]]; then
   echo "Unsupported LINUX_VER: ${LINUX_VER} for ci-wheel image"
   exit 1
 fi
 
+RAPIDS_VERSION_MAJOR_MINOR=$(rapids-version-major-minor)
+
 MANYLINUX_VER="manylinux_2_28"
-if [[
-  "${LINUX_VER}" == "ubuntu20.04"
-]]; then
-  MANYLINUX_VER="manylinux_2_31"
-fi
 
 # translate ARCH to conda-equivalent string values
 CONDA_ARCH=$(echo "$ARCH" | sed 's#amd64#linux64#' | sed 's#arm64#aarch64#')
 
 ARGS="
+RAPIDS_VERSION_MAJOR_MINOR: ${RAPIDS_VERSION_MAJOR_MINOR}
 CUDA_VER: ${CUDA_VER}
 LINUX_VER: ${LINUX_VER}
 PYTHON_VER: ${PYTHON_VER}
