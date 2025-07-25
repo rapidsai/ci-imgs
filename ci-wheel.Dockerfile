@@ -155,12 +155,12 @@ case "${LINUX_VER}" in
     update-ca-trust extract
     dnf config-manager --set-enabled powertools
     dnf install -y blas-devel lapack-devel
-    dnf -y install gcc-toolset-11-gcc gcc-toolset-11-gcc-c++
+    dnf -y install gcc-toolset-14-gcc gcc-toolset-14-gcc-c++
     dnf -y install yasm
     dnf clean all
     echo -e ' \
       #!/bin/bash\n \
-      source /opt/rh/gcc-toolset-11/enable \
+      source /opt/rh/gcc-toolset-14/enable \
     ' > /etc/profile.d/enable_devtools.sh
     pushd tmp
     rapids-retry wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
