@@ -29,14 +29,14 @@ if [[
   "${LATEST_CUDA_VER}" == "${CUDA_VER}" &&
   "${LATEST_PYTHON_VER}" == "${PYTHON_VER}"
 ]]; then
-  # only create a 'latest' manifest if it is a non-PR workflow.
+  # only create/update ':latest' manifest if it is a non-PR workflow.
   MANIFEST_TAG="${RAPIDS_VERSION_MAJOR_MINOR}-latest"
   if [[ "${BUILD_TYPE}" != "pull-request" ]]; then
-    # create a "latest"
+    # create/update ":latest"
     docker manifest create "rapidsai/${IMAGE_REPO}:latest" "${source_tags[@]}"
     docker manifest push "rapidsai/${IMAGE_REPO}:latest"
 
-    # create a {rapids_version}-latest
+    # create/update ":{rapids_version}-latest"
     docker manifest create "rapidsai/${IMAGE_REPO}:${MANIFEST_TAG}" "${source_tags[@]}"
     docker manifest push "rapidsai/${IMAGE_REPO}:${MANIFEST_TAG}"
   else
