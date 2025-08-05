@@ -2,9 +2,52 @@
 
 This repository includes the following CI images for RAPIDS:
 
-- `ci-conda` images are conda CI images used for building RAPIDS.
-- `ci-wheel` images are for building manylinux-compliant wheels. They are also used to build pure-Python wheels, and for publishing wheels with twine.
-- `citestwheel` images are for running wheel tests.
+- [`rapidsai/ci-conda`](https://hub.docker.com/r/rapidsai/ci-conda/tags): for building and testing RAPIDS `conda` packages
+- [`rapidsai/ci-wheel`](https://hub.docker.com/r/rapidsai/ci-wheel/tags): for building and publishing RAPIDS wheels (including pure-Python and manylinux-compliant wheels)
+- [`rapidsai/citestwheel`](https://hub.docker.com/r/rapidsai/citestwheel/tags): for testing wheels
+- [`rapidsai/miniforge-cuda`](https://hub.docker.com/r/rapidsai/citestwheel/tags): base image for `conda`-based images here, and for user-facing RAPIDS images like https://github.com/rapidsai/docker
+
+## Tagging Strategy
+
+All images are double-published with the following tags:
+
+```text
+:{rapids_version}-cuda{cuda_version}-{operating_system}-py{python_version}
+:cuda{cuda_version}-{operating_system}-py{python_version}
+```
+
+One particular combination is also chosen for `latest` tags like these:
+
+```text
+:{rapids_version}-latest
+:latest
+```
+
+For example, during the 25.10 release the following might all point to the same image:
+
+```text
+rapidsai/ci-conda:25.10-cuda12.9.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:cuda12.9.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:25.10-latest
+rapidsai/ci-conda:latest
+```
+
+But starting with the 25.12 release...
+
+```text
+# these images are unchanged
+rapidsai/ci-conda:25.10-cuda12.9.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:25.10-latest
+
+# these now point to 25.12
+rapidsai/ci-conda:cuda12.9.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:latest
+```
+
+RAPIDS projects and others tightly coupled to RAPIDS releases should use the images prefixed with `{rapids_version}-`.
+
+Other projects that aren't as tightly coupled to RAPIDS may want to use those without `{rapids_version}-`, to automatically
+pull in bug fixes, new features, etc. without needing to manually update tags as frequently as RAPIDS releases.
 
 ## `latest` tag
 

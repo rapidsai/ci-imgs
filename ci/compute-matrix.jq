@@ -23,6 +23,16 @@ def compute_tag_prefix($x):
     $x.IMAGE_REPO + "-" + env.PR_NUM + "-" + env.RAPIDS_VERSION_MAJOR_MINOR + "-"
   end;
 
+def compute_tag_prefix_no_rapids_version($x):
+  if
+    env.BUILD_TYPE == "branch"
+  then
+    ""
+  else
+    $x.IMAGE_REPO + "-" + env.PR_NUM + "-"
+  end;
+
+# Compute image URI in the form '{repo}/{name}:{tag}'
 def compute_image_name($x):
   compute_repo($x) as $repo |
   compute_tag_prefix($x) as $tag_prefix |
@@ -30,6 +40,15 @@ def compute_image_name($x):
    then "-base-" else "-" end) as $base_id |
   "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + $base_id + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
   $x + {IMAGE_NAME: .};
+
+# Similar to compute_image_name(), but without RAPIDS version number
+def compute_image_name_no_rapids_version($x):
+  compute_repo($x) as $repo |
+  compute_tag_prefix_no_rapids_version($x) as $tag_prefix |
+  (if $x.IMAGE_REPO == "miniforge-cuda"
+   then "-base-" else "-" end) as $base_id |
+  "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + $base_id + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
+  $x + {IMAGE_NAME_NO_RAPIDS_VERSION: .};
 
 # Checks the current entry to see if it matches the given exclude
 def matches($entry; $exclude):
@@ -58,6 +77,7 @@ def compute_matrix($input):
     del(.CI_IMAGE_CONFIG) |
     filter_excludes(.; $excludes) |
     compute_arch(.) |
-    compute_image_name(.)
+    compute_image_name(.) |
+    compute_image_name_no_rapids_version(.)
   ] |
   {include: .};
