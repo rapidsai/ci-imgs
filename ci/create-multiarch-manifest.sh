@@ -16,19 +16,30 @@ for arch in $(echo "${ARCHES}" | jq .[] -r); do
   source_tags+=("${tag}-${arch}")
 done
 
+# create/update manifests for RAPIDS-versioned images
 docker manifest create "${tag}" "${source_tags[@]}"
 docker manifest push "${tag}"
+
+# create/update manifests for non-RAPIDS-versioned images
+docker manifest create "${IMAGE_NAME_NO_RAPIDS_VERSION}" "${source_tags[@]}"
+docker manifest push "${IMAGE_NAME_NO_RAPIDS_VERSION}"
+
 if [[
   "${LATEST_UBUNTU_VER}" == "${LINUX_VER}" &&
   "${LATEST_CUDA_VER}" == "${CUDA_VER}" &&
   "${LATEST_PYTHON_VER}" == "${PYTHON_VER}"
 ]]; then
-  # only create a 'latest' manifest if it is a non-PR workflow.
+  # only create/update ':latest' manifest if it is a non-PR workflow.
   MANIFEST_TAG="${RAPIDS_VERSION_MAJOR_MINOR}-latest"
   if [[ "${BUILD_TYPE}" != "pull-request" ]]; then
+    # create/update ":latest"
+    docker manifest create "rapidsai/${IMAGE_REPO}:latest" "${source_tags[@]}"
+    docker manifest push "rapidsai/${IMAGE_REPO}:latest"
+
+    # create/update ":{rapids_version}-latest"
     docker manifest create "rapidsai/${IMAGE_REPO}:${MANIFEST_TAG}" "${source_tags[@]}"
     docker manifest push "rapidsai/${IMAGE_REPO}:${MANIFEST_TAG}"
   else
-    echo "Skipping '${MANIFEST_TAG}' manifest creation for PR workflow."
+    echo "Skipping 'latest' and '${MANIFEST_TAG}' manifest creation for PR workflow."
   fi
 fi
