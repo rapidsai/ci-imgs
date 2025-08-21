@@ -187,6 +187,7 @@ EOF
 
 # Install sccache
 ARG SCCACHE_VER=notset
+
 RUN <<EOF
 rapids-retry curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
@@ -196,6 +197,7 @@ chmod +x /usr/bin/sccache
 EOF
 
 # Download and install awscli
+# Needed to download wheels for running tests
 ARG AWS_CLI_VER=notset
 RUN <<EOF
 rapids-retry curl -o /tmp/awscliv2.zip \
