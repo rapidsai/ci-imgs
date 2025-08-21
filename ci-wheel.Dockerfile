@@ -100,6 +100,7 @@ case "${LINUX_VER}" in
       openssh-client \
       protobuf-compiler \
       software-properties-common \
+      unzip \
       wget \
       yasm \
       zip \
@@ -143,6 +144,7 @@ case "${LINUX_VER}" in
       readline-devel \
       sqlite \
       sqlite-devel \
+      unzip \
       wget \
       which \
       xz \

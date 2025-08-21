@@ -132,6 +132,7 @@ case "${LINUX_VER}" in
       readline-devel \
       sqlite \
       sqlite-devel \
+      unzip \
       wget \
       which \
       xz \
