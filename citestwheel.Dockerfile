@@ -6,9 +6,6 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
-ARG AWS_CLI_VER=notset
-
-FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
 
 FROM ${BASE_IMAGE}
 
@@ -168,6 +165,16 @@ mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
 EOF
 
+# Download and install awscli
+ARG AWS_CLI_VER=notset
+RUN <<EOF
+rapids-retry curl -o /tmp/awscliv2.zip \
+  -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+rm -rf /tmp/aws /tmp/awscliv2.zip
+EOF
+
 # Install pyenv
 RUN rapids-retry curl https://pyenv.run | bash
 
@@ -180,11 +187,6 @@ EOF
 
 # add bin to path
 ENV PATH="/pyenv/versions/${PYTHON_VER}/bin/:$PATH"
-
-# Install the AWS CLI
-# Needed to download wheels for running tests
-COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
-COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
 # update pip and install build tools
 RUN <<EOF

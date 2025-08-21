@@ -6,9 +6,6 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
-ARG AWS_CLI_VER=notset
-
-FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
 
 FROM ${BASE_IMAGE}
 
@@ -190,13 +187,22 @@ EOF
 
 # Install sccache
 ARG SCCACHE_VER=notset
-
 RUN <<EOF
 rapids-retry curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
 tar -C /tmp -xvf /tmp/sccache.tar.gz
 mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
 chmod +x /usr/bin/sccache
+EOF
+
+# Download and install awscli
+ARG AWS_CLI_VER=notset
+RUN <<EOF
+rapids-retry curl -o /tmp/awscliv2.zip \
+  -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+rm -rf /tmp/aws /tmp/awscliv2.zip
 EOF
 
 # Set AUDITWHEEL_* env vars for use with auditwheel
@@ -245,10 +251,6 @@ rapids-pip-retry install git+https://github.com/Anaconda-Platform/anaconda-clien
 rapids-pip-retry cache purge
 pyenv rehash
 EOF
-
-# Install the AWS CLI
-COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
-COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
 # Create output directory for wheel builds
 RUN mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}

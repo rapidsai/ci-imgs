@@ -5,8 +5,6 @@
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
-ARG YQ_VER=notset
-ARG AWS_CLI_VER=notset
 ARG MINIFORGE_VER=notset
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
@@ -143,10 +141,6 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-FROM mikefarah/yq:${YQ_VER} AS yq
-
-FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
-
 FROM miniforge-cuda
 
 ARG TARGETPLATFORM=notset
@@ -248,11 +242,13 @@ rapids-mamba-retry install -y \
 conda clean -aiptfy
 EOF
 
-# Install sccache and gh cli
+# Install sccache, gh cli, yq, and awscli
 ARG SCCACHE_VER=notset
 ARG REAL_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
+ARG YQ_VER=notset
+ARG AWS_CLI_VER=notset
 RUN <<EOF
 rapids-retry curl -o /tmp/sccache.tar.gz \
   -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
@@ -265,6 +261,17 @@ rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
+
+rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
+mv /tmp/yq /usr/bin/yq
+chmod +x /usr/bin/yq
+rm -f /tmp/yq
+
+rapids-retry curl -o /tmp/awscliv2.zip \
+  -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+rm -rf /tmp/aws /tmp/awscliv2.zip
 EOF
 
 # Install codecov from source distribution
@@ -275,10 +282,6 @@ pip cache purge
 EOF
 
 RUN /opt/conda/bin/git config --system --add safe.directory '*'
-
-COPY --from=yq /usr/bin/yq /usr/local/bin/yq
-COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
-COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
