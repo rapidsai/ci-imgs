@@ -167,6 +167,7 @@ EOF
 
 # Download and install awscli
 ARG AWS_CLI_VER=notset
+ARG REAL_ARCH=notset
 RUN <<EOF
 rapids-retry curl -o /tmp/awscliv2.zip \
   -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
