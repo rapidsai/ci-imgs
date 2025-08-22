@@ -267,6 +267,7 @@ mv /tmp/yq /usr/bin/yq
 chmod +x /usr/bin/yq
 rm -f /tmp/yq
 
+# ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
 rapids-retry curl -o /tmp/awscliv2.zip \
   -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
 unzip -q /tmp/awscliv2.zip -d /tmp
