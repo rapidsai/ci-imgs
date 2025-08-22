@@ -265,7 +265,6 @@ rm -rf gh_*
 rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
 mv /tmp/yq /usr/bin/yq
 chmod +x /usr/bin/yq
-rm -f /tmp/yq
 
 # ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
 rapids-retry curl -o /tmp/awscliv2.zip \
