@@ -26,8 +26,8 @@ One particular combination is also chosen for `latest` tags like these:
 For example, during the 25.10 release the following might all point to the same image:
 
 ```text
-rapidsai/ci-conda:25.10-cuda12.9.1-ubuntu24.04-py3.13
-rapidsai/ci-conda:cuda12.9.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:25.10-cuda13.0.0-ubuntu24.04-py3.13
+rapidsai/ci-conda:cuda13.0.0-ubuntu24.04-py3.13
 rapidsai/ci-conda:25.10-latest
 rapidsai/ci-conda:latest
 ```
@@ -36,11 +36,11 @@ But starting with the 25.12 release...
 
 ```text
 # these images are unchanged
-rapidsai/ci-conda:25.10-cuda12.9.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:25.10-cuda13.0.0-ubuntu24.04-py3.13
 rapidsai/ci-conda:25.10-latest
 
 # these now point to 25.12
-rapidsai/ci-conda:cuda12.9.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:cuda13.0.0-ubuntu24.04-py3.13
 rapidsai/ci-conda:latest
 ```
 
@@ -59,7 +59,7 @@ To build the dockerfiles locally, you may use the following snippets:
 
 ```sh
 export LINUX_VER=ubuntu24.04
-export CUDA_VER=12.9.1
+export CUDA_VER=13.0.0
 export PYTHON_VER=3.13
 export ARCH=amd64
 export IMAGE_REPO=ci-conda
