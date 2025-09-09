@@ -6,9 +6,6 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
-ARG AWS_CLI_VER=notset
-
-FROM amazon/aws-cli:${AWS_CLI_VER} AS aws-cli
 
 FROM ${BASE_IMAGE}
 
@@ -103,6 +100,7 @@ case "${LINUX_VER}" in
       openssh-client \
       protobuf-compiler \
       software-properties-common \
+      unzip \
       wget \
       yasm \
       zip \
@@ -146,6 +144,7 @@ case "${LINUX_VER}" in
       readline-devel \
       sqlite \
       sqlite-devel \
+      unzip \
       wget \
       which \
       xz \
@@ -199,6 +198,18 @@ mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr
 chmod +x /usr/bin/sccache
 EOF
 
+# Download and install awscli
+# Needed to download wheels for running tests
+ARG AWS_CLI_VER=notset
+RUN <<EOF
+# ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
+rapids-retry curl -o /tmp/awscliv2.zip \
+  -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+rm -rf /tmp/aws /tmp/awscliv2.zip
+EOF
+
 # Set AUDITWHEEL_* env vars for use with auditwheel
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
 
@@ -245,10 +256,6 @@ rapids-pip-retry install git+https://github.com/Anaconda-Platform/anaconda-clien
 rapids-pip-retry cache purge
 pyenv rehash
 EOF
-
-# Install the AWS CLI
-COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
-COPY --from=aws-cli /usr/local/bin/ /usr/local/bin/
 
 # Create output directory for wheel builds
 RUN mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}

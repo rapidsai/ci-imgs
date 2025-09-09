@@ -11,7 +11,7 @@
       "description": "Update low-risk CLI tools together",
       "groupName": "cli-tools",
       "matchPackageNames": [
-        "/^(amazon/aws-cli|cli/cli|codecov-cli|mikefarah/yq)$/"
+        "/^(aws/aws-cli|cli/cli|codecov-cli|mikefarah/yq)$/"
       ]
     }
   ],

@@ -80,4 +80,5 @@ jobs:
           IMAGE_REPO: ${{ matrix.IMAGE_REPO }}
           BUILD_TYPE: ${{ inputs.build_type }}
           IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
+          IMAGE_NAME_NO_RAPIDS_VERSION: ${{ matrix.IMAGE_NAME_NO_RAPIDS_VERSION }}
         run: ci/create-multiarch-manifest.sh

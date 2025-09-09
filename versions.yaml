@@ -6,12 +6,12 @@
 # prefer sticking with a stable version until a specific reason to update arises.
 SCCACHE_VER: 0.7.7
 # renovate: datasource=github-releases depName=cli/cli
-GH_CLI_VER: 2.74.2
+GH_CLI_VER: 2.76.2
 # renovate: datasource=pypi depName=codecov-cli
-CODECOV_VER: 11.0.3
-# renovate: datasource=docker depName=mikefarah/yq versioning=docker
-YQ_VER: 4.45.4
-# renovate: datasource=docker depName=amazon/aws-cli versioning=docker
-AWS_CLI_VER: 2.27.47
+CODECOV_VER: 11.1.0
+# renovate: datasource=github-releases depName=mikefarah/yq
+YQ_VER: 4.47.1
+# renovate: datasource=github-releases depName=aws/aws-cli
+AWS_CLI_VER: 2.28.1
 # renovate: datasource=docker depName=condaforge/miniforge3 versioning=docker
 MINIFORGE_VER: 25.3.1-0
