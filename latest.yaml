@@ -3,19 +3,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # Define the values used for the "latest" tag
 miniforge-cuda:
-  CUDA_VER: "13.0.0"
+  CUDA_VER: "13.0.1"
   PYTHON_VER: "3.13"
   LINUX_VER: "ubuntu24.04"
 ci-conda:
-  CUDA_VER: "13.0.0"
+  CUDA_VER: "13.0.1"
   PYTHON_VER: "3.13"
   LINUX_VER: "ubuntu24.04"
 ci-wheel:
-  CUDA_VER: "13.0.0"
+  CUDA_VER: "13.0.1"
   PYTHON_VER: "3.13"
   # Wheels should always be built with the oldest supported glibc version
   LINUX_VER: "rockylinux8"
 citestwheel:
-  CUDA_VER: "13.0.0"
+  CUDA_VER: "13.0.1"
   PYTHON_VER: "3.13"
   LINUX_VER: "ubuntu24.04"
