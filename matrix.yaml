@@ -2,7 +2,6 @@
 # All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 CUDA_VER:
-  - "12.0.1"
   - "12.2.2"
   - "12.9.1"
   - "13.0.1"
@@ -31,13 +30,9 @@ CI_IMAGE_CONFIG:
 exclude:
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu24.04"
-    CUDA_VER: "12.0.1"
-  - LINUX_VER: "ubuntu24.04"
     CUDA_VER: "12.2.2"
 
   # Only build ci-wheel for the latest CUDA of each major version
-  - CUDA_VER: "12.0.1"
-    IMAGE_REPO: "ci-wheel"
   - CUDA_VER: "12.2.2"
     IMAGE_REPO: "ci-wheel"
 
