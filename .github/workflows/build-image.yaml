@@ -24,12 +24,19 @@ on:
       IMAGE_NAME:
         required: true
         type: string
+      STAGING_IMAGE_NAME:
+        required: true
+        type: string
       DOCKERFILE:
         required: true
         type: string
       DOCKER_TARGET:
         required: false
         type: string
+      GENERATE_SBOM:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   run:
@@ -73,7 +80,7 @@ jobs:
           PYTHON_VER: ${{ inputs.PYTHON_VER }}
           ARCH: ${{ matrix.ARCH }}
           IMAGE_REPO: ${{ inputs.IMAGE_REPO }}
-      - name: Build image
+      - name: Build image (staging)
         uses: docker/build-push-action@v6
         with:
           context: context
@@ -82,12 +89,47 @@ jobs:
           build-args: |
             ${{ steps.generate-build-args.outputs.ARGS }}
           target: ${{ inputs.DOCKER_TARGET }}
-          tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
+          tags: ${{ inputs.STAGING_IMAGE_NAME }}-${{ matrix.ARCH }}
           # Enable zstd compression (gzip is default)
           # Compression level 15 is rough based on empirical testing
           # https://github.com/rapidsai/ci-imgs/pull/281#issuecomment-3001509856
           outputs: type=registry,compression=zstd,force-compression=true,oci-mediatypes=true,compression-level=15
           # Disable provenance and SBOM generation
           # https://github.com/docker/build-push-action/issues/755
+          provenance: false
+          sbom: false
+
+      - name: Install Syft using curl
+        if: ${{ inputs.GENERATE_SBOM }}
+        run: |
+          curl -sSfL https://get.anchore.io/syft | sh -s -- -b /tmp/syft
+          echo "/tmp/syft" >> "${GITHUB_PATH}"
+      - name: Generate SBOM (CycloneDX 1.6 JSON format)
+        if: ${{ inputs.GENERATE_SBOM }}
+        run: |
+          IMAGE_URI="${{ inputs.STAGING_IMAGE_NAME }}-${{ matrix.ARCH }}"
+          docker pull "${IMAGE_URI}"
+          syft scan \
+            --scope all-layers \
+            --parallelism "$(nproc --all --ignore=1)" \
+            --output cyclonedx-json=$(pwd)/sbom.json \
+            "${IMAGE_URI}"
+      - name: Embed SBOM into image
+        if: ${{ inputs.GENERATE_SBOM }}
+        run: |
+          cat > Dockerfile.sbom <<EOF
+          FROM ${{ inputs.STAGING_IMAGE_NAME }}-${{ matrix.ARCH }}
+          RUN mkdir -p /sbom
+          COPY sbom.json /sbom/sbom.json
+          EOF
+      - name: Build image with SBOM
+        if: ${{ inputs.GENERATE_SBOM }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.sbom
+          pull: true
+          tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
+          outputs: type=registry,compression=zstd,force-compression=true,oci-mediatypes=true,compression-level=15
           provenance: false
           sbom: false

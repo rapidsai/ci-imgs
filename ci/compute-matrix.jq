@@ -5,6 +5,14 @@
 def compute_arch($x):
   $x + {ARCHES: ["amd64", "arm64"]};
 
+def short_sha:
+  (env.GITHUB_SHA // "") as $sha
+  | if $sha == "" then
+      "unknownsha"
+    else
+      $sha[0:7]
+    end;
+
 def compute_repo($x):
   if
     env.BUILD_TYPE == "pull-request"
@@ -50,6 +58,22 @@ def compute_image_name_no_rapids_version($x):
   "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + $base_id + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
   $x + {IMAGE_NAME_NO_RAPIDS_VERSION: .};
 
+def compute_staging_tag_prefix($x):
+  if
+    env.BUILD_TYPE == "pull-request"
+  then
+    $x.IMAGE_REPO + "-" + env.PR_NUM + "-" + env.RAPIDS_VERSION_MAJOR_MINOR + "-"
+  else
+    $x.IMAGE_REPO + "-" + short_sha + "-"
+  end;
+
+def compute_staging_image_name($x):
+  compute_staging_tag_prefix($x) as $tag_prefix |
+  (if $x.IMAGE_REPO == "miniforge-cuda"
+   then "-base-" else "-" end) as $base_id |
+  "rapidsai/staging:" + $tag_prefix + "cuda" + $x.CUDA_VER + $base_id + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
+  $x + {STAGING_IMAGE_NAME: .};
+
 # Checks the current entry to see if it matches the given exclude
 def matches($entry; $exclude):
   all($exclude | to_entries | .[]; $entry[.key] == .value);
@@ -78,6 +102,7 @@ def compute_matrix($input):
     filter_excludes(.; $excludes) |
     compute_arch(.) |
     compute_image_name(.) |
-    compute_image_name_no_rapids_version(.)
+    compute_image_name_no_rapids_version(.) |
+    compute_staging_image_name(.)
   ] |
   {include: .};
