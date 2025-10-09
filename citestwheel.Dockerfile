@@ -4,10 +4,11 @@
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
+ARG SYFT_VER=1.32.0
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
-FROM ${BASE_IMAGE}
+FROM ${BASE_IMAGE} AS citestwheel-base
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
@@ -208,5 +209,21 @@ RUN git config --system --add safe.directory '*'
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
+
+# Generate SBOM for the citestwheel image
+FROM --platform=$BUILDPLATFORM anchore/syft:v${SYFT_VER} AS citestwheel-sbom
+ARG BUILDPLATFORM
+SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
+
+RUN --mount=type=bind,from=citestwheel-base,source=/,target=/rootfs,ro \
+    mkdir -p /out && \
+    syft scan \
+      --scope all-layers \
+      --output cyclonedx-json@1.6=/out/sbom.json \
+      dir:/rootfs
+
+FROM citestwheel-base AS citestwheel
+RUN mkdir -p /sbom
+COPY --from=citestwheel-sbom /out/sbom.json /sbom/sbom.json
 
 CMD ["/bin/bash"]

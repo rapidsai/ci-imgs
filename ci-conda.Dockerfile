@@ -6,9 +6,10 @@ ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
 ARG MINIFORGE_VER=notset
+ARG SYFT_VER=1.32.0
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
+FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda-base
 
 ARG CUDA_VER
 ARG LINUX_VER
@@ -141,7 +142,23 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-FROM miniforge-cuda
+# Generate SBOM for the miniforge-cuda stage
+FROM --platform=$BUILDPLATFORM anchore/syft:v${SYFT_VER} AS miniforge-cuda-sbom
+ARG BUILDPLATFORM
+SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
+
+RUN --mount=type=bind,from=miniforge-cuda-base,source=/,target=/rootfs,ro \
+    mkdir -p /out && \
+    syft scan \
+      --scope all-layers \
+      --output cyclonedx-json@1.6=/out/sbom.json \
+      dir:/rootfs
+
+FROM miniforge-cuda-base AS miniforge-cuda
+RUN mkdir -p /sbom
+COPY --from=miniforge-cuda-sbom /out/sbom.json /sbom/sbom.json
+
+FROM miniforge-cuda AS ci-conda-base
 
 ARG TARGETPLATFORM=notset
 ARG CUDA_VER=notset
@@ -285,5 +302,21 @@ RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
+
+# Generate SBOM for the ci-conda stage
+FROM --platform=$BUILDPLATFORM anchore/syft:v${SYFT_VER} AS ci-conda-sbom
+ARG BUILDPLATFORM
+SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
+
+RUN --mount=type=bind,from=ci-conda-base,source=/,target=/rootfs,ro \
+    mkdir -p /out && \
+    syft scan \
+      --scope all-layers \
+      --output cyclonedx-json@1.6=/out/sbom.json \
+      dir:/rootfs
+
+FROM ci-conda-base AS ci-conda
+RUN mkdir -p /sbom
+COPY --from=ci-conda-sbom /out/sbom.json /sbom/sbom.json
 
 CMD ["/bin/bash"]
