@@ -8,6 +8,7 @@ ARG PYTHON_VER=notset
 ARG MINIFORGE_VER=notset
 ARG SYFT_VER=1.32.0
 
+# syft-base image to generate SBOM
 FROM --platform=$BUILDPLATFORM alpine:3.20 AS syft-base
 ARG BUILDPLATFORM
 ARG SYFT_VER
