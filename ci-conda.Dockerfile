@@ -8,6 +8,20 @@ ARG PYTHON_VER=notset
 ARG MINIFORGE_VER=notset
 ARG SYFT_VER=1.32.0
 
+FROM --platform=$BUILDPLATFORM alpine:3.20 AS syft-base
+ARG BUILDPLATFORM
+ARG SYFT_VER
+
+RUN apk add --no-cache curl tar ca-certificates \
+ && case "$BUILDPLATFORM" in \
+      linux/amd64) SYFT_ARCH="linux_amd64" ;; \
+      linux/arm64) SYFT_ARCH="linux_arm64" ;; \
+      *) echo "Unsupported BUILDPLATFORM: ${BUILDPLATFORM}" && exit 1 ;; \
+    esac \
+ && curl -sSfL "https://github.com/anchore/syft/releases/download/v${SYFT_VER}/syft_${SYFT_VER}_${SYFT_ARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin syft \
+ && chmod +x /usr/local/bin/syft
+
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda-base
 
@@ -143,8 +157,7 @@ esac
 EOF
 
 # Generate SBOM for the miniforge-cuda stage
-FROM --platform=$BUILDPLATFORM anchore/syft:v${SYFT_VER} AS miniforge-cuda-sbom
-ARG BUILDPLATFORM
+FROM syft-base AS miniforge-cuda-sbom
 SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
 
 RUN --mount=type=bind,from=miniforge-cuda-base,source=/,target=/rootfs,ro \
@@ -304,8 +317,7 @@ RUN /opt/conda/bin/git config --system --add safe.directory '*'
 COPY pip.conf /etc/xdg/pip/pip.conf
 
 # Generate SBOM for the ci-conda stage
-FROM --platform=$BUILDPLATFORM anchore/syft:v${SYFT_VER} AS ci-conda-sbom
-ARG BUILDPLATFORM
+FROM syft-base AS ci-conda-sbom
 SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
 
 RUN --mount=type=bind,from=ci-conda-base,source=/,target=/rootfs,ro \
