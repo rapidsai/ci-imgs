@@ -57,7 +57,9 @@ case "${LINUX_VER}" in
     rm -rf /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
-    dnf makecache
+    dnf clean all
+    rm -rf /var/cache/dnf/*
+    dnf --refresh makecache
     dnf install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     dnf remove -y wget
@@ -117,7 +119,9 @@ case "${LINUX_VER}" in
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
-    dnf makecache
+    dnf clean all
+    rm -rf /var/cache/dnf/*
+    dnf --refresh makecache
     dnf update -y
     dnf install -y epel-release
     dnf update -y
