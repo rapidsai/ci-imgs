@@ -21,8 +21,13 @@ docker manifest create "${tag}" "${source_tags[@]}"
 docker manifest push "${tag}"
 
 # create/update manifests for non-RAPIDS-versioned images
-docker manifest create "${IMAGE_NAME_NO_RAPIDS_VERSION}" "${source_tags[@]}"
-docker manifest push "${IMAGE_NAME_NO_RAPIDS_VERSION}"
+# only create unversioned images when running in CI on the main branch
+if [[ -n "${GITHUB_REF_NAME:-}" && "${GITHUB_REF_NAME}" == "main" ]]; then
+  docker manifest create "${IMAGE_NAME_NO_RAPIDS_VERSION}" "${source_tags[@]}"
+  docker manifest push "${IMAGE_NAME_NO_RAPIDS_VERSION}"
+else
+  echo "Skipping unversioned image creation (GITHUB_REF_NAME='${GITHUB_REF_NAME:-}' is not 'main')."
+fi
 
 if [[
   "${LATEST_UBUNTU_VER}" == "${LINUX_VER}" &&
