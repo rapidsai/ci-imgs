@@ -57,7 +57,7 @@ case "${LINUX_VER}" in
     rm -rf /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
-    dnf clean expire-cache && dnf makecache
+    dnf clean expire-cache && dns clean metadata && dnf makecache
     dnf install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     dnf remove -y wget
