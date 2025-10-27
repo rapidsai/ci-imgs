@@ -76,6 +76,9 @@ umask 002
 # xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
+# Pin mamba to workaround install timeouts issue
+echo 'mamba<=2.3.2' >> /opt/conda/conda-meta/pinned
+
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
 rapids-mamba-retry update --all -y -n base
