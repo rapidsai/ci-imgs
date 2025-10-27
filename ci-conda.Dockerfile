@@ -76,9 +76,8 @@ umask 002
 # xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
-# Pin mamba to workaround install timeouts issue
-echo 'mamba<=2.3.1' >> /opt/conda/conda-meta/pinned
-#echo 'openssl<3.5.3' >> /opt/conda/conda-meta/pinned
+# Pin openssl to workaround install timeouts issue
+echo 'openssl<3.5.3' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
