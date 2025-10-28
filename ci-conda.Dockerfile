@@ -167,6 +167,7 @@ SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
 RUN --mount=type=bind,from=miniforge-cuda-base,source=/,target=/rootfs,ro \
     mkdir -p /out && \
     syft scan \
+      --source-name "rapidsai/miniforge-cuda" \
       --scope all-layers \
       --output cyclonedx-json@1.6=/out/sbom.json \
       dir:/rootfs
@@ -327,6 +328,7 @@ SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
 RUN --mount=type=bind,from=ci-conda-base,source=/,target=/rootfs,ro \
     mkdir -p /out && \
     syft scan \
+      --source-name "rapidsai/ci-conda" \
       --scope all-layers \
       --output cyclonedx-json@1.6=/out/sbom.json \
       dir:/rootfs

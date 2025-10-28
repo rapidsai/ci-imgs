@@ -230,6 +230,7 @@ SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
 RUN --mount=type=bind,from=citestwheel-base,source=/,target=/rootfs,ro \
     mkdir -p /out && \
     syft scan \
+      --source-name "rapidsai/citestwheel" \
       --scope all-layers \
       --output cyclonedx-json@1.6=/out/sbom.json \
       dir:/rootfs
