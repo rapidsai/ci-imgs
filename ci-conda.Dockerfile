@@ -77,7 +77,7 @@ echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
-rapids-mamba-retry update --all -y -n base
+rapids-mamba-retry update --all -y -n base -vvv
 
 # install expected Python version
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
