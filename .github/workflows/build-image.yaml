@@ -46,7 +46,7 @@ jobs:
     runs-on: linux-${{ matrix.ARCH }}-cpu4
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Download gha-tools with git clone
         run: |
           git clone https://github.com/rapidsai/gha-tools.git -b main /tmp/gha-tools
