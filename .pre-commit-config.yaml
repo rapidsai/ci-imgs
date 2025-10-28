@@ -22,7 +22,7 @@ repos:
     rev: v1.2.0
     hooks:
       - id: verify-copyright
-        args: [--fix, --main-branch=main]
+        args: [--fix, --spdx]
         files: |
           (?x)
               [.](jq|py|sh|toml|yml|yaml)$|
