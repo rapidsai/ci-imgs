@@ -9,12 +9,14 @@ This repository includes the following CI images for RAPIDS:
 
 ## Tagging Strategy
 
-All images are double-published with the following tags:
+Images built from the `main` branch in CI are double-published with the following tags:
 
 ```text
 :{rapids_version}-cuda{cuda_version}-{operating_system}-py{python_version}
 :cuda{cuda_version}-{operating_system}-py{python_version}
 ```
+
+Images built from other branches (including release branches), pull requests, or locally only receive the versioned tag (with `{rapids_version}-`).
 
 One particular combination is also chosen for `latest` tags like these:
 
