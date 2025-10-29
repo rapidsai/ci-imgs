@@ -10,8 +10,8 @@ PYTHON_VER:
   - "3.12"
   - "3.13"
 LINUX_VER:
-  - "ubuntu22.04"
-  - "ubuntu24.04"
+  # - "ubuntu22.04"
+  # - "ubuntu24.04"
   - "rockylinux8"
 CI_IMAGE_CONFIG:
   # - IMAGE_REPO: "miniforge-cuda"
