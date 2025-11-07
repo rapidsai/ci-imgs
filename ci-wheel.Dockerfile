@@ -251,7 +251,7 @@ EOF
 
 # Install anaconda-client
 RUN <<EOF
-rapids-pip-retry install git+https://github.com/Anaconda-Platform/anaconda-client
+rapids-pip-retry install anaconda-client
 rapids-pip-retry cache purge
 pyenv rehash
 EOF
