@@ -76,7 +76,7 @@ umask 002
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # Pin libcurl to workaround install timeouts issue
-echo 'libcurl<8.14' >> /opt/conda/conda-meta/pinned
+echo 'libcurl<8.16' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
