@@ -75,12 +75,10 @@ NEXT_MAJOR=$(echo $NEXT_FULL_TAG | awk '{split($0, a, "."); print a[1]}')
 NEXT_MINOR=$(echo $NEXT_FULL_TAG | awk '{split($0, a, "."); print a[2]}')
 NEXT_SHORT_TAG=${NEXT_MAJOR}.${NEXT_MINOR}
 
-# Set branch references based on RUN_CONTEXT
+# Log update context
 if [[ "${RUN_CONTEXT}" == "main" ]]; then
-    RAPIDS_BRANCH_NAME="main"
     echo "Preparing development branch update for $NEXT_FULL_TAG (targeting main branch)"
 elif [[ "${RUN_CONTEXT}" == "release" ]]; then
-    RAPIDS_BRANCH_NAME="release/${NEXT_SHORT_TAG}"
     echo "Preparing release branch update for $NEXT_FULL_TAG (targeting release/${NEXT_SHORT_TAG} branch)"
 fi
 
