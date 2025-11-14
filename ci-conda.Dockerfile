@@ -68,19 +68,17 @@ COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/co
 RUN chmod g+ws /opt/conda
 
 RUN <<EOF
+# Ensure new files/dirs have group write permissions
+umask 002
+
 # Temporary workaround for unstable libxml2 packages
 # xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
-echo 'openssl==3.6.0' >> /opt/conda/conda-meta/pinned
-echo 'libcurl==8.17.0' >> /opt/conda/conda-meta/pinned
 
-rapids-mamba-retry update openssl libcurl -vvvv -y -n base
-
-EOF
-
-RUN <<EOF
-# Ensure new files/dirs have group write permissions
-umask 002
+# Temporary workaround for deadlocks in unpacking libcurl
+# we hardcode this to match the versions in the upstream `miniforge3` image
+echo 'openssl==3.5.4' >> /opt/conda/conda-meta/pinned
+echo 'libcurl==8.16.0' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
