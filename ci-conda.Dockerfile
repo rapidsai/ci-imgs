@@ -67,8 +67,6 @@ COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/co
 # Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
 RUN chmod g+ws /opt/conda
 
-RUN mamba install conda-libmamba-solver=25.4.0
-
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
