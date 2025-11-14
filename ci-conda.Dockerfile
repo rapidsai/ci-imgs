@@ -67,6 +67,12 @@ COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/co
 # Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
 RUN chmod g+ws /opt/conda
 
+# Copy in custom condarc that removes `mirrored_channels` added upstream in 25.9.1-0
+COPY <<EOF /opt/conda/.condarc
+channels:
+  - conda-forge
+EOF
+
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
