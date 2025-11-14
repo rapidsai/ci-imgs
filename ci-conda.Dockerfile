@@ -78,8 +78,12 @@ echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 # Pin openssl to workaround install timeouts issue
 #echo 'openssl<3.5.3' >> /opt/conda/conda-meta/pinned
 # timeouts occur with this version
-echo 'openssl==3.5.4' >> /opt/conda/conda-meta/pinned
-echo 'libcurl==8.16.0' >> /opt/conda/conda-meta/pinned
+#echo 'openssl==3.5.4' >> /opt/conda/conda-meta/pinned
+#echo 'libcurl==8.16.0' >> /opt/conda/conda-meta/pinned
+
+# let's try running the update on the base conda environment 
+# from our new tmp conda environment 
+RUN conda create --name tmp -y && conda activate tmp
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
