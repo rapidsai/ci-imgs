@@ -75,9 +75,13 @@ umask 002
 # xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
+# Pin openssl to workaround install timeouts issue
+#echo 'openssl<3.5.3' >> /opt/conda/conda-meta/pinned
+echo 'openssl==3.5.4' >> /opt/conda/conda-meta/pinned
+
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
-rapids-mamba-retry update --all -y -n base -vvv
+rapids-mamba-retry update --all -y -vvv -n base
 
 # install expected Python version
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
@@ -90,8 +94,8 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
-rapids-mamba-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-rapids-mamba-retry update --all -y -n base
+rapids-mamba-retry install -y -vvv -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+rapids-mamba-retry update --all -y -vvv -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   dnf install -y findutils
   dnf clean all
@@ -200,7 +204,7 @@ EOF
 
 # Install prereq for envsubst
 RUN <<EOF
-rapids-mamba-retry install -y \
+rapids-mamba-retry install -y -vvv \
   gettext
 conda clean -aiptfy
 EOF
@@ -225,7 +229,7 @@ else
     PYTHON_ABI_TAG="cpython"
 fi
 
-rapids-mamba-retry install -y \
+rapids-mamba-retry install -y -vvv \
   anaconda-client \
   ca-certificates \
   certifi \
