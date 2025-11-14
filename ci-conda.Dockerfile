@@ -77,6 +77,7 @@ mirrored_channels:
     - https://prefix.dev/conda-forge
 EOF
 
+RUN mamba install mamba=2.3.3
 
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
