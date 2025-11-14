@@ -67,16 +67,6 @@ COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/co
 # Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
 RUN chmod g+ws /opt/conda
 
-# Copy in `mirrored_channels` to mimic upstream change in 25.9.1-0
-COPY <<EOF /opt/conda/.condarc
-channels:
-  - conda-forge
-mirrored_channels:
-  conda-forge:
-    - https://conda.anaconda.org/conda-forge
-    - https://prefix.dev/conda-forge
-EOF
-
 RUN mamba install mamba=2.3.3
 
 RUN <<EOF
@@ -86,10 +76,6 @@ umask 002
 # Temporary workaround for unstable libxml2 packages
 # xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
-
-# Temporary workaround for deadlocks in unpacking libcurl
-# we hardcode this to match the versions in the upstream `miniforge3` image
-echo 'libcurl==8.14.1' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
