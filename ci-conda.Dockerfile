@@ -80,7 +80,7 @@ mamba config set extract_threads 1
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
-env G_SLICE=always-malloc rapids-mamba-retry update --all -vvvv -y -n base
+rapids-mamba-retry update --all -vvvv -y -n base
 
 # install expected Python version
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
@@ -93,9 +93,8 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
-
-env G_SLICE=always-malloc rapids-mamba-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-env G_SLICE=always-malloc rapids-mamba-retry update --all -y -n base
+rapids-mamba-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+rapids-mamba-retry update --all -y -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   dnf install -y findutils
   dnf clean all
