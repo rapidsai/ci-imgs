@@ -77,8 +77,8 @@ echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # Temporary workaround for deadlocks in unpacking libcurl
 # we hardcode this to match the versions in the upstream `miniforge3` image
-echo 'openssl==3.5.4' >> /opt/conda/conda-meta/pinned
-echo 'libcurl==8.16.0' >> /opt/conda/conda-meta/pinned
+echo 'openssl==3.5.1' >> /opt/conda/conda-meta/pinned
+echo 'libcurl==8.14.1' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
