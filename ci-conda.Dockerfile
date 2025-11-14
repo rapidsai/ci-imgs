@@ -67,6 +67,8 @@ COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/co
 # Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
 RUN chmod g+ws /opt/conda
 
+RUN rapids-mamba-retry update openssl=3.6.0
+
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
@@ -74,9 +76,6 @@ umask 002
 # Temporary workaround for unstable libxml2 packages
 # xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
-
-# Set extract threads to 1 to avoid deadlocks
-mamba config set default_threads 1
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
