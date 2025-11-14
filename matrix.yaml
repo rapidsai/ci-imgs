@@ -20,12 +20,12 @@ CI_IMAGE_CONFIG:
   - IMAGE_REPO: "ci-conda"
     dockerfile: ci-conda.Dockerfile
     docker_target: ""
-  - IMAGE_REPO: "ci-wheel"
-    dockerfile: ci-wheel.Dockerfile
-    docker_target: ""
-  - IMAGE_REPO: "citestwheel"
-    dockerfile: citestwheel.Dockerfile
-    docker_target: ""
+  # - IMAGE_REPO: "ci-wheel"
+  #   dockerfile: ci-wheel.Dockerfile
+  #   docker_target: ""
+  # - IMAGE_REPO: "citestwheel"
+  #   dockerfile: citestwheel.Dockerfile
+  #   docker_target: ""
 exclude:
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu24.04"
