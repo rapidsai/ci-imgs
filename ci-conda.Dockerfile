@@ -71,12 +71,16 @@ RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
 
+# Set GSLICE environment variable to work around `mamba` deadlocks
+# see https://github.com/mamba-org/mamba/issues/1611
+export G_SLICE=always-malloc
+
 # Temporary workaround for unstable libxml2 packages
 # xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # Pin openssl to workaround install timeouts issue
-echo 'openssl<3.5.3' >> /opt/conda/conda-meta/pinned
+# echo 'openssl<3.5.3' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
