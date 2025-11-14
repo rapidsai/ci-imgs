@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 def compute_arch($x):
-#  $x + {ARCHES: ["amd64", "arm64"]};
+  $x + {ARCHES: ["amd64", "arm64"]};
   $x + {ARCHES: ["amd64"]};
 
 def compute_repo($x):
