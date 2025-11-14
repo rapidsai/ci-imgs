@@ -76,7 +76,7 @@ umask 002
 echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 
 # Set extract threads to 1 to avoid deadlocks
-mamba config set extract_threads 1
+mamba config set default_threads 1
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
