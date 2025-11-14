@@ -6,26 +6,26 @@ CUDA_VER:
   - "13.0.2"
 PYTHON_VER:
   - "3.10"
-  # - "3.11"
-  # - "3.12"
-  # - "3.13"
+  - "3.11"
+  - "3.12"
+  - "3.13"
 LINUX_VER:
-  # - "ubuntu22.04"
-  # - "ubuntu24.04"
+  - "ubuntu22.04"
+  - "ubuntu24.04"
   - "rockylinux8"
 CI_IMAGE_CONFIG:
-  # - IMAGE_REPO: "miniforge-cuda"
-  #   dockerfile: ci-conda.Dockerfile
-  #   docker_target: miniforge-cuda
+  - IMAGE_REPO: "miniforge-cuda"
+    dockerfile: ci-conda.Dockerfile
+    docker_target: miniforge-cuda
   - IMAGE_REPO: "ci-conda"
     dockerfile: ci-conda.Dockerfile
     docker_target: ""
-  # - IMAGE_REPO: "ci-wheel"
-  #   dockerfile: ci-wheel.Dockerfile
-  #   docker_target: ""
-  # - IMAGE_REPO: "citestwheel"
-  #   dockerfile: citestwheel.Dockerfile
-  #   docker_target: ""
+  - IMAGE_REPO: "ci-wheel"
+    dockerfile: ci-wheel.Dockerfile
+    docker_target: ""
+  - IMAGE_REPO: "citestwheel"
+    dockerfile: citestwheel.Dockerfile
+    docker_target: ""
 exclude:
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu24.04"
