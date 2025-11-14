@@ -78,9 +78,6 @@ echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
 # Set extract threads to 1 to avoid deadlocks
 mamba config set extract_threads 1
 
-# Disable `mamba` lockfiles
-mamba config set use_lockfiles False
-
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
 rapids-mamba-retry update --all -vvvv -y -n base
