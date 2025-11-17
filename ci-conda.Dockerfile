@@ -10,10 +10,7 @@ ARG MINIFORGE_VER=notset
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 
-ARG ARG CACHE_BST
 ENV PATH=/opt/conda/bin:$PATH
-ENV CACHE_BUST=${CACHE_BST}
-ENV RAPIDS_MAMBA_RETRY_TIMEOUT=120
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
