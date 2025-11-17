@@ -1,12 +1,52 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+################################ build and update miniforge-upstream ###############################
+
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
 ARG MINIFORGE_VER=notset
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
+
+ARG ARG CACHE_BST
+ENV PATH=/opt/conda/bin:$PATH
+ENV CACHE_BUST=${CACHE_BST}
+ENV RAPIDS_MAMBA_RETRY_TIMEOUT=120
+
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Install latest gha-tools to miniforge for unbuntu
+RUN <<EOF
+  i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
+  apt-get install -y --no-install-recommends wget
+  wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+  apt-get purge -y wget && apt-get autoremove -y
+  rm -rf /var/lib/apt/lists/*
+EOF
+
+RUN <<EOF
+# Ensure new files/dirs have group write permissions
+umask 002
+
+# Temporary workaround for unstable libxml2 packages
+# xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
+# TODO: this has already been fixed
+# echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
+
+# Temporary workaround for deadlocks in unpacking libcurl
+# we hardcode this to match the versions in the upstream `miniforge3` image
+# TODO:no need to pin this ideally
+# echo 'libcurl==8.14.1' >> /opt/conda/conda-meta/pinned
+
+# update everything before other environment changes, to ensure mixing
+# an older conda with newer packages still works well
+rapids-mamba-retry update --all -y -n base
+EOF
+
+################################ build miniforge-cuda using updated miniforge-upstream from above ###############################
+
 FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
 
 ARG CUDA_VER
