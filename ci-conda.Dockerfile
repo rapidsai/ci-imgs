@@ -27,15 +27,8 @@ RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
 
-# Temporary workaround for unstable libxml2 packages
-# xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
-# TODO: this has already been fixed
-# echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
-
-# Temporary workaround for deadlocks in unpacking libcurl
-# we hardcode this to match the versions in the upstream `miniforge3` image
-# TODO:no need to pin this ideally
-# echo 'libcurl==8.14.1' >> /opt/conda/conda-meta/pinned
+# Example of pinned package in case you require an override
+# echo '<PACKAGE_NAME>==<VERSION>' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
