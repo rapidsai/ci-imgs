@@ -9,6 +9,7 @@ PYTHON_VER:
   - "3.11"
   - "3.12"
   - "3.13"
+  - "3.14"
 LINUX_VER:
   - "ubuntu22.04"
   - "ubuntu24.04"
