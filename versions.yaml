@@ -13,4 +13,4 @@ YQ_VER: 4.48.1
 # renovate: datasource=github-releases depName=aws/aws-cli
 AWS_CLI_VER: 2.28.1
 # renovate: datasource=docker depName=condaforge/miniforge3 versioning=docker
-MINIFORGE_VER: 25.9.1-0
+MINIFORGE_VER: 25.11.0-0
