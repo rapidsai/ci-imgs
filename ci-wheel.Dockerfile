@@ -46,6 +46,7 @@ esac
 EOF
 
 # Install latest gha-tools
+ARG SCCACHE_VER=notset
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
@@ -66,6 +67,7 @@ case "${LINUX_VER}" in
     exit 1
     ;;
 esac
+SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
 EOF
 
 RUN <<EOF
@@ -184,17 +186,6 @@ rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}
 tar -xf gh_*.tar.gz
 mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
-EOF
-
-# Install sccache
-ARG SCCACHE_VER=notset
-
-RUN <<EOF
-rapids-retry curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
-tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
-chmod +x /usr/bin/sccache
 EOF
 
 # Download and install awscli

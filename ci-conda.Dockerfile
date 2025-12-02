@@ -15,12 +15,14 @@ ENV PATH=/opt/conda/bin:$PATH
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Install latest gha-tools to miniforge for unbuntu
+ARG SCCACHE_VER=notset
 RUN <<EOF
   i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
   apt-get install -y --no-install-recommends wget
   wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
   apt-get purge -y wget && apt-get autoremove -y
   rm -rf /var/lib/apt/lists/*
+  SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
 EOF
 
 RUN <<EOF
@@ -63,6 +65,7 @@ esac
 EOF
 
 # Install latest gha-tools
+ARG SCCACHE_VER=notset
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
@@ -83,6 +86,7 @@ case "${LINUX_VER}" in
     exit 1
     ;;
 esac
+SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
 EOF
 
 # Create a conda group and assign it as root's primary group
@@ -264,20 +268,13 @@ rapids-mamba-retry install -y \
 conda clean -aiptfy
 EOF
 
-# Install sccache, gh cli, yq, and awscli
-ARG SCCACHE_VER=notset
+# Install gh cli, yq, and awscli
 ARG REAL_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG YQ_VER=notset
 ARG AWS_CLI_VER=notset
 RUN <<EOF
-rapids-retry curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
-tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
-chmod +x /usr/bin/sccache
-rm -rf /tmp/sccache.tar.gz "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl"
 
 rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
