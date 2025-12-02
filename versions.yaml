@@ -1,9 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
-# 'sccache' is intentionally not auto-updated by renovate. Such updates
-# have the potential to significantly disrupt RAPIDS development, so we
-# prefer sticking with a stable version until a specific reason to update arises.
-SCCACHE_VER: 0.7.7
 # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_VER: 2.82.1
 # renovate: datasource=pypi depName=codecov-cli

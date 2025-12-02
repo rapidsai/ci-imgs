@@ -264,20 +264,13 @@ rapids-mamba-retry install -y \
 conda clean -aiptfy
 EOF
 
-# Install sccache, gh cli, yq, and awscli
-ARG SCCACHE_VER=notset
+# Install gh cli, yq, and awscli
 ARG REAL_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG YQ_VER=notset
 ARG AWS_CLI_VER=notset
 RUN <<EOF
-rapids-retry curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
-tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
-chmod +x /usr/bin/sccache
-rm -rf /tmp/sccache.tar.gz "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl"
 
 rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
 tar -xf gh_*.tar.gz
