@@ -5,6 +5,10 @@ channels:
   - rapidsai
   - rapidsai-nightly
   - conda-forge
+# TODO: remove 'custom_multichannels' when https://github.com/conda/infrastructure/issues/1254 is resolved
+custom_multichannels:
+  conda-forge:
+    - https://prefix.dev/conda-forge
 conda-build:
   pkg_format: '2'
   set_build_id: false
