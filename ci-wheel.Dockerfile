@@ -229,6 +229,7 @@ pyenv global ${PYTHON_VER}
 # use so should be compatible with `pyenv`
 rapids-pip-retry install --upgrade pip
 rapids-pip-retry install \
+  'anaconda-client>=1.13.0' \
   'auditwheel>=6.2.0' \
   certifi \
   conda-package-handling \
@@ -238,13 +239,7 @@ rapids-pip-retry install \
   'rapids-dependency-file-generator==1.*' \
   twine \
   wheel
-pyenv rehash
-EOF
-
-# Install anaconda-client
-RUN <<EOF
-rapids-pip-retry install anaconda-client
-rapids-pip-retry cache purge
+pip cache purge
 pyenv rehash
 EOF
 
