@@ -186,17 +186,6 @@ mv gh_*/bin/gh /usr/local/bin
 rm -rf gh_*
 EOF
 
-# Install sccache
-ARG SCCACHE_VER=notset
-
-RUN <<EOF
-rapids-retry curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
-tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
-chmod +x /usr/bin/sccache
-EOF
-
 # Download and install awscli
 # Needed to download wheels for running tests
 ARG AWS_CLI_VER=notset
