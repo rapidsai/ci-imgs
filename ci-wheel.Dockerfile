@@ -53,12 +53,14 @@ case "${LINUX_VER}" in
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
     apt-get install -y --no-install-recommends wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     dnf install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     dnf remove -y wget
     dnf clean all
     ;;
@@ -67,7 +69,6 @@ case "${LINUX_VER}" in
     exit 1
     ;;
 esac
-SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
 EOF
 
 RUN <<EOF
