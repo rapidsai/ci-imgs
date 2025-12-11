@@ -14,12 +14,17 @@ ENV PATH=/opt/conda/bin:$PATH
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Install latest gha-tools to miniforge for unbuntu
+# Install gha-tools, gh CLI, and sccache to miniforge for ubuntu
+# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
 ARG SCCACHE_VER=notset
+ARG GH_CLI_VER=notset
+ARG CPU_ARCH=notset
 RUN <<EOF
   i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
   apt-get install -y --no-install-recommends wget
   wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+  wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+  tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
   SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
   apt-get purge -y wget && apt-get autoremove -y
   rm -rf /var/lib/apt/lists/*
@@ -64,14 +69,19 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Install latest gha-tools
+# Install gha-tools, gh CLI, and sccache
+# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
 ARG SCCACHE_VER=notset
+ARG GH_CLI_VER=notset
+ARG CPU_ARCH=notset
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
     apt-get install -y --no-install-recommends wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
     SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
@@ -79,6 +89,8 @@ case "${LINUX_VER}" in
   "rockylinux"*)
     dnf install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
     SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     dnf remove -y wget
     dnf clean all
@@ -269,19 +281,11 @@ rapids-mamba-retry install -y \
 conda clean -aiptfy
 EOF
 
-# Install gh cli, yq, and awscli
+# Install yq and awscli
 ARG REAL_ARCH=notset
-ARG GH_CLI_VER=notset
-ARG CPU_ARCH=notset
 ARG YQ_VER=notset
 ARG AWS_CLI_VER=notset
 RUN <<EOF
-
-rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-tar -xf gh_*.tar.gz
-mv gh_*/bin/gh /usr/local/bin
-rm -rf gh_*
-
 rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
 mv /tmp/yq /usr/bin/yq
 chmod +x /usr/bin/yq

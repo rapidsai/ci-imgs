@@ -45,14 +45,18 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Install latest gha-tools
+# Install gha-tools, gh CLI, and sccache
+# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
 ARG SCCACHE_VER=notset
+ARG GH_CLI_VER=notset
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
     apt-get install -y --no-install-recommends wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
     SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
@@ -60,6 +64,8 @@ case "${LINUX_VER}" in
   "rockylinux"*)
     dnf install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
     SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     dnf remove -y wget
     dnf clean all
@@ -177,16 +183,6 @@ case "${LINUX_VER}" in
     exit 1
     ;;
 esac
-EOF
-
-# Download and install gh CLI tool
-ARG GH_CLI_VER=notset
-RUN <<EOF
-set -e
-rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-tar -xf gh_*.tar.gz
-mv gh_*/bin/gh /usr/local/bin
-rm -rf gh_*
 EOF
 
 # Download and install awscli
