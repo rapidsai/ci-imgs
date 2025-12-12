@@ -57,17 +57,21 @@ The `latest` image tags are controlled by the values in `latest.yaml`.
 
 ## Building the dockerfiles locally
 
-To build the dockerfiles locally, you may use the following snippets:
+To build the dockerfiles locally, you may use the following snippets.
+
+The `ci-conda` and `ci-wheel` images require a GitHub token to download sccache releases.
+If you have the `gh` CLI installed and authenticated, you can use `gh auth token` to get your token:
 
 ```sh
 export LINUX_VER=ubuntu24.04
 export CUDA_VER=13.0.2
 export PYTHON_VER=3.13
 export ARCH=amd64
+export GH_TOKEN=$(gh auth token)
 export IMAGE_REPO=ci-conda
-docker build $(ci/compute-build-args.sh) -f ci-conda.Dockerfile context/
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-conda.Dockerfile context/
 export IMAGE_REPO=ci-wheel
-docker build $(ci/compute-build-args.sh) -f ci-wheel.Dockerfile context/
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-wheel.Dockerfile context/
 export IMAGE_REPO=citestwheel
 docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile context/
 ```
