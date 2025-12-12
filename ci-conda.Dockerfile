@@ -19,13 +19,13 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 ARG SCCACHE_VER=notset
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
-RUN <<EOF
+RUN --mount=type=secret,id=GH_TOKEN <<EOF
   i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
   apt-get install -y --no-install-recommends wget
   wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
   wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
   tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-  SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+  GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
   apt-get purge -y wget && apt-get autoremove -y
   rm -rf /var/lib/apt/lists/*
 EOF
@@ -74,7 +74,7 @@ EOF
 ARG SCCACHE_VER=notset
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
-RUN <<EOF
+RUN --mount=type=secret,id=GH_TOKEN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
@@ -82,7 +82,7 @@ case "${LINUX_VER}" in
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
     tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
     ;;
@@ -91,7 +91,7 @@ case "${LINUX_VER}" in
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
     tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     dnf remove -y wget
     dnf clean all
     ;;
