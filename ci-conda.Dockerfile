@@ -1,11 +1,14 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-################################ build the syft-base image ###############################
-
+ARG CUDA_VER=notset
+ARG LINUX_VER=notset
+ARG PYTHON_VER=notset
+ARG MINIFORGE_VER=notset
 ARG SYFT_VER=1.32.0
 
-# syft-base image to generate SBOM
+################################ build the syft-base image ###############################
+
 FROM --platform=$BUILDPLATFORM alpine:3.20 AS syft-base
 ARG BUILDPLATFORM
 ARG SYFT_VER
@@ -21,11 +24,6 @@ RUN apk add --no-cache curl tar ca-certificates \
  && chmod +x /usr/local/bin/syft
 
 ################################ build and update miniforge-upstream ###############################
-
-ARG CUDA_VER=notset
-ARG LINUX_VER=notset
-ARG PYTHON_VER=notset
-ARG MINIFORGE_VER=notset
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 
