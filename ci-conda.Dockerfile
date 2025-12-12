@@ -1,10 +1,8 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-ARG CUDA_VER=notset
-ARG LINUX_VER=notset
-ARG PYTHON_VER=notset
-ARG MINIFORGE_VER=notset
+################################ build the syft-base image ###############################
+
 ARG SYFT_VER=1.32.0
 
 # syft-base image to generate SBOM
@@ -22,7 +20,49 @@ RUN apk add --no-cache curl tar ca-certificates \
     | tar -xz -C /usr/local/bin syft \
  && chmod +x /usr/local/bin/syft
 
+################################ build and update miniforge-upstream ###############################
+
+ARG CUDA_VER=notset
+ARG LINUX_VER=notset
+ARG PYTHON_VER=notset
+ARG MINIFORGE_VER=notset
+
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
+
+ENV PATH=/opt/conda/bin:$PATH
+
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Install gha-tools, gh CLI, and sccache to miniforge for ubuntu
+# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
+ARG SCCACHE_VER=notset
+ARG GH_CLI_VER=notset
+ARG CPU_ARCH=notset
+RUN --mount=type=secret,id=GH_TOKEN <<EOF
+  i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
+  apt-get install -y --no-install-recommends wget
+  wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+  wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+  tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
+  GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+  apt-get purge -y wget && apt-get autoremove -y
+  rm -rf /var/lib/apt/lists/*
+EOF
+
+RUN <<EOF
+# Ensure new files/dirs have group write permissions
+umask 002
+
+# Example of pinned package in case you require an override
+# echo '<PACKAGE_NAME>==<VERSION>' >> /opt/conda/conda-meta/pinned
+
+# update everything before other environment changes, to ensure mixing
+# an older conda with newer packages still works well
+rapids-mamba-retry update --all -y -n base
+EOF
+
+################################ build miniforge-cuda using updated miniforge-upstream from above ###############################
+
 FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda-base
 
 ARG CUDA_VER
@@ -48,19 +88,29 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Install latest gha-tools
-RUN <<EOF
+# Install gha-tools, gh CLI, and sccache
+# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
+ARG SCCACHE_VER=notset
+ARG GH_CLI_VER=notset
+ARG CPU_ARCH=notset
+RUN --mount=type=secret,id=GH_TOKEN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
     apt-get install -y --no-install-recommends wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
+    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     dnf install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
+    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     dnf remove -y wget
     dnf clean all
     ;;
@@ -86,17 +136,6 @@ RUN chmod g+ws /opt/conda
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
-
-# Temporary workaround for unstable libxml2 packages
-# xref: https://github.com/conda-forge/libxml2-feedstock/issues/145
-echo 'libxml2<2.14.0' >> /opt/conda/conda-meta/pinned
-
-# Pin openssl to workaround install timeouts issue
-echo 'openssl<3.5.3' >> /opt/conda/conda-meta/pinned
-
-# update everything before other environment changes, to ensure mixing
-# an older conda with newer packages still works well
-rapids-mamba-retry update --all -y -n base
 
 # install expected Python version
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
@@ -277,26 +316,11 @@ rapids-mamba-retry install -y \
 conda clean -aiptfy
 EOF
 
-# Install sccache, gh cli, yq, and awscli
-ARG SCCACHE_VER=notset
+# Install yq and awscli
 ARG REAL_ARCH=notset
-ARG GH_CLI_VER=notset
-ARG CPU_ARCH=notset
 ARG YQ_VER=notset
 ARG AWS_CLI_VER=notset
 RUN <<EOF
-rapids-retry curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
-tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
-chmod +x /usr/bin/sccache
-rm -rf /tmp/sccache.tar.gz "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl"
-
-rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-tar -xf gh_*.tar.gz
-mv gh_*/bin/gh /usr/local/bin
-rm -rf gh_*
-
 rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
 mv /tmp/yq /usr/bin/yq
 chmod +x /usr/bin/yq

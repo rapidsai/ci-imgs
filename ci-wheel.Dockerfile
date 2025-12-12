@@ -60,19 +60,28 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Install latest gha-tools
-RUN <<EOF
+# Install gha-tools, gh CLI, and sccache
+# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
+ARG SCCACHE_VER=notset
+ARG GH_CLI_VER=notset
+RUN --mount=type=secret,id=GH_TOKEN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
     apt-get install -y --no-install-recommends wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
+    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     dnf install -y wget
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
+    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     dnf remove -y wget
     dnf clean all
     ;;
@@ -191,27 +200,6 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Download and install gh CLI tool
-ARG GH_CLI_VER=notset
-RUN <<EOF
-set -e
-rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-tar -xf gh_*.tar.gz
-mv gh_*/bin/gh /usr/local/bin
-rm -rf gh_*
-EOF
-
-# Install sccache
-ARG SCCACHE_VER=notset
-
-RUN <<EOF
-rapids-retry curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
-tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
-chmod +x /usr/bin/sccache
-EOF
-
 # Download and install awscli
 # Needed to download wheels for running tests
 ARG AWS_CLI_VER=notset
@@ -252,6 +240,7 @@ pyenv global ${PYTHON_VER}
 # use so should be compatible with `pyenv`
 rapids-pip-retry install --upgrade pip
 rapids-pip-retry install \
+  'anaconda-client>=1.13.0' \
   'auditwheel>=6.2.0' \
   certifi \
   conda-package-handling \
@@ -261,13 +250,7 @@ rapids-pip-retry install \
   'rapids-dependency-file-generator==1.*' \
   twine \
   wheel
-pyenv rehash
-EOF
-
-# Install anaconda-client
-RUN <<EOF
-rapids-pip-retry install git+https://github.com/Anaconda-Platform/anaconda-client
-rapids-pip-retry cache purge
+pip cache purge
 pyenv rehash
 EOF
 

@@ -28,8 +28,8 @@ One particular combination is also chosen for `latest` tags like these:
 For example, during the 25.10 release the following might all point to the same image:
 
 ```text
-rapidsai/ci-conda:25.10-cuda13.0.1-ubuntu24.04-py3.13
-rapidsai/ci-conda:cuda13.0.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:25.10-cuda13.0.2-ubuntu24.04-py3.13
+rapidsai/ci-conda:cuda13.0.2-ubuntu24.04-py3.13
 rapidsai/ci-conda:25.10-latest
 rapidsai/ci-conda:latest
 ```
@@ -38,11 +38,11 @@ But starting with the 25.12 release...
 
 ```text
 # these images are unchanged
-rapidsai/ci-conda:25.10-cuda13.0.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:25.10-cuda13.0.2-ubuntu24.04-py3.13
 rapidsai/ci-conda:25.10-latest
 
 # these now point to 25.12
-rapidsai/ci-conda:cuda13.0.1-ubuntu24.04-py3.13
+rapidsai/ci-conda:cuda13.0.2-ubuntu24.04-py3.13
 rapidsai/ci-conda:latest
 ```
 
@@ -57,17 +57,21 @@ The `latest` image tags are controlled by the values in `latest.yaml`.
 
 ## Building the dockerfiles locally
 
-To build the dockerfiles locally, you may use the following snippets:
+To build the dockerfiles locally, you may use the following snippets.
+
+The `ci-conda` and `ci-wheel` images require a GitHub token to download sccache releases.
+If you have the `gh` CLI installed and authenticated, you can use `gh auth token` to get your token:
 
 ```sh
 export LINUX_VER=ubuntu24.04
-export CUDA_VER=13.0.1
+export CUDA_VER=13.0.2
 export PYTHON_VER=3.13
 export ARCH=amd64
+export GH_TOKEN=$(gh auth token)
 export IMAGE_REPO=ci-conda
-docker build $(ci/compute-build-args.sh) -f ci-conda.Dockerfile context/
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-conda.Dockerfile context/
 export IMAGE_REPO=ci-wheel
-docker build $(ci/compute-build-args.sh) -f ci-wheel.Dockerfile context/
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-wheel.Dockerfile context/
 export IMAGE_REPO=citestwheel
 docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile context/
 ```
