@@ -103,6 +103,7 @@ case "${LINUX_VER}" in
       libxmlsec1-dev \
       llvm \
       make \
+      patch \
       ssh \
       tk-dev \
       unzip \
@@ -127,6 +128,7 @@ case "${LINUX_VER}" in
       git \
       jq \
       libffi-devel \
+      patch \
       ncurses-devel \
       readline-devel \
       sqlite \
