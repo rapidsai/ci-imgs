@@ -106,6 +106,7 @@ case "${LINUX_VER}" in
       libssl-dev \
       libtool \
       openssh-client \
+      patch \
       protobuf-compiler \
       software-properties-common \
       unzip \
@@ -148,6 +149,7 @@ case "${LINUX_VER}" in
       numactl-devel \
       openslide-devel \
       openssh-clients \
+      patch \
       protobuf-compiler \
       readline-devel \
       sqlite \
