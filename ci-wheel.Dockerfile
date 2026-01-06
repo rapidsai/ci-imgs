@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 ARG CUDA_VER=notset
@@ -117,11 +117,11 @@ case "${LINUX_VER}" in
     )
 
     # only re-install NCCL if there wasn't one already installed in the image
-    if ! apt show libnccl-dev > /dev/null 2>&1; then
+    if ! apt list --installed | grep -E 'libnccl\-dev' 2>&1 >/dev/null; then
       echo "libnccl-dev not found, manually installing it"
       LIBRARIES_TO_INSTALL+=(libnccl-dev)
     else
-      echo "linccl-dev already installed"
+      echo "libnccl-dev already installed"
     fi
 
     apt-get install -y --no-install-recommends \
@@ -177,11 +177,11 @@ case "${LINUX_VER}" in
     )
 
     # only re-install NCCL if there wasn't one already installed in the image
-    if ! dnf info libnccl-devel > /dev/null 2>&1; then
+    if ! rpm --query --all | grep -E 'libnccl\-devel' > /dev/null 2>&1; then
       echo "libnccl-devel not found, manually installing it"
       LIBRARIES_TO_INSTALL+=(libnccl-devel)
     else
-      echo "linccl-devel already installed"
+      echo "libnccl-devel already installed"
     fi
 
     dnf install -y \
