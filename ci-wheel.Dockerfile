@@ -81,39 +81,52 @@ RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     rapids-retry apt-get update -y
-    apt-get install -y \
-      autoconf \
-      automake \
-      build-essential \
-      ca-certificates \
-      cmake \
-      curl \
-      debianutils \
-      gcc \
-      git \
-      jq \
-      libbz2-dev \
-      libcudnn8-dev \
-      libcurl4-openssl-dev \
-      libffi-dev \
-      liblapack-dev \
-      libncurses5-dev \
-      libnuma-dev \
-      libopenblas-dev \
-      libopenslide-dev \
-      libreadline-dev \
-      libsqlite3-dev \
-      libssl-dev \
-      libtool \
-      openssh-client \
-      patch \
-      protobuf-compiler \
-      software-properties-common \
-      unzip \
-      wget \
-      yasm \
-      zip \
+    LIBRARIES_TO_INSTALL=(
+      autoconf
+      automake
+      build-essential
+      ca-certificates
+      cmake
+      curl
+      debianutils
+      gcc
+      git
+      jq
+      libbz2-dev
+      libcudnn8-dev
+      libcurl4-openssl-dev
+      libffi-dev
+      liblapack-dev
+      libncurses5-dev
+      libnuma-dev
+      libopenblas-dev
+      libopenslide-dev
+      libreadline-dev
+      libsqlite3-dev
+      libssl-dev
+      libtool
+      openssh-client
+      patch
+      protobuf-compiler
+      software-properties-common
+      unzip
+      wget
+      yasm
+      zip
       zlib1g-dev
+    )
+
+    # only re-install NCCL if there wasn't one already installed in the image
+    if ! apt show libnccl-dev > /dev/null 2>&1; then
+      echo "libnccl-dev not found, manually installing it"
+      LIBRARIES_TO_INSTALL+=(libnccl-dev)
+    else
+      echo "linccl-dev already installed"
+    fi
+
+    apt-get install -y --no-install-recommends \
+      "${LIBRARIES_TO_INSTALL[@]}"
+
     update-ca-certificates
     add-apt-repository ppa:git-core/ppa
     add-apt-repository ppa:ubuntu-toolchain-r/test
@@ -128,39 +141,51 @@ case "${LINUX_VER}" in
     dnf update -y
     dnf install -y epel-release
     dnf update -y
-    dnf install -y \
-      autoconf \
-      automake \
-      bzip2 \
-      bzip2-devel \
-      ca-certificates \
-      cmake \
-      curl \
-      dnf-plugins-core \
-      gcc \
-      git \
-      jq \
-      libcudnn8-devel \
-      libcurl-devel \
-      libffi-devel \
-      libtool \
-      ncurses-devel \
-      numactl \
-      numactl-devel \
-      openslide-devel \
-      openssh-clients \
-      patch \
-      protobuf-compiler \
-      readline-devel \
-      sqlite \
-      sqlite-devel \
-      unzip \
-      wget \
-      which \
-      xz \
-      xz-devel \
-      zip \
+    LIBRARIES_TO_INSTALL=(
+      autoconf
+      automake
+      bzip2
+      bzip2-devel
+      ca-certificates
+      cmake
+      curl
+      dnf-plugins-core
+      gcc
+      git
+      jq
+      libcudnn8-devel
+      libcurl-devel
+      libffi-devel
+      libtool
+      ncurses-devel
+      numactl
+      numactl-devel
+      openslide-devel
+      openssh-clients
+      patch
+      protobuf-compiler
+      readline-devel
+      sqlite
+      sqlite-devel
+      unzip
+      wget
+      which
+      xz
+      xz-devel
+      zip
       zlib-devel
+    )
+
+    # only re-install NCCL if there wasn't one already installed in the image
+    if ! dnf info libnccl-devel > /dev/null 2>&1; then
+      echo "libnccl-devel not found, manually installing it"
+      LIBRARIES_TO_INSTALL+=(libnccl-devel)
+    else
+      echo "linccl-devel already installed"
+    fi
+
+    dnf install -y \
+      "${LIBRARIES_TO_INSTALL[@]}"
     update-ca-trust extract
     dnf config-manager --set-enabled powertools
     dnf install -y blas-devel lapack-devel
