@@ -49,7 +49,7 @@ EOF
 # NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
 ARG SCCACHE_VER=notset
 ARG GH_CLI_VER=notset
-RUN --mount=type=secret,env=GH_TOKEN <<EOF
+RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
