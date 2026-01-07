@@ -55,9 +55,9 @@ pull in bug fixes, new features, etc. without needing to manually update tags as
 
 The `latest` image tags are controlled by the values in `latest.yaml`.
 
-## Building the dockerfiles locally
+## Building the images locally
 
-To build the dockerfiles locally, you may use the following snippets.
+To build the images locally, you may use the following snippets.
 
 These scripts require the `gha-tools` project.
 If you don't have it installed, you may install it like this:
