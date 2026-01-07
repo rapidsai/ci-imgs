@@ -59,6 +59,14 @@ The `latest` image tags are controlled by the values in `latest.yaml`.
 
 To build the dockerfiles locally, you may use the following snippets.
 
+These scripts require the `gha-tools` project.
+If you don't have it installed, you may install it like this:
+
+```shell
+git clone https://github.com/rapidsai/gha-tools.git /tmp/gha-tools
+export PATH="/tmp/gha-tools/tools:${PATH}"
+```
+
 The `ci-conda` and `ci-wheel` images require a GitHub token to download sccache releases.
 If you have the `gh` CLI installed and authenticated, you can use `gh auth token` to get your token:
 

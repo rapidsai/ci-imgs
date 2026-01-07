@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 ################################ build and update miniforge-upstream ###############################
@@ -19,13 +19,13 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 ARG SCCACHE_VER=notset
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
-RUN --mount=type=secret,id=GH_TOKEN <<EOF
+RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN <<EOF
   i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
   apt-get install -y --no-install-recommends wget
   wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
   wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
   tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-  GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+  SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
   apt-get purge -y wget && apt-get autoremove -y
   rm -rf /var/lib/apt/lists/*
 EOF
@@ -74,7 +74,7 @@ EOF
 ARG SCCACHE_VER=notset
 ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
-RUN --mount=type=secret,id=GH_TOKEN <<EOF
+RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
@@ -82,7 +82,7 @@ case "${LINUX_VER}" in
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
     tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
     ;;
@@ -91,7 +91,7 @@ case "${LINUX_VER}" in
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
     tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     dnf remove -y wget
     dnf clean all
     ;;
@@ -151,22 +151,24 @@ echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> /etc/skel/.ba
 echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> ~/.bashrc
 EOF
 
-# tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
-# On Ubuntu 24.04 and newer, we also need tzdata-legacy
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
+    PACKAGES_TO_INSTALL=(
+      tzdata
+    )
+
+    # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
+    # On Ubuntu 24.04 and newer, we also need tzdata-legacy
     os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
     if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
-        tzdata_pkgs=(tzdata tzdata-legacy)
-    else
-        tzdata_pkgs=(tzdata)
+        PACKAGES_TO_INSTALL+=(tzdata-legacy)
     fi
 
     rapids-retry apt-get update -y
     apt-get upgrade -y
     apt-get install -y --no-install-recommends \
-      "${tzdata_pkgs[@]}"
+      "${PACKAGES_TO_INSTALL[@]}"
 
     rm -rf "/var/lib/apt/lists/*"
     ;;
@@ -205,28 +207,34 @@ case "${LINUX_VER}" in
   "ubuntu"*)
     rapids-retry apt-get update -y
     apt-get upgrade -y
-    apt-get install -y --no-install-recommends \
-      ca-certificates \
-      curl \
-      file \
-      unzip \
-      wget \
-      gcc \
+    PACKAGES_TO_INSTALL=(
+      ca-certificates
+      curl
+      file
+      unzip
+      wget
+      gcc
       g++
+    )
+    apt-get install -y --no-install-recommends \
+      "${PACKAGES_TO_INSTALL[@]}"
     update-ca-certificates
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     dnf -y update
-    dnf -y install --setopt=install_weak_deps=False \
-      ca-certificates \
-      file \
-      unzip \
-      wget \
-      which \
-      yum-utils \
-      gcc \
+    PACKAGES_TO_INSTALL=(
+      ca-certificates
+      file
+      unzip
+      wget
+      which
+      yum-utils
+      gcc
       gcc-c++
+    )
+    dnf -y install --setopt=install_weak_deps=False \
+      "${PACKAGES_TO_INSTALL[@]}"
     update-ca-trust extract
     dnf clean all
     ;;
@@ -264,20 +272,24 @@ else
     PYTHON_ABI_TAG="cpython"
 fi
 
+PACKAGES_TO_INSTALL=(
+  'anaconda-client>=1.13.1'
+  'ca-certificates>=2026.1.4'
+  'certifi>=2026.1.4'
+  'conda-build>=25.11.1'
+  'conda-package-handling>=2.4.0'
+  'dunamai>=1.25.0'
+  'git>=2.52.0'
+  'jq>=1.8.1'
+  'packaging>=25.0'
+  "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+  'rapids-dependency-file-generator==1.*'
+  'rattler-build>=0.55.0'
+)
+
 rapids-mamba-retry install -y \
-  anaconda-client \
-  ca-certificates \
-  certifi \
-  conda-build \
-  conda-package-handling \
-  dunamai \
-  git \
-  jq \
-  packaging \
-  "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}" \
-  "rapids-dependency-file-generator==1.*" \
-  rattler-build \
-;
+  "${PACKAGES_TO_INSTALL[@]}"
+
 conda clean -aiptfy
 EOF
 
