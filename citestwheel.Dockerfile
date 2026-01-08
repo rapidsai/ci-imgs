@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 ARG CUDA_VER=notset
@@ -75,41 +75,44 @@ case "${LINUX_VER}" in
     rapids-retry apt-get update -y
     apt-get upgrade -y
 
+    PACKAGES_TO_INSTALL=(
+      build-essential
+      ca-certificates
+      curl
+      git
+      jq
+      libbz2-dev
+      libffi-dev
+      liblzma-dev
+      libncursesw5-dev
+      libnuma1
+      libreadline-dev
+      libsqlite3-dev
+      libssl-dev
+      libxml2-dev
+      libxmlsec1-dev
+      llvm
+      make
+      patch
+      ssh
+      tk-dev
+      tzdata
+      unzip
+      wget
+      xz-utils
+      zlib1g-dev
+    )
+
     # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
     # On Ubuntu 24.04 and newer, we also need tzdata-legacy
     os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
     if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
-        tzdata_pkgs=(tzdata tzdata-legacy)
-    else
-        tzdata_pkgs=(tzdata)
+        PACKAGES_TO_INSTALL+=(tzdata-legacy)
     fi
 
     apt-get install -y --no-install-recommends \
-      "${tzdata_pkgs[@]}" \
-      build-essential \
-      ca-certificates \
-      curl \
-      git \
-      jq \
-      libbz2-dev \
-      libffi-dev \
-      liblzma-dev \
-      libncursesw5-dev \
-      libnuma1 \
-      libreadline-dev \
-      libsqlite3-dev \
-      libssl-dev \
-      libxml2-dev \
-      libxmlsec1-dev \
-      llvm \
-      make \
-      patch \
-      ssh \
-      tk-dev \
-      unzip \
-      wget \
-      xz-utils \
-      zlib1g-dev
+      "${PACKAGES_TO_INSTALL[@]}" \
+
     update-ca-certificates
 
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
@@ -118,27 +121,31 @@ case "${LINUX_VER}" in
     dnf update -y
     dnf install -y epel-release
     dnf update -y
-    dnf install -y \
-      bzip2 \
-      bzip2-devel \
-      ca-certificates \
-      curl \
-      dnf-plugins-core \
-      gcc \
-      git \
-      jq \
-      libffi-devel \
-      patch \
-      ncurses-devel \
-      readline-devel \
-      sqlite \
-      sqlite-devel \
-      unzip \
-      wget \
-      which \
-      xz \
-      xz-devel \
+    PACKAGES_TO_INSTALL=(
+      bzip2
+      bzip2-devel
+      ca-certificates
+      curl
+      dnf-plugins-core
+      gcc
+      git
+      jq
+      libffi-devel
+      patch
+      ncurses-devel
+      readline-devel
+      sqlite
+      sqlite-devel
+      unzip
+      wget
+      which
+      xz
+      xz-devel
       zlib-devel
+    )
+    dnf install -y \
+      "${PACKAGES_TO_INSTALL[@]}"
+
     update-ca-trust extract
     dnf clean all
     pushd tmp
@@ -199,7 +206,7 @@ pyenv global ${PYTHON_VER}
 # use so should be compatible with `pyenv`
 rapids-pip-retry install --upgrade pip
 rapids-pip-retry install \
-  certifi \
+  'certifi>=2026.1.4' \
   'rapids-dependency-file-generator==1.*'
 pyenv rehash
 EOF

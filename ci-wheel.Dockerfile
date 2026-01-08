@@ -49,7 +49,7 @@ EOF
 # NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
 ARG SCCACHE_VER=notset
 ARG GH_CLI_VER=notset
-RUN --mount=type=secret,id=GH_TOKEN <<EOF
+RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
@@ -57,7 +57,7 @@ case "${LINUX_VER}" in
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
     tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     apt-get purge -y wget && apt-get autoremove -y
     rm -rf /var/lib/apt/lists/*
     ;;
@@ -66,7 +66,7 @@ case "${LINUX_VER}" in
     wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
     wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
     tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    GH_TOKEN=$(cat /run/secrets/GH_TOKEN) SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
     dnf remove -y wget
     dnf clean all
     ;;
@@ -81,7 +81,7 @@ RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     rapids-retry apt-get update -y
-    LIBRARIES_TO_INSTALL=(
+    PACKAGES_TO_INSTALL=(
       autoconf
       automake
       build-essential
@@ -119,13 +119,13 @@ case "${LINUX_VER}" in
     # only re-install NCCL if there wasn't one already installed in the image
     if ! apt list --installed | grep -E 'libnccl\-dev' 2>&1 >/dev/null; then
       echo "libnccl-dev not found, manually installing it"
-      LIBRARIES_TO_INSTALL+=(libnccl-dev)
+      PACKAGES_TO_INSTALL+=(libnccl-dev)
     else
       echo "libnccl-dev already installed"
     fi
 
     apt-get install -y --no-install-recommends \
-      "${LIBRARIES_TO_INSTALL[@]}"
+      "${PACKAGES_TO_INSTALL[@]}"
 
     update-ca-certificates
     add-apt-repository ppa:git-core/ppa
@@ -141,7 +141,7 @@ case "${LINUX_VER}" in
     dnf update -y
     dnf install -y epel-release
     dnf update -y
-    LIBRARIES_TO_INSTALL=(
+    PACKAGES_TO_INSTALL=(
       autoconf
       automake
       bzip2
@@ -179,13 +179,13 @@ case "${LINUX_VER}" in
     # only re-install NCCL if there wasn't one already installed in the image
     if ! rpm --query --all | grep -E 'libnccl\-devel' > /dev/null 2>&1; then
       echo "libnccl-devel not found, manually installing it"
-      LIBRARIES_TO_INSTALL+=(libnccl-devel)
+      PACKAGES_TO_INSTALL+=(libnccl-devel)
     else
       echo "libnccl-devel already installed"
     fi
 
     dnf install -y \
-      "${LIBRARIES_TO_INSTALL[@]}"
+      "${PACKAGES_TO_INSTALL[@]}"
     update-ca-trust extract
     dnf config-manager --set-enabled powertools
     dnf install -y blas-devel lapack-devel
@@ -251,17 +251,21 @@ pyenv global ${PYTHON_VER}
 # `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
 # use so should be compatible with `pyenv`
 rapids-pip-retry install --upgrade pip
+
+PACKAGES_TO_INSTALL=(
+  'anaconda-client>=1.13.0'
+  'auditwheel>=6.2.0'
+  'certifi>=2026.1.4'
+  'conda-package-handling>=2.4.0'
+  'dunamai>=1.25.0'
+  'patchelf>=0.17.2.4'
+  'pydistcheck==0.11.*'
+  'rapids-dependency-file-generator==1.*'
+  'twine>=6.2.0'
+  'wheel>=0.45.1'
+)
 rapids-pip-retry install \
-  'anaconda-client>=1.13.0' \
-  'auditwheel>=6.2.0' \
-  certifi \
-  conda-package-handling \
-  dunamai \
-  patchelf \
-  'pydistcheck==0.9.*' \
-  'rapids-dependency-file-generator==1.*' \
-  twine \
-  wheel
+  "${PACKAGES_TO_INSTALL[@]}"
 pip cache purge
 pyenv rehash
 EOF
