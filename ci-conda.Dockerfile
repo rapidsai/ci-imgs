@@ -32,8 +32,6 @@ EOF
 
 ################################ build miniforge-cuda using updated miniforge-upstream from above ###############################
 
-ARG CUDA_VER=notset
-ARG LINUX_VER=notset
 FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
 
 ARG CUDA_VER=notset
