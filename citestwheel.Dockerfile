@@ -3,16 +3,14 @@
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
+FROM nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
-ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
-
-FROM ${BASE_IMAGE}
-
-ARG CUDA_VER=notset
-ARG LINUX_VER=notset
-ARG CPU_ARCH=notset
-ARG PYTHON_VER=notset
 ARG CONDA_ARCH=notset
+ARG CPU_ARCH=notset
+ARG CUDA_VER=notset
+ARG DEBIAN_FRONTEND=noninteractive
+ARG LINUX_VER=notset
+ARG PYTHON_VER=notset
 
 # Set RAPIDS versions env variables
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
@@ -20,10 +18,8 @@ ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 ENV RAPIDS_DEPENDENCIES="latest"
 ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
 
-ARG DEBIAN_FRONTEND=noninteractive
-
 ENV PYENV_ROOT="/pyenv"
-ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
+ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
@@ -186,18 +182,16 @@ unzip -q /tmp/awscliv2.zip -d /tmp
 rm -rf /tmp/aws /tmp/awscliv2.zip
 EOF
 
-# Install pyenv
-RUN rapids-retry curl https://pyenv.run | bash
-
 # Create pyenvs
 RUN <<EOF
+  rapids-retry curl https://pyenv.run | bash
   pyenv install ${PYTHON_VER}
   pyenv global ${PYTHON_VER}
   python --version
 EOF
 
 # add bin to path
-ENV PATH="/pyenv/versions/${PYTHON_VER}/bin/:$PATH"
+ENV PATH="${PYENV_ROOT}/versions/${PYTHON_VER}/bin/:$PATH"
 
 # update pip and install build tools
 RUN <<EOF
