@@ -250,7 +250,9 @@ RUN <<EOF
 pyenv global ${PYTHON_VER}
 # `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
 # use so should be compatible with `pyenv`
-rapids-pip-retry install --upgrade pip
+#
+# >=25.3 floor is there to ensure we have a version that respects '--build-constraint'
+rapids-pip-retry install --upgrade 'pip>=25.3'
 
 PACKAGES_TO_INSTALL=(
   'anaconda-client>=1.13.0'
