@@ -1,0 +1,4 @@
+# reduce the risk of other files accidentally included in context/ getting passed to image builds
+*
+!condarc.tmpl
+!pip.conf
