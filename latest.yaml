@@ -1,10 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 # Define the values used for the "latest" tag
-miniforge-cuda:
-  CUDA_VER: "13.1.0"
-  PYTHON_VER: "3.13"
-  LINUX_VER: "ubuntu24.04"
 ci-conda:
   CUDA_VER: "13.1.0"
   PYTHON_VER: "3.13"

@@ -5,51 +5,40 @@
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
-ARG PYTHON_VER=notset
 ARG MINIFORGE_VER=notset
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 
-ENV PATH=/opt/conda/bin:$PATH
-
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
-
-# Install gha-tools, gh CLI, and sccache to miniforge for ubuntu
-# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
-ARG SCCACHE_VER=notset
-ARG GH_CLI_VER=notset
-ARG CPU_ARCH=notset
-RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN <<EOF
-  i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
-  apt-get install -y --no-install-recommends wget
-  wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-  wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-  tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-  SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
-  apt-get purge -y wget && apt-get autoremove -y
-  rm -rf /var/lib/apt/lists/*
-EOF
 
 RUN <<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
+
+# install gha-tools for rapids-mamba-retry
+wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
 
 # Example of pinned package in case you require an override
 # echo '<PACKAGE_NAME>==<VERSION>' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
-rapids-mamba-retry update --all -y -n base
+#
+# NOTE: 'PATH' is set locally here (instead of 'ENV') because this target is just an intermediate
+#       build that files are copied out of.
+PATH="/opt/conda/bin:$PATH" \
+  rapids-mamba-retry update --all -y -n base
 EOF
 
-################################ build miniforge-cuda using updated miniforge-upstream from above ###############################
+FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda
 
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
-
-ARG CUDA_VER
-ARG LINUX_VER
-ARG PYTHON_VER
+ARG CONDA_ARCH=notset
+ARG CUDA_VER=notset
 ARG DEBIAN_FRONTEND=noninteractive
+ARG LINUX_VER=notset
+ARG PYTHON_VER=notset
+ARG PYTHON_VER_UPPER_BOUND=notset
+
 ENV PATH=/opt/conda/bin:$PATH
 ENV PYTHON_VERSION=${PYTHON_VER}
 
@@ -71,9 +60,9 @@ EOF
 
 # Install gha-tools, gh CLI, and sccache
 # NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
-ARG SCCACHE_VER=notset
-ARG GH_CLI_VER=notset
 ARG CPU_ARCH=notset
+ARG GH_CLI_VER=notset
+ARG SCCACHE_VER=notset
 RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
@@ -182,24 +171,11 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-FROM miniforge-cuda
-
-ARG TARGETPLATFORM=notset
-ARG CUDA_VER=notset
-ARG LINUX_VER=notset
-ARG PYTHON_VER=notset
-ARG PYTHON_VER_UPPER_BOUND=notset
-ARG CONDA_ARCH=notset
-
-ARG DEBIAN_FRONTEND
-
 # Set RAPIDS versions env variables
-ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
-ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
-ENV RAPIDS_DEPENDENCIES="latest"
 ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
-
-SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
+ENV RAPIDS_DEPENDENCIES="latest"
+ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 
 # Install system packages depending on the LINUX_VER
 RUN <<EOF
@@ -294,9 +270,9 @@ conda clean -aiptfy
 EOF
 
 # Install yq and awscli
+ARG AWS_CLI_VER=notset
 ARG REAL_ARCH=notset
 ARG YQ_VER=notset
-ARG AWS_CLI_VER=notset
 RUN <<EOF
 rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
 mv /tmp/yq /usr/bin/yq

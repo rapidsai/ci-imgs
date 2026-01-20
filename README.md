@@ -5,7 +5,6 @@ This repository includes the following CI images for RAPIDS:
 - [`rapidsai/ci-conda`](https://hub.docker.com/r/rapidsai/ci-conda/tags): for building and testing RAPIDS `conda` packages
 - [`rapidsai/ci-wheel`](https://hub.docker.com/r/rapidsai/ci-wheel/tags): for building and publishing RAPIDS wheels (including pure-Python and manylinux-compliant wheels)
 - [`rapidsai/citestwheel`](https://hub.docker.com/r/rapidsai/citestwheel/tags): for testing wheels
-- [`rapidsai/miniforge-cuda`](https://hub.docker.com/r/rapidsai/citestwheel/tags): base image for `conda`-based images here, and for user-facing RAPIDS images like https://github.com/rapidsai/docker
 
 ## Tagging Strategy
 
@@ -71,7 +70,7 @@ The `ci-conda` and `ci-wheel` images require a GitHub token to download sccache 
 If you have the `gh` CLI installed and authenticated, you can use `gh auth token` to get your token:
 
 ```sh
-export LINUX_VER=ubuntu24.04
+export LINUX_VER=rockylinux8
 export CUDA_VER=13.0.2
 export PYTHON_VER=3.13
 export ARCH=amd64

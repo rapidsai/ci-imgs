@@ -15,9 +15,6 @@ LINUX_VER:
   - "ubuntu24.04"
   - "rockylinux8"
 CI_IMAGE_CONFIG:
-  - IMAGE_REPO: "miniforge-cuda"
-    dockerfile: ci-conda.Dockerfile
-    docker_target: miniforge-cuda
   - IMAGE_REPO: "ci-conda"
     dockerfile: ci-conda.Dockerfile
     docker_target: ""

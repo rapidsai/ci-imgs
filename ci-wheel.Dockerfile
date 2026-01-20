@@ -8,26 +8,25 @@ ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
 FROM ${BASE_IMAGE}
 
-ARG CUDA_VER=notset
-ARG LINUX_VER=notset
+ARG CONDA_ARCH=notset
 ARG CPU_ARCH=notset
-ARG REAL_ARCH=notset
-ARG PYTHON_VER=notset
+ARG CUDA_VER=notset
+ARG DEBIAN_FRONTEND=noninteractive
+ARG LINUX_VER=notset
 ARG MANYLINUX_VER=notset
 ARG POLICY=${MANYLINUX_VER}
-ARG CONDA_ARCH=notset
-
-ARG DEBIAN_FRONTEND=noninteractive
+ARG PYTHON_VER=notset
+ARG REAL_ARCH=notset
 
 # Set RAPIDS versions env variables
-ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
-ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
-ENV RAPIDS_DEPENDENCIES="latest"
 ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
+ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
+ENV RAPIDS_DEPENDENCIES="latest"
+ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 ENV RAPIDS_WHEEL_BLD_OUTPUT_DIR=/tmp/wheelhouse
 
 ENV PYENV_ROOT="/pyenv"
-ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
+ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
@@ -250,7 +249,9 @@ RUN <<EOF
 pyenv global ${PYTHON_VER}
 # `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
 # use so should be compatible with `pyenv`
-rapids-pip-retry install --upgrade pip
+#
+# >=25.3 floor is there to ensure we have a version that respects '--build-constraint'
+rapids-pip-retry install --upgrade 'pip>=25.3'
 
 PACKAGES_TO_INSTALL=(
   'anaconda-client>=1.13.0'
