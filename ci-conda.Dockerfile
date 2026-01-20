@@ -30,14 +30,14 @@ PATH="/opt/conda/bin:$PATH" \
   rapids-mamba-retry update --all -y -n base
 EOF
 
-################################ build miniforge-cuda using updated miniforge-upstream from above ###############################
+FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda
 
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
-
+ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset
 ARG DEBIAN_FRONTEND=noninteractive
 ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
+ARG PYTHON_VER_UPPER_BOUND=notset
 
 ENV PATH=/opt/conda/bin:$PATH
 ENV PYTHON_VERSION=${PYTHON_VER}
@@ -171,22 +171,11 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-FROM miniforge-cuda
-
-ARG CONDA_ARCH=notset
-ARG CUDA_VER=notset
-ARG DEBIAN_FRONTEND=noninteractive
-ARG LINUX_VER=notset
-ARG PYTHON_VER=notset
-ARG PYTHON_VER_UPPER_BOUND=notset
-
 # Set RAPIDS versions env variables
 ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
 ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
 ENV RAPIDS_DEPENDENCIES="latest"
 ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
-
-SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Install system packages depending on the LINUX_VER
 RUN <<EOF
