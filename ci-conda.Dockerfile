@@ -266,6 +266,7 @@ EOF
 
 # Install tools
 ARG AWS_CLI_VER=notset
+ARG CODECOV_VER=notset
 ARG REAL_ARCH=notset
 ARG YQ_VER=notset
 RUN <<EOF
