@@ -284,9 +284,28 @@ unzip -q /tmp/awscliv2.zip -d /tmp
 rm -rf /tmp/aws /tmp/awscliv2.zip
 
 # codecov-cli
+#
+# codecov-cli is a noarch Python package, but some of its dependencies require compilation.
+# compilers are installed defensively here to prevent issues like "a dependency of codecov-cli
+# doesn't support CPU_ARCH / LINUX_VER / PYTHON_VER" from slowing down updates to RAPIDS CI.
+#
+COMPILER_PACKAGES=(
+  gcc
+  g++
+)
+apt-get install -y --no-install-recommends \
+  "${COMPILER_PACKAGES[@]}"
+
 rapids-pip-retry install --prefer-binary \
   "codecov-cli==${CODECOV_VER}"
 
+# remove compiler packages... conda-based CI should use conda-forge's compilers
+apt-get purge -y \
+  "${COMPILER_PACKAGES[@]}"
+apt-get autoremove -y
+
+# clear the pip cache, to shrink image size and prevent unintentionally
+# pinning CI to older versions of things
 pip cache purge
 EOF
 
