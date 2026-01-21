@@ -293,16 +293,34 @@ COMPILER_PACKAGES=(
   gcc
   g++
 )
-apt-get install -y --no-install-recommends \
-  "${COMPILER_PACKAGES[@]}"
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    apt-get install -y --no-install-recommends \
+      "${COMPILER_PACKAGES[@]}"
+    ;;
+  "rockylinux"*)
+    dnf install -y \
+      "${COMPILER_PACKAGES[@]}"
+    ;;
+esac
 
 rapids-pip-retry install --prefer-binary \
   "codecov-cli==${CODECOV_VER}"
 
 # remove compiler packages... conda-based CI should use conda-forge's compilers
-apt-get purge -y \
-  "${COMPILER_PACKAGES[@]}"
-apt-get autoremove -y
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    apt-get purge -y \
+      "${COMPILER_PACKAGES[@]}"
+    apt-get autoremove -y
+    rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+    ;;
+  "rockylinux"*)
+    dnf remove -y \
+      "${COMPILER_PACKAGES[@]}"
+    dnf clean all
+    ;;
+esac
 
 # clear the pip cache, to shrink image size and prevent unintentionally
 # pinning CI to older versions of things
