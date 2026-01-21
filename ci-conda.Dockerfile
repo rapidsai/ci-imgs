@@ -100,10 +100,10 @@ EOF
 # Ownership & permissions based on https://docs.anaconda.com/anaconda/install/multi-user/#multi-user-anaconda-installation-on-linux
 COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/conda
 
-# Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
-RUN chmod g+ws /opt/conda
-
 RUN <<EOF
+# Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
+chmod g+ws /opt/conda
+
 # Ensure new files/dirs have group write permissions
 umask 002
 
@@ -130,10 +130,10 @@ find /opt/conda -follow -type f -name '*.pyc' -delete
 conda clean -aiptfy
 EOF
 
-# Reassign root's primary group to root
-RUN usermod -g root root
-
 RUN <<EOF
+# Reassign root's primary group to root
+usermod -g root root
+
 # ensure conda environment is always activated
 ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
 echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> /etc/skel/.bashrc
@@ -189,8 +189,6 @@ case "${LINUX_VER}" in
       file
       unzip
       wget
-      gcc
-      g++
     )
     apt-get install -y --no-install-recommends \
       "${PACKAGES_TO_INSTALL[@]}"
@@ -206,8 +204,6 @@ case "${LINUX_VER}" in
       wget
       which
       yum-utils
-      gcc
-      gcc-c++
     )
     dnf -y install --setopt=install_weak_deps=False \
       "${PACKAGES_TO_INSTALL[@]}"
@@ -221,22 +217,21 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Install prereq for envsubst
-RUN <<EOF
-rapids-mamba-retry install -y \
-  gettext
-conda clean -aiptfy
-EOF
-
 # Create condarc file from env vars
 ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
 ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
 COPY condarc.tmpl /tmp/condarc.tmpl
-RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
-    rm -f /tmp/condarc.tmpl
 
 # Install CI tools using mamba
 RUN <<EOF
+# Install prereq for envsubst
+rapids-mamba-retry install -y \
+  gettext
+
+# create condarc file from env vars
+cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
+rm -f /tmp/condarc.tmpl
+
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
 PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
 PYTHON_UPPER_BOUND="${PYTHON_MAJOR_VERSION}.$((PYTHON_MINOR_VERSION+1)).0a0"
@@ -269,27 +264,28 @@ rapids-mamba-retry install -y \
 conda clean -aiptfy
 EOF
 
-# Install yq and awscli
+# Install tools
 ARG AWS_CLI_VER=notset
 ARG REAL_ARCH=notset
 ARG YQ_VER=notset
 RUN <<EOF
+# yq
 rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
 mv /tmp/yq /usr/bin/yq
 chmod +x /usr/bin/yq
 
+# AWS CLI
 # ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
 rapids-retry curl -o /tmp/awscliv2.zip \
   -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
 unzip -q /tmp/awscliv2.zip -d /tmp
 /tmp/aws/install
 rm -rf /tmp/aws /tmp/awscliv2.zip
-EOF
 
-# Install codecov from source distribution
-ARG CODECOV_VER=notset
-RUN <<EOF
-rapids-pip-retry install codecov-cli==${CODECOV_VER}
+# codecov-cli
+rapids-pip-retry install --prefer-binary \
+  "codecov-cli==${CODECOV_VER}"
+
 pip cache purge
 EOF
 
