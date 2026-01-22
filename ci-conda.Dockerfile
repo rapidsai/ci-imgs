@@ -296,6 +296,7 @@ case "${LINUX_VER}" in
       gcc
       g++
     )
+    rapids-retry apt-get update -y
     apt-get install -y --no-install-recommends \
       "${COMPILER_PACKAGES[@]}"
     ;;
