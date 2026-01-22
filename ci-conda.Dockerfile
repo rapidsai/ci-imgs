@@ -289,16 +289,21 @@ rm -rf /tmp/aws /tmp/awscliv2.zip
 # compilers are installed defensively here to prevent issues like "a dependency of codecov-cli
 # doesn't support CPU_ARCH / LINUX_VER / PYTHON_VER" from slowing down updates to RAPIDS CI.
 #
-COMPILER_PACKAGES=(
-  gcc
-  g++
-)
+
 case "${LINUX_VER}" in
   "ubuntu"*)
+    COMPILER_PACKAGES=(
+      gcc
+      g++
+    )
     apt-get install -y --no-install-recommends \
       "${COMPILER_PACKAGES[@]}"
     ;;
   "rockylinux"*)
+    COMPILER_PACKAGES=(
+      gcc
+      gcc-c++
+    )
     dnf install -y \
       "${COMPILER_PACKAGES[@]}"
     ;;
