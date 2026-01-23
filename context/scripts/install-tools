@@ -46,11 +46,20 @@ done
 TOOL_INSTALL_DIR=/usr/local/bin
 
 # install wget if not already installed
+unzip_preinstalled=true
 wget_preinstalled=true
 
-if ! type -f wget >/dev/null; then
-  echo "could not find 'wget', installing it"
-  wget_preinstalled=false
+# avoid leaking apt-get install'd packages out of this script
+PACKAGES_TO_INSTALL=()
+if ! type -f unzip >/dev/null 2>&1; then
+  PACKAGES_TO_INSTALL+=(unzip)
+fi
+if ! type -f wget >/dev/null 2>&1; then
+  PACKAGES_TO_INSTALL+=(wget)
+fi
+
+if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
+  echo "could not find some necessary packages, temporarily installing them"
   case "${LINUX_VER}" in
     "ubuntu"*)
       i=0
@@ -59,10 +68,11 @@ if ! type -f wget >/dev/null; then
         sleep 10;
       done
       apt-get install -y --no-install-recommends \
-        wget
+        "${PACKAGES_TO_INSTALL[@]}"
       ;;
     "rockylinux"*)
-      dnf install -y wget
+      dnf install -y \
+        "${PACKAGES_TO_INSTALL[@]}"
       ;;
     *)
       echo "Unsupported LINUX_VER: ${LINUX_VER}"
@@ -93,8 +103,8 @@ fi
 if (( aws_cli_flag == 1 )); then
   echo "installing AWS CLI"
   # ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
-  rapids-retry curl -o /tmp/awscliv2.zip \
-    -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
+  rapids-retry wget -O /tmp/awscliv2.zip \
+    "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
   unzip -q /tmp/awscliv2.zip -d /tmp
   /tmp/aws/install
   rm -rf /tmp/aws /tmp/awscliv2.zip
@@ -115,16 +125,18 @@ if (( yq_flag == 1 )); then
   chmod +x "${TOOL_INSTALL_DIR}/yq"
 fi
 
-# uninstall wget
-if [[ "${wget_preinstalled}" != "true" ]]; then
+# possibly uninstall system packages needed for the installs above
+if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
     case "${LINUX_VER}" in
     "ubuntu"*)
-      apt-get purge -y wget
+      apt-get purge -y \
+        "${PACKAGE_TO_INSTALL[@]}"
       apt-get autoremove -y
       rm -rf /var/lib/apt/lists/*
       ;;
     "rockylinux"*)
-      dnf remove -y wget
+      dnf remove -y \
+        "${PACKAGES_TO_INSTALL[@]}"
       dnf clean all
       ;;
   esac
