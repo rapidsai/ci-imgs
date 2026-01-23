@@ -9,14 +9,9 @@ ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 FROM ${BASE_IMAGE}
 
 ARG CONDA_ARCH=notset
-ARG CPU_ARCH=notset
 ARG CUDA_VER=notset
 ARG DEBIAN_FRONTEND=noninteractive
-ARG LINUX_VER=notset
-ARG MANYLINUX_VER=notset
-ARG POLICY=${MANYLINUX_VER}
 ARG PYTHON_VER=notset
-ARG REAL_ARCH=notset
 
 # Set RAPIDS versions env variables
 ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
@@ -30,50 +25,41 @@ ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Set apt policy configurations
-# We bump up the number of retries and the timeouts for `apt`
-# Note that `dnf` defaults to 10 retries, so no additional configuration is required here
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
-    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
-    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
-    ;;
-esac
-EOF
-
-# Install gha-tools, gh CLI, and sccache
-# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
-ARG SCCACHE_VER=notset
+# Install all the tools that are just "download a binary and stick it on PATH".
+#
+# These can be together, and earlier, because they're very cache-friendly... the versions are
+# pinned so the layer content shouldn't change.
+#
+# And safe here because they're unaffected by pip, the Python interpreter or other Python packages.
+ARG AWS_CLI_VER=notset
+ARG CPU_ARCH=notset
 ARG GH_CLI_VER=notset
-RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
-    apt-get install -y --no-install-recommends wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
-    apt-get purge -y wget && apt-get autoremove -y
-    rm -rf /var/lib/apt/lists/*
-    ;;
-  "rockylinux"*)
-    dnf install -y wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
-    dnf remove -y wget
-    dnf clean all
-    ;;
-  *)
-    echo "Unsupported LINUX_VER: ${LINUX_VER}"
-    exit 1
-    ;;
-esac
+ARG LINUX_VER=notset
+ARG REAL_ARCH=notset
+ARG SCCACHE_VER=notset
+RUN \
+  --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+# configure apt (do this first because it affects installs in later scripts)
+LINUX_VER=${LINUX_VER} \
+  /tmp/build-scripts/configure-apt
+
+# install AWS CLI, gh CLI, gha-tools, and sccache
+#
+# notes:
+#   * AWS CLI is needed to work with artifacts on S3
+AWS_CLI_VER=${AWS_CLI_VER} \
+CPU_ARCH=${CPU_ARCH} \
+GH_CLI_VER=${GH_CLI_VER} \
+LINUX_VER=${LINUX_VER} \
+REAL_ARCH=${REAL_ARCH} \
+SCCACHE_VER=${SCCACHE_VER} \
+  /tmp/build-scripts/install-tools \
+    --aws-cli \
+    --gh-cli \
+    --gha-tools \
+    --sccache
 EOF
 
 RUN <<EOF
@@ -211,25 +197,15 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Download and install awscli
-# Needed to download wheels for running tests
-ARG AWS_CLI_VER=notset
-RUN <<EOF
-# ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
-rapids-retry curl -o /tmp/awscliv2.zip \
-  -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
-unzip -q /tmp/awscliv2.zip -d /tmp
-/tmp/aws/install
-rm -rf /tmp/aws /tmp/awscliv2.zip
-EOF
-
 # Set AUDITWHEEL_* env vars for use with auditwheel
+ARG MANYLINUX_VER=notset
+ARG POLICY=${MANYLINUX_VER}
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
 
-# Install pyenv
-RUN rapids-retry curl https://pyenv.run | bash
-
 RUN <<EOF
+# install pyenv
+rapids-retry curl https://pyenv.run | bash
+
 case "${LINUX_VER}" in
   "ubuntu"*)
     pyenv install --verbose "${RAPIDS_PY_VERSION}"
@@ -271,12 +247,14 @@ pip cache purge
 pyenv rehash
 EOF
 
+RUN <<EOF
 # Create output directory for wheel builds
-RUN mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
+mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
 
 # Mark all directories as safe for git so that GHA clones into the root don't
 # run into issues
-RUN git config --system --add safe.directory '*'
+git config --system --add safe.directory '*'
+EOF
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf

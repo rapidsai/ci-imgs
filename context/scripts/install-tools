@@ -1,0 +1,131 @@
+#!/bin/bash
+
+# [description]
+#
+#   Installs 'gha-tools' and puts it at /usr/local/bin so no PATH modification is required.
+#
+
+set -e -u -o pipefail
+
+# parse command-line flags
+aws_cli_flag=0
+gh_cli_flag=0
+gha_tools_flag=0
+sccache_flag=0
+yq_flag=0
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --aws-cli)
+      aws_cli_flag=1
+      shift
+      ;;
+    --gh-cli)
+      gh_cli_flag=1
+      shift
+      ;;
+    --gha-tools)
+      gha_tools_flag=1
+      shift
+      ;;
+    --sccache)
+      sccache_flag=1
+      shift
+      ;;
+    --yq)
+      yq_flag=1
+      shift
+      ;;
+    -*)
+      echo "Unknown flag: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+TOOL_INSTALL_DIR=/usr/local/bin
+
+# install wget if not already installed
+wget_preinstalled=true
+
+if ! type -f wget >/dev/null; then
+  echo "could not find 'wget', installing it"
+  wget_preinstalled=false
+  case "${LINUX_VER}" in
+    "ubuntu"*)
+      i=0
+      until apt-get update -y; do
+        ((++i >= 5)) && break;
+        sleep 10;
+      done
+      apt-get install -y --no-install-recommends \
+        wget
+      ;;
+    "rockylinux"*)
+      dnf install -y wget
+      ;;
+    *)
+      echo "Unsupported LINUX_VER: ${LINUX_VER}"
+      exit 1
+      ;;
+  esac
+fi
+
+# install gha-tools first, as other things below depend on it
+if (( gha_tools_flag == 1 )); then
+  echo "installing 'gha-tools'"
+  wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C "${TOOL_INSTALL_DIR}"
+  echo "done installing 'gha-tools' to '${TOOL_INSTALL_DIR}'"
+fi
+
+# install gh CLI
+# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
+if (( gh_cli_flag == 1 )); then
+  echo "installing 'gh' CLI"
+  wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+  tar -xf gh_*.tar.gz
+  mv gh_*/bin/gh "${TOOL_INSTALL_DIR}"
+  rm -rf gh_*
+  echo "done installing 'gh' CLI to '${TOOL_INSTALL_DIR}'"
+fi
+
+# install AWS CLI
+if (( aws_cli_flag == 1 )); then
+  echo "installing AWS CLI"
+  # ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
+  rapids-retry curl -o /tmp/awscliv2.zip \
+    -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
+  unzip -q /tmp/awscliv2.zip -d /tmp
+  /tmp/aws/install
+  rm -rf /tmp/aws /tmp/awscliv2.zip
+fi
+
+# install sccache
+if (( sccache_flag == 1 )); then
+  echo "installing 'sccache'"
+  SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
+  echo "done installing 'sccache'"
+fi
+
+# install yq
+if (( yq_flag == 1 )); then
+  echo "installing 'yq'"
+  rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
+  mv /tmp/yq "${TOOL_INSTALL_DIR}"
+  chmod +x "${TOOL_INSTALL_DIR}/yq"
+fi
+
+# uninstall wget
+if [[ "${wget_preinstalled}" != "true" ]]; then
+    case "${LINUX_VER}" in
+    "ubuntu"*)
+      apt-get purge -y wget
+      apt-get autoremove -y
+      rm -rf /var/lib/apt/lists/*
+      ;;
+    "rockylinux"*)
+      dnf remove -y wget
+      dnf clean all
+      ;;
+  esac
+fi
