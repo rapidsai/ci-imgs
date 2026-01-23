@@ -45,8 +45,8 @@ jobs:
     runs-on: linux-${{ matrix.ARCH }}-cpu4
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-      - name: Download gha-tools
+        uses: actions/checkout@v6
+      - name: Install gha-tools
         run: |
           context/scripts/install-tools --gha-tools
       - name: Login to DockerHub

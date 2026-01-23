@@ -20,8 +20,8 @@ jobs:
       MATRIX: ${{ steps.compute-matrix.outputs.MATRIX }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-      - name: Download gha-tools
+        uses: actions/checkout@v6
+      - name: Install gha-tools
         run: |
           context/scripts/install-tools --gha-tools
       - name: Compute matrix
@@ -59,8 +59,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-      - name: Download gha-tools
+        uses: actions/checkout@v6
+      - name: Install gha-tools
         run: |
           context/scripts/install-tools --gha-tools
       - name: Login to DockerHub
