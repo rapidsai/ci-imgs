@@ -45,10 +45,6 @@ done
 
 TOOL_INSTALL_DIR=/usr/local/bin
 
-# install wget if not already installed
-unzip_preinstalled=true
-wget_preinstalled=true
-
 # avoid leaking apt-get install'd packages out of this script
 PACKAGES_TO_INSTALL=()
 if ! type -f unzip >/dev/null 2>&1; then
