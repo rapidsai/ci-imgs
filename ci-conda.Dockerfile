@@ -18,8 +18,9 @@ RUN \
 umask 002
 
 # install gha-tools for rapids-mamba-retry
-/tmp/build-scripts/install-tools \
-  --gha-tools
+LINUX_VER=${LINUX_VER} \
+  /tmp/build-scripts/install-tools \
+    --gha-tools
 
 # Example of pinned package in case you require an override
 # echo '<PACKAGE_NAME>==<VERSION>' >> /opt/conda/conda-meta/pinned
