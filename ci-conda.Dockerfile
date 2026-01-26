@@ -11,6 +11,7 @@ FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+ARG LINUX_VER=notset
 RUN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF

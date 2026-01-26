@@ -10,8 +10,18 @@ set -e -u -o pipefail
 
 # Set apt policy configurations
 # We bump up the number of retries and the timeouts for `apt`
-# Note that `dnf` defaults to 10 retries, so no additional configuration is required here
-echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
-echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
-echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
+case "${LINUX_VER}" in
+    "ubuntu"*)
+      echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+      echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
+      echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
+      echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
+      ;;
+    "rockylinux"*)
+      # Note that `dnf` defaults to 10 retries, so no additional configuration is required here
+      ;;
+    *)
+      echo "Unsupported LINUX_VER: ${LINUX_VER}"
+      exit 1
+    ;;
+esac

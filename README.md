@@ -70,7 +70,7 @@ The `ci-conda` and `ci-wheel` images require a GitHub token to download sccache 
 If you have the `gh` CLI installed and authenticated, you can use `gh auth token` to get your token:
 
 ```sh
-export LINUX_VER=ubuntu24.04
+export LINUX_VER=rockylinux8
 export CUDA_VER=13.1.0
 export PYTHON_VER=3.13
 export ARCH=amd64
