@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 name: build and publish imgs workflow
 
@@ -21,9 +21,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Install gha-tools
+      - name: Download gha-tools with git clone
         run: |
-          context/scripts/install-tools --gha-tools
+          git clone https://github.com/rapidsai/gha-tools.git -b main /tmp/gha-tools
+          echo "/tmp/gha-tools/tools" >> "${GITHUB_PATH}"
       - name: Compute matrix
         id: compute-matrix
         run: |
@@ -60,10 +61,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Install gha-tools
+      - name: Download gha-tools with git clone
         run: |
-          TOOL_INSTALL_DIR=/tmp/bin \
-            context/scripts/install-tools --gha-tools
+          git clone https://github.com/rapidsai/gha-tools.git -b main /tmp/gha-tools
+          echo "/tmp/gha-tools/tools" >> "${GITHUB_PATH}"
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
