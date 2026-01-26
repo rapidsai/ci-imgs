@@ -43,7 +43,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-TOOL_INSTALL_DIR=/usr/local/bin
+TOOL_INSTALL_DIR=${TOOL_INSTALL_DIR:/usr/local/bin}
+
+# if running in GitHub Actions, ensure the install path is on PATH for all workflow steps
+if [[ -n "${GITHUB_PATH:-}" ]]; then
+  echo "${TOOL_INSTALL_DIR}" >> "${GITHUB_PATH}"
+fi
 
 # avoid leaking apt-get install'd packages out of this script
 PACKAGES_TO_INSTALL=()
