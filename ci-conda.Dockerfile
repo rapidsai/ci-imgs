@@ -11,7 +11,6 @@ FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-ARG LINUX_VER=notset
 RUN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
@@ -19,9 +18,8 @@ RUN \
 umask 002
 
 # install gha-tools for rapids-mamba-retry
-LINUX_VER=${LINUX_VER} \
-  /tmp/build-scripts/install-tools \
-    --gha-tools
+/tmp/build-scripts/install-tools \
+  --gha-tools
 
 # Example of pinned package in case you require an override
 # echo '<PACKAGE_NAME>==<VERSION>' >> /opt/conda/conda-meta/pinned
@@ -73,7 +71,6 @@ LINUX_VER=${LINUX_VER} \
 AWS_CLI_VER=${AWS_CLI_VER} \
 CPU_ARCH=${CPU_ARCH} \
 GH_CLI_VER=${GH_CLI_VER} \
-LINUX_VER=${LINUX_VER} \
 REAL_ARCH=${REAL_ARCH} \
 SCCACHE_VER=${SCCACHE_VER} \
 YQ_VER=${YQ_VER} \

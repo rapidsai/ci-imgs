@@ -56,8 +56,7 @@ fi
 
 if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
   echo "could not find some necessary packages, temporarily installing them"
-  case "${LINUX_VER}" in
-    "ubuntu"*)
+  if type -f apt-get >/dev/null 2>&1; then
       i=0
       until apt-get update -y; do
         ((++i >= 5)) && break;
@@ -65,16 +64,11 @@ if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
       done
       apt-get install -y --no-install-recommends \
         "${PACKAGES_TO_INSTALL[@]}"
-      ;;
-    "rockylinux"*)
+  else
+      dnf update -y
       dnf install -y \
         "${PACKAGES_TO_INSTALL[@]}"
-      ;;
-    *)
-      echo "Unsupported LINUX_VER: ${LINUX_VER}"
-      exit 1
-      ;;
-  esac
+  fi
 fi
 
 # install gha-tools first, as other things below depend on it
@@ -123,17 +117,14 @@ fi
 
 # possibly uninstall system packages needed for the installs above
 if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
-    case "${LINUX_VER}" in
-    "ubuntu"*)
-      apt-get purge -y \
-        "${PACKAGE_TO_INSTALL[@]}"
-      apt-get autoremove -y
-      rm -rf /var/lib/apt/lists/*
-      ;;
-    "rockylinux"*)
-      dnf remove -y \
-        "${PACKAGES_TO_INSTALL[@]}"
-      dnf clean all
-      ;;
-  esac
+    if type -f apt-get >/dev/null 2>&1; then
+        apt-get purge -y \
+          "${PACKAGE_TO_INSTALL[@]}"
+        apt-get autoremove -y
+        rm -rf /var/lib/apt/lists/*
+    else
+        dnf remove -y \
+          "${PACKAGES_TO_INSTALL[@]}"
+        dnf clean all
+    fi
 fi

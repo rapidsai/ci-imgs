@@ -43,7 +43,6 @@ LINUX_VER=${LINUX_VER} \
 #   * AWS CLI is needed to work with artifacts on S3
 AWS_CLI_VER=${AWS_CLI_VER} \
 GH_CLI_VER=${GH_CLI_VER} \
-LINUX_VER=${LINUX_VER} \
 REAL_ARCH=${REAL_ARCH} \
   /tmp/build-scripts/install-tools \
     --aws-cli \

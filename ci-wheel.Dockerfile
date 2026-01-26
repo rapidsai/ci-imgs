@@ -52,7 +52,6 @@ LINUX_VER=${LINUX_VER} \
 AWS_CLI_VER=${AWS_CLI_VER} \
 CPU_ARCH=${CPU_ARCH} \
 GH_CLI_VER=${GH_CLI_VER} \
-LINUX_VER=${LINUX_VER} \
 REAL_ARCH=${REAL_ARCH} \
 SCCACHE_VER=${SCCACHE_VER} \
   /tmp/build-scripts/install-tools \
