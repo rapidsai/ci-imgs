@@ -49,7 +49,6 @@ TOOL_INSTALL_DIR="${TOOL_INSTALL_DIR:-/usr/local/bin}"
 if [[ -n "${GITHUB_PATH:-}" ]]; then
   echo "${TOOL_INSTALL_DIR}" >> "${GITHUB_PATH}"
 fi
-exit 1
 
 # avoid leaking apt-get install'd packages out of this script
 PACKAGES_TO_INSTALL=()
