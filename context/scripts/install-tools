@@ -44,6 +44,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 TOOL_INSTALL_DIR="${TOOL_INSTALL_DIR:-/usr/local/bin}"
+mkdir -p "${TOOL_INSTALL_DIR}"
 
 # if running in GitHub Actions, ensure the install path is on PATH for all workflow steps
 if [[ -n "${GITHUB_PATH:-}" ]]; then
