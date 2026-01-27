@@ -11,12 +11,15 @@ FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-RUN <<EOF
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
 
 # install gha-tools for rapids-mamba-retry
-wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
+/tmp/build-scripts/install-tools \
+  --gha-tools
 
 # Example of pinned package in case you require an override
 # echo '<PACKAGE_NAME>==<VERSION>' >> /opt/conda/conda-meta/pinned
@@ -35,7 +38,6 @@ FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda
 ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset
 ARG DEBIAN_FRONTEND=noninteractive
-ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
 ARG PYTHON_VER_UPPER_BOUND=notset
 
@@ -44,55 +46,42 @@ ENV PYTHON_VERSION=${PYTHON_VER}
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Set apt policy configurations
-# We bump up the number of retries and the timeouts for `apt`
-# Note that `dnf` defaults to 10 retries, so no additional configuration is required here
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
-    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
-    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
-    ;;
-esac
-EOF
-
-# Install gha-tools, gh CLI, and sccache
-# NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
+# Install all the tools that are just "download a binary and stick it on PATH".
+#
+# These can be together, and earlier, because they're very cache-friendly... the versions are
+# pinned so the layer content shouldn't change.
+#
+# And safe here because they're unaffected by conda or conda packages.
+ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
+ARG LINUX_VER=notset
 ARG GH_CLI_VER=notset
+ARG REAL_ARCH=notset
 ARG SCCACHE_VER=notset
-RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
-    apt-get install -y --no-install-recommends wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
-    apt-get purge -y wget && apt-get autoremove -y
-    rm -rf /var/lib/apt/lists/*
-    ;;
-  "rockylinux"*)
-    dnf install -y wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-    tar -xf gh_*.tar.gz && mv gh_*/bin/gh /usr/local/bin && rm -rf gh_*
-    SCCACHE_VERSION="${SCCACHE_VER}" rapids-install-sccache
-    dnf remove -y wget
-    dnf clean all
-    ;;
-  *)
-    echo "Unsupported LINUX_VER: ${LINUX_VER}"
-    exit 1
-    ;;
-esac
-EOF
+ARG YQ_VER=notset
+RUN \
+  --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+# configure apt (do this first because it affects installs in later scripts)
+LINUX_VER=${LINUX_VER} \
+  /tmp/build-scripts/configure-apt
+
+# install AWS CLI, gh CLI, gha-tools, sccache, and yq
+AWS_CLI_VER=${AWS_CLI_VER} \
+CPU_ARCH=${CPU_ARCH} \
+GH_CLI_VER=${GH_CLI_VER} \
+REAL_ARCH=${REAL_ARCH} \
+SCCACHE_VER=${SCCACHE_VER} \
+YQ_VER=${YQ_VER} \
+  /tmp/build-scripts/install-tools \
+    --aws-cli \
+    --gh-cli \
+    --gha-tools \
+    --sccache \
+    --yq
 
 # Create a conda group and assign it as root's primary group
-RUN <<EOF
 groupadd conda
 usermod -g conda root
 EOF
@@ -126,11 +115,10 @@ if [[ "$LINUX_VER" == "rockylinux"* ]]; then
 fi
 find /opt/conda -follow -type f -name '*.a' -delete
 find /opt/conda -follow -type f -name '*.pyc' -delete
+
 # recreate missing libstdc++ symlinks
 conda clean -aiptfy
-EOF
 
-RUN <<EOF
 # Reassign root's primary group to root
 usermod -g root root
 
@@ -138,37 +126,6 @@ usermod -g root root
 ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
 echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> /etc/skel/.bashrc
 echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> ~/.bashrc
-EOF
-
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    PACKAGES_TO_INSTALL=(
-      tzdata
-    )
-
-    # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
-    # On Ubuntu 24.04 and newer, we also need tzdata-legacy
-    os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
-    if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
-        PACKAGES_TO_INSTALL+=(tzdata-legacy)
-    fi
-
-    rapids-retry apt-get update -y
-    apt-get upgrade -y
-    apt-get install -y --no-install-recommends \
-      "${PACKAGES_TO_INSTALL[@]}"
-
-    rm -rf "/var/lib/apt/lists/*"
-    ;;
-  "rockylinux"*)
-    dnf update -y
-    dnf clean all
-    ;;
-  *)
-    echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1
-    ;;
-esac
 EOF
 
 # Set RAPIDS versions env variables
@@ -187,9 +144,22 @@ case "${LINUX_VER}" in
       ca-certificates
       curl
       file
+      tzdata
       unzip
       wget
     )
+
+    # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
+    # On Ubuntu 24.04 and newer, we also need tzdata-legacy.
+    os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
+    # 'shellcheck' is unhappy with the use of '>' to compare decimals here, but it works as expected for the 'bash' version in these
+    # images, and installing 'bc' or using a Python interpreter seem heavy for this purpose.
+    #
+    # shellcheck disable=SC2072
+    if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
+        PACKAGES_TO_INSTALL+=(tzdata-legacy)
+    fi
+
     apt-get install -y --no-install-recommends \
       "${PACKAGES_TO_INSTALL[@]}"
     update-ca-certificates
@@ -264,32 +234,15 @@ rapids-mamba-retry install -y \
 conda clean -aiptfy
 EOF
 
-# Install tools
-ARG AWS_CLI_VER=notset
+# Install codecov-cli
 ARG CODECOV_VER=notset
-ARG REAL_ARCH=notset
-ARG YQ_VER=notset
 RUN <<EOF
-# yq
-rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
-mv /tmp/yq /usr/bin/yq
-chmod +x /usr/bin/yq
-
-# AWS CLI
-# ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
-rapids-retry curl -o /tmp/awscliv2.zip \
-  -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
-unzip -q /tmp/awscliv2.zip -d /tmp
-/tmp/aws/install
-rm -rf /tmp/aws /tmp/awscliv2.zip
-
 # codecov-cli
 #
 # codecov-cli is a noarch Python package, but some of its dependencies require compilation.
 # compilers are installed defensively here to prevent issues like "a dependency of codecov-cli
 # doesn't support CPU_ARCH / LINUX_VER / PYTHON_VER" from slowing down updates to RAPIDS CI.
 #
-
 case "${LINUX_VER}" in
   "ubuntu"*)
     COMPILER_PACKAGES=(

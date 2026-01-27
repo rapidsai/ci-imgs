@@ -6,10 +6,8 @@ ARG LINUX_VER=notset
 FROM nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
 ARG CONDA_ARCH=notset
-ARG CPU_ARCH=notset
 ARG CUDA_VER=notset
 ARG DEBIAN_FRONTEND=noninteractive
-ARG LINUX_VER=notset
 ARG PYTHON_VER=notset
 
 # Set RAPIDS versions env variables
@@ -18,46 +16,38 @@ ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 ENV RAPIDS_DEPENDENCIES="latest"
 ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
 
-ENV PYENV_ROOT="/pyenv"
-ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
-
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Set apt policy configurations
-# We bump up the number of retries and the timeouts for `apt`
-# Note that `dnf` defaults to 10 retries, so no additional configuration is required here
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
-    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
-    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
-    ;;
-esac
-EOF
+# Install all the tools that are just "download a binary and stick it on PATH".
+#
+# These can be together, and earlier, because they're very cache-friendly... the versions are
+# pinned so the layer content shouldn't change.
+#
+# And safe here because they're unaffected by pip, the Python interpreter or other Python packages.
+ARG AWS_CLI_VER=notset
+ARG CPU_ARCH=notset
+ARG GH_CLI_VER=notset
+ARG LINUX_VER=notset
+ARG REAL_ARCH=notset
+RUN \
+  --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+# configure apt (do this first because it affects installs in later scripts)
+LINUX_VER=${LINUX_VER} \
+  /tmp/build-scripts/configure-apt
 
-# Install latest gha-tools
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
-    apt-get install -y --no-install-recommends wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    apt-get purge -y wget && apt-get autoremove -y
-    rm -rf /var/lib/apt/lists/*
-    ;;
-  "rockylinux"*)
-    dnf install -y wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    dnf remove -y wget
-    dnf clean all
-    ;;
-  *)
-    echo "Unsupported LINUX_VER: ${LINUX_VER}"
-    exit 1
-    ;;
-esac
+# install AWS CLI, gha-tools, and gh CLI
+#
+# notes:
+#   * AWS CLI is needed to work with artifacts on S3
+AWS_CLI_VER=${AWS_CLI_VER} \
+GH_CLI_VER=${GH_CLI_VER} \
+REAL_ARCH=${REAL_ARCH} \
+  /tmp/build-scripts/install-tools \
+    --aws-cli \
+    --gh-cli \
+    --gha-tools
 EOF
 
 RUN <<EOF
@@ -160,42 +150,19 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Download and install gh CLI tool
-ARG GH_CLI_VER=notset
-RUN <<EOF
-set -e
-rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-tar -xf gh_*.tar.gz
-mv gh_*/bin/gh /usr/local/bin
-rm -rf gh_*
-EOF
-
-# Download and install awscli
-ARG AWS_CLI_VER=notset
-ARG REAL_ARCH=notset
-RUN <<EOF
-# ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
-rapids-retry curl -o /tmp/awscliv2.zip \
-  -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
-unzip -q /tmp/awscliv2.zip -d /tmp
-/tmp/aws/install
-rm -rf /tmp/aws /tmp/awscliv2.zip
-EOF
+ENV PYENV_ROOT="/pyenv"
+ENV PATH="${PYENV_ROOT}/versions/${PYTHON_VER}/bin/:${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
 
 # Create pyenvs
 RUN <<EOF
-  rapids-retry curl https://pyenv.run | bash
-  pyenv install ${PYTHON_VER}
-  pyenv global ${PYTHON_VER}
-  python --version
-EOF
+# install pyenv
+rapids-retry curl https://pyenv.run | bash
 
-# add bin to path
-ENV PATH="${PYENV_ROOT}/versions/${PYTHON_VER}/bin/:$PATH"
-
-# update pip and install build tools
-RUN <<EOF
+# create environment for the desired Python version
+pyenv install ${PYTHON_VER}
 pyenv global ${PYTHON_VER}
+python --version
+
 # `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
 # use so should be compatible with `pyenv`
 rapids-pip-retry install --upgrade pip
