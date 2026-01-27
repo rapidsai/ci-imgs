@@ -155,7 +155,7 @@ ENV PATH="${PYENV_ROOT}/versions/${PYTHON_VER}/bin/:${PYENV_ROOT}/bin:${PYENV_RO
 
 # Create pyenvs
 RUN <<EOF
-# install pevn
+# install pyenv
 rapids-retry curl https://pyenv.run | bash
 
 # create environment for the desired Python version

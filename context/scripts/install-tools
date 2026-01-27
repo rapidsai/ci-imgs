@@ -82,7 +82,7 @@ fi
 # NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
 if (( gh_cli_flag == 1 )); then
   echo "installing 'gh' CLI"
-  wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
+  rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
   tar -xf gh_*.tar.gz
   mv gh_*/bin/gh "${TOOL_INSTALL_DIR}"
   rm -rf gh_*
