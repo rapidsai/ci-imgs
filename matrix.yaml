@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 CUDA_VER:
   - "12.2.2"
@@ -10,6 +10,7 @@ PYTHON_VER:
   - "3.11"
   - "3.12"
   - "3.13"
+  - "3.14"
 LINUX_VER:
   - "ubuntu22.04"
   - "ubuntu24.04"
@@ -25,6 +26,10 @@ CI_IMAGE_CONFIG:
     dockerfile: citestwheel.Dockerfile
     docker_target: ""
 exclude:
+  # Exclude ci-conda from Python 3.14 because conda doesn't support it yet
+  - PYTHON_VER: "3.14"
+    IMAGE_REPO: "ci-conda"
+
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu24.04"
     CUDA_VER: "12.2.2"
