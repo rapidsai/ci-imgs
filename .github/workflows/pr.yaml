@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 name: ci
 
@@ -12,6 +12,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+jobs:
+  # Please keep pr-builder as the top job here
+  pr-builder:
+    needs:
+      - build-images
+    uses: rapidsai/shared-workflows/.github/workflows/pr-builder.yaml@main
+    if: always()
+    with:
+      needs: ${{ toJSON(needs) }}
   build-images:
     uses: ./.github/workflows/build-and-publish-images.yaml
     with:
