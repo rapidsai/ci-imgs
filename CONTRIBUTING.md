@@ -8,17 +8,21 @@ We love your input! We want to make contributing to this project as easy and tra
 - Proposing new features
 
 ## We Develop with GitHub
+
 We use GitHub to host code, track issues and feature requests, and accept pull requests.
 
 ## Report a bug or request a feature
+
 The best way to get in touch is by [opening an issue](https://github.com/rapidsai/ci-imgs/issues/new/choose).
 
 ## To make a code contribution
+
 1. Fork the repo and create your branch from `main`.
 2. Make your changes.
 3. Create a pull request!
 
 ## Developer Certificate of Origin
+
 All contributions to this project must be accompanied by a sign-off indicating that the contribution is made pursuant to the Developer Certificate of Origin (DCO). This is a lightweight way for contributors to certify that they wrote or otherwise have the right to submit the code they are contributing to the project.
 
 The DCO is a simple statement that you, as a contributor, have the legal right to make the contribution. To certify your adherence to the DCO, you must sign off on your commits. This is done by adding a `Signed-off-by` line to your commit messages:
@@ -60,4 +64,5 @@ By making a contribution to this project, I certify that:
 ```
 
 ## Attribution
+
 Portions adopted from https://github.com/pytorch/pytorch/blob/main/CONTRIBUTING.md

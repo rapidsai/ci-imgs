@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 ARG CUDA_VER=notset
@@ -8,102 +8,109 @@ ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
 FROM ${BASE_IMAGE}
 
-ARG CUDA_VER=notset
-ARG LINUX_VER=notset
-ARG CPU_ARCH=notset
-ARG REAL_ARCH=notset
-ARG PYTHON_VER=notset
-ARG MANYLINUX_VER=notset
-ARG POLICY=${MANYLINUX_VER}
 ARG CONDA_ARCH=notset
-
+ARG CUDA_VER=notset
 ARG DEBIAN_FRONTEND=noninteractive
+ARG PYTHON_VER=notset
 
 # Set RAPIDS versions env variables
-ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
-ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
-ENV RAPIDS_DEPENDENCIES="latest"
 ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
+ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
+ENV RAPIDS_DEPENDENCIES="latest"
+ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 ENV RAPIDS_WHEEL_BLD_OUTPUT_DIR=/tmp/wheelhouse
 
 ENV PYENV_ROOT="/pyenv"
-ENV PATH="/pyenv/bin:/pyenv/shims:$PATH"
+ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Set apt policy configurations
-# We bump up the number of retries and the timeouts for `apt`
-# Note that `dnf` defaults to 10 retries, so no additional configuration is required here
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
-    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
-    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
-    ;;
-esac
-EOF
+# Install all the tools that are just "download a binary and stick it on PATH".
+#
+# These can be together, and earlier, because they're very cache-friendly... the versions are
+# pinned so the layer content shouldn't change.
+#
+# And safe here because they're unaffected by pip, the Python interpreter or other Python packages.
+ARG AWS_CLI_VER=notset
+ARG CPU_ARCH=notset
+ARG GH_CLI_VER=notset
+ARG LINUX_VER=notset
+ARG REAL_ARCH=notset
+ARG SCCACHE_VER=notset
+RUN \
+  --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+# configure apt (do this first because it affects installs in later scripts)
+LINUX_VER=${LINUX_VER} \
+  /tmp/build-scripts/configure-apt
 
-# Install latest gha-tools
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
-    apt-get install -y --no-install-recommends wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    apt-get purge -y wget && apt-get autoremove -y
-    rm -rf /var/lib/apt/lists/*
-    ;;
-  "rockylinux"*)
-    dnf install -y wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    dnf remove -y wget
-    dnf clean all
-    ;;
-  *)
-    echo "Unsupported LINUX_VER: ${LINUX_VER}"
-    exit 1
-    ;;
-esac
+# install AWS CLI, gh CLI, gha-tools, and sccache
+#
+# notes:
+#   * AWS CLI is needed to work with artifacts on S3
+AWS_CLI_VER=${AWS_CLI_VER} \
+CPU_ARCH=${CPU_ARCH} \
+GH_CLI_VER=${GH_CLI_VER} \
+REAL_ARCH=${REAL_ARCH} \
+SCCACHE_VER=${SCCACHE_VER} \
+  /tmp/build-scripts/install-tools \
+    --aws-cli \
+    --gh-cli \
+    --gha-tools \
+    --sccache
 EOF
 
 RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     rapids-retry apt-get update -y
-    apt-get install -y \
-      autoconf \
-      automake \
-      build-essential \
-      ca-certificates \
-      cmake \
-      curl \
-      debianutils \
-      gcc \
-      git \
-      jq \
-      libbz2-dev \
-      libcudnn8-dev \
-      libcurl4-openssl-dev \
-      libffi-dev \
-      liblapack-dev \
-      libncurses5-dev \
-      libnuma-dev \
-      libopenblas-dev \
-      libopenslide-dev \
-      libreadline-dev \
-      libsqlite3-dev \
-      libssl-dev \
-      libtool \
-      openssh-client \
-      protobuf-compiler \
-      software-properties-common \
-      unzip \
-      wget \
-      yasm \
-      zip \
+    PACKAGES_TO_INSTALL=(
+      autoconf
+      automake
+      build-essential
+      ca-certificates
+      cmake
+      curl
+      debianutils
+      gcc
+      git
+      jq
+      libbz2-dev
+      libcudnn8-dev
+      libcurl4-openssl-dev
+      libffi-dev
+      liblapack-dev
+      libncurses5-dev
+      libnuma-dev
+      libopenblas-dev
+      libopenslide-dev
+      libreadline-dev
+      libsqlite3-dev
+      libssl-dev
+      libtool
+      openssh-client
+      patch
+      protobuf-compiler
+      software-properties-common
+      unzip
+      wget
+      yasm
+      zip
       zlib1g-dev
+    )
+
+    # only re-install NCCL if there wasn't one already installed in the image
+    if ! apt list --installed | grep -E 'libnccl\-dev' 2>&1 >/dev/null; then
+      echo "libnccl-dev not found, manually installing it"
+      PACKAGES_TO_INSTALL+=(libnccl-dev)
+    else
+      echo "libnccl-dev already installed"
+    fi
+
+    apt-get install -y --no-install-recommends \
+      "${PACKAGES_TO_INSTALL[@]}"
+
     update-ca-certificates
     add-apt-repository ppa:git-core/ppa
     add-apt-repository ppa:ubuntu-toolchain-r/test
@@ -118,38 +125,51 @@ case "${LINUX_VER}" in
     dnf update -y
     dnf install -y epel-release
     dnf update -y
-    dnf install -y \
-      autoconf \
-      automake \
-      bzip2 \
-      bzip2-devel \
-      ca-certificates \
-      cmake \
-      curl \
-      dnf-plugins-core \
-      gcc \
-      git \
-      jq \
-      libcudnn8-devel \
-      libcurl-devel \
-      libffi-devel \
-      libtool \
-      ncurses-devel \
-      numactl \
-      numactl-devel \
-      openslide-devel \
-      openssh-clients \
-      protobuf-compiler \
-      readline-devel \
-      sqlite \
-      sqlite-devel \
-      unzip \
-      wget \
-      which \
-      xz \
-      xz-devel \
-      zip \
+    PACKAGES_TO_INSTALL=(
+      autoconf
+      automake
+      bzip2
+      bzip2-devel
+      ca-certificates
+      cmake
+      curl
+      dnf-plugins-core
+      gcc
+      git
+      jq
+      libcudnn8-devel
+      libcurl-devel
+      libffi-devel
+      libtool
+      ncurses-devel
+      numactl
+      numactl-devel
+      openslide-devel
+      openssh-clients
+      patch
+      protobuf-compiler
+      readline-devel
+      sqlite
+      sqlite-devel
+      unzip
+      wget
+      which
+      xz
+      xz-devel
+      zip
       zlib-devel
+    )
+
+    # only re-install NCCL if there wasn't one already installed in the image
+    if ! rpm --query --all | grep -E 'libnccl\-devel' > /dev/null 2>&1; then
+      echo "libnccl-devel not found, manually installing it"
+      PACKAGES_TO_INSTALL+=(libnccl-devel)
+    else
+      echo "libnccl-devel already installed"
+    fi
+
+    dnf install -y \
+      "${PACKAGES_TO_INSTALL[@]}"
     update-ca-trust extract
     dnf config-manager --set-enabled powertools
     dnf install -y blas-devel lapack-devel
@@ -176,46 +196,15 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Download and install gh CLI tool
-ARG GH_CLI_VER=notset
-RUN <<EOF
-set -e
-rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-tar -xf gh_*.tar.gz
-mv gh_*/bin/gh /usr/local/bin
-rm -rf gh_*
-EOF
-
-# Install sccache
-ARG SCCACHE_VER=notset
-
-RUN <<EOF
-rapids-retry curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
-tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
-chmod +x /usr/bin/sccache
-EOF
-
-# Download and install awscli
-# Needed to download wheels for running tests
-ARG AWS_CLI_VER=notset
-RUN <<EOF
-# ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
-rapids-retry curl -o /tmp/awscliv2.zip \
-  -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
-unzip -q /tmp/awscliv2.zip -d /tmp
-/tmp/aws/install
-rm -rf /tmp/aws /tmp/awscliv2.zip
-EOF
-
 # Set AUDITWHEEL_* env vars for use with auditwheel
+ARG MANYLINUX_VER=notset
+ARG POLICY=${MANYLINUX_VER}
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
 
-# Install pyenv
-RUN rapids-retry curl https://pyenv.run | bash
-
 RUN <<EOF
+# install pyenv
+rapids-retry curl https://pyenv.run | bash
+
 case "${LINUX_VER}" in
   "ubuntu"*)
     pyenv install --verbose "${RAPIDS_PY_VERSION}"
@@ -235,28 +224,36 @@ RUN <<EOF
 pyenv global ${PYTHON_VER}
 # `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
 # use so should be compatible with `pyenv`
-rapids-pip-retry install --upgrade pip
+#
+# >=25.3 floor is there to ensure we have a version that respects '--build-constraint'
+rapids-pip-retry install --upgrade 'pip>=25.3'
+
+PACKAGES_TO_INSTALL=(
+  'anaconda-client>=1.13.0'
+  'auditwheel>=6.2.0'
+  'certifi>=2026.1.4'
+  'conda-package-handling>=2.4.0'
+  'dunamai>=1.25.0'
+  'patchelf>=0.17.2.4'
+  'pydistcheck==0.11.*'
+  'rapids-dependency-file-generator==1.*'
+  'twine>=6.2.0'
+  'wheel>=0.45.1'
+)
 rapids-pip-retry install \
-  'anaconda-client>=1.13.0' \
-  'auditwheel>=6.2.0' \
-  certifi \
-  conda-package-handling \
-  dunamai \
-  patchelf \
-  'pydistcheck==0.9.*' \
-  'rapids-dependency-file-generator==1.*' \
-  twine \
-  wheel
+  "${PACKAGES_TO_INSTALL[@]}"
 pip cache purge
 pyenv rehash
 EOF
 
+RUN <<EOF
 # Create output directory for wheel builds
-RUN mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
+mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
 
 # Mark all directories as safe for git so that GHA clones into the root don't
 # run into issues
-RUN git config --system --add safe.directory '*'
+git config --system --add safe.directory '*'
+EOF
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf

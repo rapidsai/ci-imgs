@@ -1,22 +1,21 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 CUDA_VER:
   - "12.2.2"
   - "12.9.1"
   - "13.0.2"
+  - "13.1.1"
 PYTHON_VER:
   - "3.10"
   - "3.11"
   - "3.12"
   - "3.13"
+  - "3.14"
 LINUX_VER:
   - "ubuntu22.04"
   - "ubuntu24.04"
   - "rockylinux8"
 CI_IMAGE_CONFIG:
-  - IMAGE_REPO: "miniforge-cuda"
-    dockerfile: ci-conda.Dockerfile
-    docker_target: miniforge-cuda
   - IMAGE_REPO: "ci-conda"
     dockerfile: ci-conda.Dockerfile
     docker_target: ""
@@ -27,12 +26,18 @@ CI_IMAGE_CONFIG:
     dockerfile: citestwheel.Dockerfile
     docker_target: ""
 exclude:
+  # Exclude ci-conda from Python 3.14 because conda doesn't support it yet
+  - PYTHON_VER: "3.14"
+    IMAGE_REPO: "ci-conda"
+
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu24.04"
     CUDA_VER: "12.2.2"
 
   # Only build ci-wheel for the latest CUDA of each major version
   - CUDA_VER: "12.2.2"
+    IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "13.0.2"
     IMAGE_REPO: "ci-wheel"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)

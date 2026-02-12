@@ -5,7 +5,6 @@ This repository includes the following CI images for RAPIDS:
 - [`rapidsai/ci-conda`](https://hub.docker.com/r/rapidsai/ci-conda/tags): for building and testing RAPIDS `conda` packages
 - [`rapidsai/ci-wheel`](https://hub.docker.com/r/rapidsai/ci-wheel/tags): for building and publishing RAPIDS wheels (including pure-Python and manylinux-compliant wheels)
 - [`rapidsai/citestwheel`](https://hub.docker.com/r/rapidsai/citestwheel/tags): for testing wheels
-- [`rapidsai/miniforge-cuda`](https://hub.docker.com/r/rapidsai/citestwheel/tags): base image for `conda`-based images here, and for user-facing RAPIDS images like https://github.com/rapidsai/docker
 
 ## Tagging Strategy
 
@@ -28,8 +27,8 @@ One particular combination is also chosen for `latest` tags like these:
 For example, during the 25.10 release the following might all point to the same image:
 
 ```text
-rapidsai/ci-conda:25.10-cuda13.0.2-ubuntu24.04-py3.13
-rapidsai/ci-conda:cuda13.0.2-ubuntu24.04-py3.13
+rapidsai/ci-conda:25.10-cuda13.1.0-ubuntu24.04-py3.13
+rapidsai/ci-conda:cuda13.1.0-ubuntu24.04-py3.13
 rapidsai/ci-conda:25.10-latest
 rapidsai/ci-conda:latest
 ```
@@ -38,11 +37,11 @@ But starting with the 25.12 release...
 
 ```text
 # these images are unchanged
-rapidsai/ci-conda:25.10-cuda13.0.2-ubuntu24.04-py3.13
+rapidsai/ci-conda:25.10-cuda13.1.0-ubuntu24.04-py3.13
 rapidsai/ci-conda:25.10-latest
 
 # these now point to 25.12
-rapidsai/ci-conda:cuda13.0.2-ubuntu24.04-py3.13
+rapidsai/ci-conda:cuda13.1.0-ubuntu24.04-py3.13
 rapidsai/ci-conda:latest
 ```
 
@@ -55,19 +54,31 @@ pull in bug fixes, new features, etc. without needing to manually update tags as
 
 The `latest` image tags are controlled by the values in `latest.yaml`.
 
-## Building the dockerfiles locally
+## Building the images locally
 
-To build the dockerfiles locally, you may use the following snippets:
+To build the images locally, you may use the following snippets.
+
+These scripts require the `gha-tools` project.
+If you don't have it installed, you may install it like this:
+
+```shell
+git clone https://github.com/rapidsai/gha-tools.git /tmp/gha-tools
+export PATH="/tmp/gha-tools/tools:${PATH}"
+```
+
+The `ci-conda` and `ci-wheel` images require a GitHub token to download sccache releases.
+If you have the `gh` CLI installed and authenticated, you can use `gh auth token` to get your token:
 
 ```sh
-export LINUX_VER=ubuntu24.04
-export CUDA_VER=13.0.2
+export LINUX_VER=rockylinux8
+export CUDA_VER=13.1.0
 export PYTHON_VER=3.13
 export ARCH=amd64
+export GH_TOKEN=$(gh auth token)
 export IMAGE_REPO=ci-conda
-docker build $(ci/compute-build-args.sh) -f ci-conda.Dockerfile context/
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-conda.Dockerfile context/
 export IMAGE_REPO=ci-wheel
-docker build $(ci/compute-build-args.sh) -f ci-wheel.Dockerfile context/
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-wheel.Dockerfile context/
 export IMAGE_REPO=citestwheel
 docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile context/
 ```

@@ -35,18 +35,14 @@ def compute_tag_prefix_no_rapids_version($x):
 def compute_image_name($x):
   compute_repo($x) as $repo |
   compute_tag_prefix($x) as $tag_prefix |
-  (if $x.IMAGE_REPO == "miniforge-cuda"
-   then "-base-" else "-" end) as $base_id |
-  "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + $base_id + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
+  "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + "-" + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
   $x + {IMAGE_NAME: .};
 
 # Similar to compute_image_name(), but without RAPIDS version number
 def compute_image_name_no_rapids_version($x):
   compute_repo($x) as $repo |
   compute_tag_prefix_no_rapids_version($x) as $tag_prefix |
-  (if $x.IMAGE_REPO == "miniforge-cuda"
-   then "-base-" else "-" end) as $base_id |
-  "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + $base_id + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
+  "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + "-" + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
   $x + {IMAGE_NAME_NO_RAPIDS_VERSION: .};
 
 # Checks the current entry to see if it matches the given exclude

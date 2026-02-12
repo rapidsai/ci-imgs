@@ -1,92 +1,87 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 ################################ build and update miniforge-upstream ###############################
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
-ARG PYTHON_VER=notset
 ARG MINIFORGE_VER=notset
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 
-ENV PATH=/opt/conda/bin:$PATH
-
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Install latest gha-tools to miniforge for unbuntu
-RUN <<EOF
-  i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
-  apt-get install -y --no-install-recommends wget
-  wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-  apt-get purge -y wget && apt-get autoremove -y
-  rm -rf /var/lib/apt/lists/*
-EOF
-
-RUN <<EOF
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
 # Ensure new files/dirs have group write permissions
 umask 002
+
+# install gha-tools for rapids-mamba-retry
+/tmp/build-scripts/install-tools \
+  --gha-tools
 
 # Example of pinned package in case you require an override
 # echo '<PACKAGE_NAME>==<VERSION>' >> /opt/conda/conda-meta/pinned
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
-rapids-mamba-retry update --all -y -n base
+#
+# NOTE: 'PATH' is set locally here (instead of 'ENV') because this target is just an intermediate
+#       build that files are copied out of.
+PATH="/opt/conda/bin:$PATH" \
+  rapids-mamba-retry update --all -y -n base
 EOF
 
-################################ build miniforge-cuda using updated miniforge-upstream from above ###############################
+FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda
 
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS miniforge-cuda
-
-ARG CUDA_VER
-ARG LINUX_VER
-ARG PYTHON_VER
+ARG CONDA_ARCH=notset
+ARG CUDA_VER=notset
 ARG DEBIAN_FRONTEND=noninteractive
+ARG PYTHON_VER=notset
+ARG PYTHON_VER_UPPER_BOUND=notset
+
 ENV PATH=/opt/conda/bin:$PATH
 ENV PYTHON_VERSION=${PYTHON_VER}
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Set apt policy configurations
-# We bump up the number of retries and the timeouts for `apt`
-# Note that `dnf` defaults to 10 retries, so no additional configuration is required here
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
-    echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
-    echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
-    echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
-    ;;
-esac
-EOF
+# Install all the tools that are just "download a binary and stick it on PATH".
+#
+# These can be together, and earlier, because they're very cache-friendly... the versions are
+# pinned so the layer content shouldn't change.
+#
+# And safe here because they're unaffected by conda or conda packages.
+ARG AWS_CLI_VER=notset
+ARG CPU_ARCH=notset
+ARG LINUX_VER=notset
+ARG GH_CLI_VER=notset
+ARG REAL_ARCH=notset
+ARG SCCACHE_VER=notset
+ARG YQ_VER=notset
+RUN \
+  --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+# configure apt (do this first because it affects installs in later scripts)
+LINUX_VER=${LINUX_VER} \
+  /tmp/build-scripts/configure-apt
 
-# Install latest gha-tools
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    i=0; until apt-get update -y; do ((++i >= 5)) && break; sleep 10; done
-    apt-get install -y --no-install-recommends wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    apt-get purge -y wget && apt-get autoremove -y
-    rm -rf /var/lib/apt/lists/*
-    ;;
-  "rockylinux"*)
-    dnf install -y wget
-    wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C /usr/local/bin
-    dnf remove -y wget
-    dnf clean all
-    ;;
-  *)
-    echo "Unsupported LINUX_VER: ${LINUX_VER}"
-    exit 1
-    ;;
-esac
-EOF
+# install AWS CLI, gh CLI, gha-tools, sccache, and yq
+AWS_CLI_VER=${AWS_CLI_VER} \
+CPU_ARCH=${CPU_ARCH} \
+GH_CLI_VER=${GH_CLI_VER} \
+REAL_ARCH=${REAL_ARCH} \
+SCCACHE_VER=${SCCACHE_VER} \
+YQ_VER=${YQ_VER} \
+  /tmp/build-scripts/install-tools \
+    --aws-cli \
+    --gh-cli \
+    --gha-tools \
+    --sccache \
+    --yq
 
 # Create a conda group and assign it as root's primary group
-RUN <<EOF
 groupadd conda
 usermod -g conda root
 EOF
@@ -94,10 +89,10 @@ EOF
 # Ownership & permissions based on https://docs.anaconda.com/anaconda/install/multi-user/#multi-user-anaconda-installation-on-linux
 COPY --from=miniforge-upstream --chown=root:conda --chmod=770 /opt/conda /opt/conda
 
-# Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
-RUN chmod g+ws /opt/conda
-
 RUN <<EOF
+# Ensure new files are created with group write access & setgid. See https://unix.stackexchange.com/a/12845
+chmod g+ws /opt/conda
+
 # Ensure new files/dirs have group write permissions
 umask 002
 
@@ -120,67 +115,24 @@ if [[ "$LINUX_VER" == "rockylinux"* ]]; then
 fi
 find /opt/conda -follow -type f -name '*.a' -delete
 find /opt/conda -follow -type f -name '*.pyc' -delete
+
 # recreate missing libstdc++ symlinks
 conda clean -aiptfy
-EOF
 
 # Reassign root's primary group to root
-RUN usermod -g root root
+usermod -g root root
 
-RUN <<EOF
 # ensure conda environment is always activated
 ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
 echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> /etc/skel/.bashrc
 echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> ~/.bashrc
 EOF
 
-# tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
-# On Ubuntu 24.04 and newer, we also need tzdata-legacy
-RUN <<EOF
-case "${LINUX_VER}" in
-  "ubuntu"*)
-    os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
-    if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
-        tzdata_pkgs=(tzdata tzdata-legacy)
-    else
-        tzdata_pkgs=(tzdata)
-    fi
-
-    rapids-retry apt-get update -y
-    apt-get upgrade -y
-    apt-get install -y --no-install-recommends \
-      "${tzdata_pkgs[@]}"
-
-    rm -rf "/var/lib/apt/lists/*"
-    ;;
-  "rockylinux"*)
-    dnf update -y
-    dnf clean all
-    ;;
-  *)
-    echo "Unsupported LINUX_VER: ${LINUX_VER}" && exit 1
-    ;;
-esac
-EOF
-
-FROM miniforge-cuda
-
-ARG TARGETPLATFORM=notset
-ARG CUDA_VER=notset
-ARG LINUX_VER=notset
-ARG PYTHON_VER=notset
-ARG PYTHON_VER_UPPER_BOUND=notset
-ARG CONDA_ARCH=notset
-
-ARG DEBIAN_FRONTEND
-
 # Set RAPIDS versions env variables
-ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
-ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
-ENV RAPIDS_DEPENDENCIES="latest"
 ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
-
-SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
+ENV RAPIDS_DEPENDENCIES="latest"
+ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
 
 # Install system packages depending on the LINUX_VER
 RUN <<EOF
@@ -188,28 +140,43 @@ case "${LINUX_VER}" in
   "ubuntu"*)
     rapids-retry apt-get update -y
     apt-get upgrade -y
+    PACKAGES_TO_INSTALL=(
+      ca-certificates
+      curl
+      file
+      tzdata
+      unzip
+      wget
+    )
+
+    # tzdata is needed by the ORC library used by pyarrow, because it provides /etc/localtime
+    # On Ubuntu 24.04 and newer, we also need tzdata-legacy.
+    os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2)
+    # 'shellcheck' is unhappy with the use of '>' to compare decimals here, but it works as expected for the 'bash' version in these
+    # images, and installing 'bc' or using a Python interpreter seem heavy for this purpose.
+    #
+    # shellcheck disable=SC2072
+    if [[ "${os_version}" > "24.04" ]] || [[ "${os_version}" == "24.04" ]]; then
+        PACKAGES_TO_INSTALL+=(tzdata-legacy)
+    fi
+
     apt-get install -y --no-install-recommends \
-      ca-certificates \
-      curl \
-      file \
-      unzip \
-      wget \
-      gcc \
-      g++
+      "${PACKAGES_TO_INSTALL[@]}"
     update-ca-certificates
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     dnf -y update
+    PACKAGES_TO_INSTALL=(
+      ca-certificates
+      file
+      unzip
+      wget
+      which
+      yum-utils
+    )
     dnf -y install --setopt=install_weak_deps=False \
-      ca-certificates \
-      file \
-      unzip \
-      wget \
-      which \
-      yum-utils \
-      gcc \
-      gcc-c++
+      "${PACKAGES_TO_INSTALL[@]}"
     update-ca-trust extract
     dnf clean all
     ;;
@@ -220,22 +187,21 @@ case "${LINUX_VER}" in
 esac
 EOF
 
-# Install prereq for envsubst
-RUN <<EOF
-rapids-mamba-retry install -y \
-  gettext
-conda clean -aiptfy
-EOF
-
 # Create condarc file from env vars
 ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
 ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
 COPY condarc.tmpl /tmp/condarc.tmpl
-RUN cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
-    rm -f /tmp/condarc.tmpl
 
 # Install CI tools using mamba
 RUN <<EOF
+# Install prereq for envsubst
+rapids-mamba-retry install -y \
+  gettext
+
+# create condarc file from env vars
+cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
+rm -f /tmp/condarc.tmpl
+
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
 PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
 PYTHON_UPPER_BOUND="${PYTHON_MAJOR_VERSION}.$((PYTHON_MINOR_VERSION+1)).0a0"
@@ -247,59 +213,76 @@ else
     PYTHON_ABI_TAG="cpython"
 fi
 
+PACKAGES_TO_INSTALL=(
+  'anaconda-client>=1.13.1'
+  'ca-certificates>=2026.1.4'
+  'certifi>=2026.1.4'
+  'conda-build>=25.11.1'
+  'conda-package-handling>=2.4.0'
+  'dunamai>=1.25.0'
+  'git>=2.52.0'
+  'jq>=1.8.1'
+  'packaging>=25.0'
+  "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+  'rapids-dependency-file-generator==1.*'
+  'rattler-build>=0.55.0'
+)
+
 rapids-mamba-retry install -y \
-  anaconda-client \
-  ca-certificates \
-  certifi \
-  conda-build \
-  conda-package-handling \
-  dunamai \
-  git \
-  jq \
-  packaging \
-  "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}" \
-  "rapids-dependency-file-generator==1.*" \
-  rattler-build \
-;
+  "${PACKAGES_TO_INSTALL[@]}"
+
 conda clean -aiptfy
 EOF
 
-# Install sccache, gh cli, yq, and awscli
-ARG SCCACHE_VER=notset
-ARG REAL_ARCH=notset
-ARG GH_CLI_VER=notset
-ARG CPU_ARCH=notset
-ARG YQ_VER=notset
-ARG AWS_CLI_VER=notset
-RUN <<EOF
-rapids-retry curl -o /tmp/sccache.tar.gz \
-  -L "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER}/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl.tar.gz"
-tar -C /tmp -xvf /tmp/sccache.tar.gz
-mv "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl/sccache" /usr/bin/sccache
-chmod +x /usr/bin/sccache
-rm -rf /tmp/sccache.tar.gz "/tmp/sccache-v${SCCACHE_VER}-"${REAL_ARCH}"-unknown-linux-musl"
-
-rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-tar -xf gh_*.tar.gz
-mv gh_*/bin/gh /usr/local/bin
-rm -rf gh_*
-
-rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
-mv /tmp/yq /usr/bin/yq
-chmod +x /usr/bin/yq
-
-# ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
-rapids-retry curl -o /tmp/awscliv2.zip \
-  -L "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
-unzip -q /tmp/awscliv2.zip -d /tmp
-/tmp/aws/install
-rm -rf /tmp/aws /tmp/awscliv2.zip
-EOF
-
-# Install codecov from source distribution
+# Install codecov-cli
 ARG CODECOV_VER=notset
 RUN <<EOF
-rapids-pip-retry install codecov-cli==${CODECOV_VER}
+# codecov-cli
+#
+# codecov-cli is a noarch Python package, but some of its dependencies require compilation.
+# compilers are installed defensively here to prevent issues like "a dependency of codecov-cli
+# doesn't support CPU_ARCH / LINUX_VER / PYTHON_VER" from slowing down updates to RAPIDS CI.
+#
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    COMPILER_PACKAGES=(
+      gcc
+      g++
+    )
+    rapids-retry apt-get update -y
+    apt-get install -y --no-install-recommends \
+      "${COMPILER_PACKAGES[@]}"
+    ;;
+  "rockylinux"*)
+    COMPILER_PACKAGES=(
+      gcc
+      gcc-c++
+    )
+    dnf install -y \
+      "${COMPILER_PACKAGES[@]}"
+    ;;
+esac
+
+rapids-pip-retry install --prefer-binary \
+  "codecov-cli==${CODECOV_VER}"
+
+# remove compiler packages... conda-based CI should use conda-forge's compilers
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    apt-get purge -y \
+      "${COMPILER_PACKAGES[@]}"
+    apt-get autoremove -y
+    rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+    ;;
+  "rockylinux"*)
+    dnf remove -y \
+      "${COMPILER_PACKAGES[@]}"
+    dnf clean all
+    ;;
+esac
+
+# clear the pip cache, to shrink image size and prevent unintentionally
+# pinning CI to older versions of things
 pip cache purge
 EOF
 
