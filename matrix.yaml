@@ -6,7 +6,6 @@ CUDA_VER:
   - "13.0.2"
   - "13.1.1"
 PYTHON_VER:
-  - "3.10"
   - "3.11"
   - "3.12"
   - "3.13"
@@ -26,9 +25,6 @@ CI_IMAGE_CONFIG:
     dockerfile: citestwheel.Dockerfile
     docker_target: ""
 exclude:
-  # Exclude ci-conda from Python 3.14 because conda doesn't support it yet
-  - PYTHON_VER: "3.14"
-    IMAGE_REPO: "ci-conda"
 
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu24.04"
