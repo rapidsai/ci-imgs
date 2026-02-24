@@ -124,6 +124,7 @@ case "${LINUX_VER}" in
   "rockylinux"*)
     dnf update -y
     dnf install --nodocs -y epel-release
+    dnf config-manager --set-enabled powertools
     dnf update -y
     PACKAGES_TO_INSTALL=(
       autoconf
@@ -175,7 +176,6 @@ case "${LINUX_VER}" in
     dnf install --nodocs -y \
       "${PACKAGES_TO_INSTALL[@]}"
     update-ca-trust extract
-    dnf config-manager --set-enabled powertools
     dnf clean all
     echo -e ' \
       #!/bin/bash\n \
