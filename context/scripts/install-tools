@@ -66,7 +66,7 @@ if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
         "${PACKAGES_TO_INSTALL[@]}"
   else
       dnf update -y
-      dnf install -y \
+      dnf install --nodocs -y \
         "${PACKAGES_TO_INSTALL[@]}"
   fi
 fi
@@ -121,10 +121,16 @@ if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
         apt-get purge -y \
           "${PACKAGE_TO_INSTALL[@]}"
         apt-get autoremove -y
-        rm -rf /var/lib/apt/lists/*
+          /var/cache/apt/archives \
+          /var/lib/apt/lists/*
     else
         dnf remove -y \
           "${PACKAGES_TO_INSTALL[@]}"
         dnf clean all
     fi
+    # either way, clean up docs and other unnecessary stuff
+    rm -rf \
+      /usr/share/doc \
+      /usr/share/info \
+      /usr/share/man
 fi

@@ -59,9 +59,7 @@ SCCACHE_VER=${SCCACHE_VER} \
     --gh-cli \
     --gha-tools \
     --sccache
-EOF
 
-RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     rapids-retry apt-get update -y
@@ -119,24 +117,29 @@ case "${LINUX_VER}" in
     add-apt-repository -r ppa:git-core/ppa
     add-apt-repository -r ppa:ubuntu-toolchain-r/test
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
-    rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+    rm -rf \
+      /var/cache/apt/archives \
+      /var/lib/apt/lists/*
     ;;
   "rockylinux"*)
     dnf update -y
-    dnf install -y epel-release
+    dnf install --nodocs -y epel-release
     dnf update -y
     PACKAGES_TO_INSTALL=(
       autoconf
       automake
+      blas-devel
       bzip2
       bzip2-devel
       ca-certificates
       cmake
       curl
       dnf-plugins-core
-      gcc
+      gcc-toolset-14-gcc
+      gcc-toolset-14-gcc-c++
       git
       jq
+      lapack-devel
       libcudnn8-devel
       libcurl-devel
       libffi-devel
@@ -156,6 +159,7 @@ case "${LINUX_VER}" in
       which
       xz
       xz-devel
+      yasm
       zip
       zlib-devel
     )
@@ -168,13 +172,10 @@ case "${LINUX_VER}" in
       echo "libnccl-devel already installed"
     fi
 
-    dnf install -y \
+    dnf install --nodocs -y \
       "${PACKAGES_TO_INSTALL[@]}"
     update-ca-trust extract
     dnf config-manager --set-enabled powertools
-    dnf install -y blas-devel lapack-devel
-    dnf -y install gcc-toolset-14-gcc gcc-toolset-14-gcc-c++
-    dnf -y install yasm
     dnf clean all
     echo -e ' \
       #!/bin/bash\n \
@@ -188,12 +189,19 @@ case "${LINUX_VER}" in
     make
     make install
     popd
+    rm -rf /tmp/openssl*
     ;;
   *)
     echo "Unsupported LINUX_VER: ${LINUX_VER}"
     exit 1
     ;;
 esac
+
+# clean up docs and other unnecessary stuff
+rm -rf \
+  /usr/share/doc \
+  /usr/share/info \
+  /usr/share/man
 EOF
 
 # Set AUDITWHEEL_* env vars for use with auditwheel
@@ -218,9 +226,7 @@ case "${LINUX_VER}" in
     exit 1
     ;;
 esac
-EOF
 
-RUN <<EOF
 pyenv global ${PYTHON_VER}
 # `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
 # use so should be compatible with `pyenv`
@@ -244,14 +250,12 @@ rapids-pip-retry install \
   "${PACKAGES_TO_INSTALL[@]}"
 pip cache purge
 pyenv rehash
-EOF
 
-RUN <<EOF
 # Create output directory for wheel builds
 mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
 
-# Mark all directories as safe for git so that GHA clones into the root don't
-# run into issues
+# Allow git to clone anywhere (these are images for isolated, short-lived CI containers,
+# don't need to worry about this setting intended for long-lived / shared servers)
 git config --system --add safe.directory '*'
 EOF
 
