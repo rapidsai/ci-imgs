@@ -121,6 +121,7 @@ if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
         apt-get purge -y \
           "${PACKAGE_TO_INSTALL[@]}"
         apt-get autoremove -y
+        rm -rf \
           /var/cache/apt/archives \
           /var/lib/apt/lists/*
     else
