@@ -3,7 +3,20 @@
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
-FROM nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
+ARG SYFT_ALPINE_VER=notset
+ARG SYFT_VER=notset
+
+################################ build the syft-base image ###############################
+
+FROM --platform=$BUILDPLATFORM alpine:${SYFT_ALPINE_VER} AS syft-base
+ARG SYFT_VER
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+SYFT_VER=${SYFT_VER} /tmp/build-scripts/install-syft
+EOF
+
+FROM nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER} AS citestwheel
 
 ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset
@@ -177,5 +190,21 @@ RUN git config --system --add safe.directory '*'
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
+
+################################ generate SBOM ###############################
+
+FROM syft-base AS sbom
+ARG IMAGE_REPO=notset
+RUN \
+  --mount=type=bind,from=citestwheel,source=/,target=/rootfs,ro \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+IMAGE_REPO=${IMAGE_REPO} /tmp/build-scripts/generate-sbom
+EOF
+
+################################ final image with SBOM ###############################
+
+FROM citestwheel
+COPY --from=sbom /out/sbom.json /sbom/sbom.json
 
 CMD ["/bin/bash"]
