@@ -3,10 +3,12 @@
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
+ARG SYFT_ALPINE_VER=notset
+ARG SYFT_VER=notset
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
-FROM ${BASE_IMAGE}
+FROM ${BASE_IMAGE} AS ci-wheel
 
 ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset
@@ -257,5 +259,23 @@ EOF
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
+
+################################ generate SBOM ###############################
+
+FROM --platform=$BUILDPLATFORM alpine:${SYFT_ALPINE_VER} AS sbom
+ARG SYFT_VER
+ARG IMAGE_REPO=notset
+RUN \
+  --mount=type=bind,from=ci-wheel,source=/,target=/rootfs,ro \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+SYFT_VER=${SYFT_VER} /tmp/build-scripts/install-syft
+IMAGE_REPO=${IMAGE_REPO} /tmp/build-scripts/generate-sbom
+EOF
+
+################################ final image with SBOM ###############################
+
+FROM ci-wheel
+COPY --from=sbom /out/sbom.json /sbom/sbom.json
 
 CMD ["/bin/bash"]

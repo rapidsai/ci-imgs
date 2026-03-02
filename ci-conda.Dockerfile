@@ -1,11 +1,13 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-################################ build and update miniforge-upstream ###############################
-
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG MINIFORGE_VER=notset
+ARG SYFT_ALPINE_VER=notset
+ARG SYFT_VER=notset
+
+################################ build and update miniforge-upstream ###############################
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 
@@ -290,5 +292,23 @@ RUN /opt/conda/bin/git config --system --add safe.directory '*'
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
+
+################################ generate SBOM ###############################
+
+FROM --platform=$BUILDPLATFORM alpine:${SYFT_ALPINE_VER} AS sbom
+ARG SYFT_VER
+ARG IMAGE_REPO=notset
+RUN \
+  --mount=type=bind,from=ci-conda,source=/,target=/rootfs,ro \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+SYFT_VER=${SYFT_VER} /tmp/build-scripts/install-syft
+IMAGE_REPO=${IMAGE_REPO} /tmp/build-scripts/generate-sbom
+EOF
+
+################################ final image with SBOM ###############################
+
+FROM ci-conda
+COPY --from=sbom /out/sbom.json /sbom/sbom.json
 
 CMD ["/bin/bash"]
