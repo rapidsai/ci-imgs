@@ -3,4 +3,6 @@
 !condarc.tmpl
 !scripts/configure-apt
 !scripts/install-tools
+!scripts/install-syft
+!scripts/generate-sbom
 !pip.conf
