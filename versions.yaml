@@ -12,3 +12,7 @@ AWS_CLI_VER: 2.28.1
 MINIFORGE_VER: 25.11.0-0
 # renovate: datasource=github-releases depName=rapidsai/sccache
 SCCACHE_VER: 0.13.0-rapids.8
+# renovate: datasource=github-releases depName=anchore/syft
+SYFT_VER: 1.32.0
+# renovate: datasource=docker depName=alpine versioning=docker
+SYFT_ALPINE_VER: "3.20"
