@@ -8,16 +8,6 @@ ARG SYFT_VER=notset
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
-################################ build the syft-base image ###############################
-
-FROM --platform=$BUILDPLATFORM alpine:${SYFT_ALPINE_VER} AS syft-base
-ARG SYFT_VER
-RUN \
-  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
-<<EOF
-SYFT_VER=${SYFT_VER} /tmp/build-scripts/install-syft
-EOF
-
 FROM ${BASE_IMAGE} AS ci-wheel
 
 ARG CONDA_ARCH=notset
@@ -272,12 +262,14 @@ COPY pip.conf /etc/xdg/pip/pip.conf
 
 ################################ generate SBOM ###############################
 
-FROM syft-base AS sbom
+FROM --platform=$BUILDPLATFORM alpine:${SYFT_ALPINE_VER} AS sbom
+ARG SYFT_VER
 ARG IMAGE_REPO=notset
 RUN \
   --mount=type=bind,from=ci-wheel,source=/,target=/rootfs,ro \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
+SYFT_VER=${SYFT_VER} /tmp/build-scripts/install-syft
 IMAGE_REPO=${IMAGE_REPO} /tmp/build-scripts/generate-sbom
 EOF
 

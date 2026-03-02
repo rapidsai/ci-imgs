@@ -7,16 +7,6 @@ ARG MINIFORGE_VER=notset
 ARG SYFT_ALPINE_VER=notset
 ARG SYFT_VER=notset
 
-################################ build the syft-base image ###############################
-
-FROM --platform=$BUILDPLATFORM alpine:${SYFT_ALPINE_VER} AS syft-base
-ARG SYFT_VER
-RUN \
-  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
-<<EOF
-SYFT_VER=${SYFT_VER} /tmp/build-scripts/install-syft
-EOF
-
 ################################ build and update miniforge-upstream ###############################
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
@@ -305,12 +295,14 @@ COPY pip.conf /etc/xdg/pip/pip.conf
 
 ################################ generate SBOM ###############################
 
-FROM syft-base AS sbom
+FROM --platform=$BUILDPLATFORM alpine:${SYFT_ALPINE_VER} AS sbom
+ARG SYFT_VER
 ARG IMAGE_REPO=notset
 RUN \
   --mount=type=bind,from=ci-conda,source=/,target=/rootfs,ro \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
+SYFT_VER=${SYFT_VER} /tmp/build-scripts/install-syft
 IMAGE_REPO=${IMAGE_REPO} /tmp/build-scripts/generate-sbom
 EOF
 
