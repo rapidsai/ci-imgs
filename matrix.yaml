@@ -30,10 +30,8 @@ exclude:
   - LINUX_VER: "ubuntu24.04"
     CUDA_VER: "12.2.2"
 
-  # Only build ci-wheel for the latest CUDA of each major version
+  # CUDA 12 wheels are built with only the latest CUDA 12 CTK
   - CUDA_VER: "12.2.2"
-    IMAGE_REPO: "ci-wheel"
-  - CUDA_VER: "13.0.2"
     IMAGE_REPO: "ci-wheel"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)
