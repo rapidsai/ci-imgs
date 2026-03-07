@@ -285,9 +285,11 @@ esac
 # clear the pip cache, to shrink image size and prevent unintentionally
 # pinning CI to older versions of things
 pip cache purge
-EOF
 
-RUN /opt/conda/bin/git config --system --add safe.directory '*'
+# Allow git to clone anywhere (these are images for isolated, short-lived CI containers,
+# don't need to worry about this setting intended for long-lived / shared servers)
+/opt/conda/bin/git config --system --add safe.directory '*'
+EOF
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
