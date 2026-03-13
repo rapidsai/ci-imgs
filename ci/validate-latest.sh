@@ -10,7 +10,7 @@ if [[ -z "${MATRIX}" ]]; then
 fi
 
 errors=0
-for image_repo in $(yq -r 'keys | .[]' latest.yaml); do
+yq -r -0 'keys | .[]' latest.yaml | while read -r -d $'\0' image_repo; do
   cuda_ver=$(yq -r ".${image_repo}.CUDA_VER" latest.yaml)
   python_ver=$(yq -r ".${image_repo}.PYTHON_VER" latest.yaml)
   linux_ver=$(yq -r ".${image_repo}.LINUX_VER" latest.yaml)
