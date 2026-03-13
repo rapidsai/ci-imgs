@@ -48,9 +48,7 @@ REAL_ARCH=${REAL_ARCH} \
     --aws-cli \
     --gh-cli \
     --gha-tools
-EOF
 
-RUN <<EOF
 set -e
 case "${LINUX_VER}" in
   "ubuntu"*)
@@ -170,10 +168,11 @@ rapids-pip-retry install \
   'certifi>=2026.1.4' \
   'rapids-dependency-file-generator==1.*'
 pyenv rehash
-EOF
 
-# git safe directory
-RUN git config --system --add safe.directory '*'
+# Allow git to clone anywhere (these are images for isolated, short-lived CI containers,
+# don't need to worry about this setting intended for long-lived / shared servers)
+git config --system --add safe.directory '*'
+EOF
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
