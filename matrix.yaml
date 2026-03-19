@@ -5,6 +5,7 @@ CUDA_VER:
   - "12.9.1"
   - "13.0.2"
   - "13.1.1"
+  - "13.2.0"
 PYTHON_VER:
   - "3.11"
   - "3.12"
@@ -29,12 +30,6 @@ exclude:
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu24.04"
     CUDA_VER: "12.2.2"
-
-  # Only build ci-wheel for the latest CUDA of each major version
-  - CUDA_VER: "12.2.2"
-    IMAGE_REPO: "ci-wheel"
-  - CUDA_VER: "13.0.2"
-    IMAGE_REPO: "ci-wheel"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)
   - LINUX_VER: "ubuntu22.04"

@@ -213,6 +213,7 @@ else
     PYTHON_ABI_TAG="cpython"
 fi
 
+# TODO: remove the ceiling on 'rattler-build' (https://github.com/rapidsai/build-planning/issues/259)
 PACKAGES_TO_INSTALL=(
   'anaconda-client>=1.13.1'
   'ca-certificates>=2026.1.4'
@@ -225,7 +226,7 @@ PACKAGES_TO_INSTALL=(
   'packaging>=25.0'
   "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
   'rapids-dependency-file-generator==1.*'
-  'rattler-build>=0.55.0'
+  'rattler-build>=0.55.0,<0.58'
 )
 
 rapids-mamba-retry install -y \
@@ -284,9 +285,11 @@ esac
 # clear the pip cache, to shrink image size and prevent unintentionally
 # pinning CI to older versions of things
 pip cache purge
-EOF
 
-RUN /opt/conda/bin/git config --system --add safe.directory '*'
+# Allow git to clone anywhere (these are images for isolated, short-lived CI containers,
+# don't need to worry about this setting intended for long-lived / shared servers)
+/opt/conda/bin/git config --system --add safe.directory '*'
+EOF
 
 # Add pip.conf
 COPY pip.conf /etc/xdg/pip/pip.conf
