@@ -8,6 +8,13 @@
   ],
   "packageRules": [
     {
+      "description": "Update GitHub Actions together",
+      "groupName": "github-actions",
+      "matchManagers": [
+        "github-actions"
+      ]
+    },
+    {
       "description": "Update low-risk CLI tools together",
       "groupName": "cli-tools",
       "matchPackageNames": [
