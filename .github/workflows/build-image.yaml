@@ -73,7 +73,7 @@ jobs:
           ARCH: ${{ matrix.ARCH }}
           IMAGE_REPO: ${{ inputs.IMAGE_REPO }}
       - name: Build image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: context
           file: ${{ inputs.DOCKERFILE }}
