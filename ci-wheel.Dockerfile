@@ -212,7 +212,9 @@ ARG MANYLINUX_VER=notset
 ARG POLICY=${MANYLINUX_VER}
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
 
-RUN <<EOF
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
 # install pyenv
 rapids-retry curl https://pyenv.run | bash
 
