@@ -2,8 +2,6 @@
 
 set -e -u -o pipefail
 
-# started - 377M
-
 # delete logs from 'pyenv install'
 rm -rf /tmp/python-build*.log
 
