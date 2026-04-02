@@ -17,7 +17,7 @@ RUN \
 # Ensure new files/dirs have group write permissions
 umask 002
 
-# install gha-tools for rapids-mamba-retry
+# install gha-tools for rapids-conda-retry
 /tmp/build-scripts/install-tools \
   --gha-tools
 
@@ -30,7 +30,10 @@ umask 002
 # NOTE: 'PATH' is set locally here (instead of 'ENV') because this target is just an intermediate
 #       build that files are copied out of.
 PATH="/opt/conda/bin:$PATH" \
-  rapids-mamba-retry update --all -y -n base
+  rapids-conda-retry update --all -y -n base
+
+PATH="/opt/conda/bin:$PATH" \
+  conda clean -aiptfy
 EOF
 
 FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda
@@ -107,8 +110,8 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
-rapids-mamba-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-rapids-mamba-retry update --all -y -n base
+rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+rapids-conda-retry update --all -y -n base
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   dnf install -y findutils
   dnf clean all
@@ -192,10 +195,10 @@ ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
 ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
 COPY condarc.tmpl /tmp/condarc.tmpl
 
-# Install CI tools using mamba
+# Install CI tools using conda
 RUN <<EOF
 # Install prereq for envsubst
-rapids-mamba-retry install -y \
+rapids-conda-retry install -y \
   gettext
 
 # create condarc file from env vars
@@ -229,7 +232,7 @@ PACKAGES_TO_INSTALL=(
   'rattler-build>=0.55.0,<0.58'
 )
 
-rapids-mamba-retry install -y \
+rapids-conda-retry install -y \
   "${PACKAGES_TO_INSTALL[@]}"
 
 conda clean -aiptfy

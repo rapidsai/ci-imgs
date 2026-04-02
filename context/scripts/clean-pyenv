@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -e -u -o pipefail
+
+# started - 377M
+
+# delete logs from 'pyenv install'
+rm -rf /tmp/python-build*.log
+
+# delete git and GitHub stuff
+find "${PYENV_ROOT}" -type d -name '.git' -exec rm -rf '{}' \+
+find "${PYENV_ROOT}" -type d -name '.github' -exec rm -rf '{}' \+
+
+# delete docs
+find "${PYENV_ROOT}" -type d -name 'man' -exec rm -rf '{}' \+
+
+# delete tests
+find "${PYENV_ROOT}" -type d -name 'test' -exec rm -rf '{}' \+
+
+# delete plugins
+#
+# These are only needed at image-building time, e.g. 'plugins/python-build' is needed for 'pyenv install'.
+#
+# The only direct 'pyenv' invocation in RAPIDS CI at runtime is 'pyenv rehash', which doesn't need any plugins.
+rm -rf "${PYENV_ROOT}/plugins"
