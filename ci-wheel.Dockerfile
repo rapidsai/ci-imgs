@@ -25,6 +25,9 @@ ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Add pip.conf
+COPY pip.conf /etc/xdg/pip/pip.conf
+
 # Install all the tools that are just "download a binary and stick it on PATH".
 #
 # These can be together, and earlier, because they're very cache-friendly... the versions are
@@ -209,7 +212,9 @@ ARG MANYLINUX_VER=notset
 ARG POLICY=${MANYLINUX_VER}
 ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
 
-RUN <<EOF
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
 # install pyenv
 rapids-retry curl https://pyenv.run | bash
 
@@ -248,8 +253,14 @@ PACKAGES_TO_INSTALL=(
 )
 rapids-pip-retry install \
   "${PACKAGES_TO_INSTALL[@]}"
-pip cache purge
+
 pyenv rehash
+
+# clear the pip cache
+pip cache purge
+
+# remove unnecessary pyenv stuff
+/tmp/build-scripts/clean-pyenv
 
 # Create output directory for wheel builds
 mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
@@ -258,8 +269,5 @@ mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
 # don't need to worry about this setting intended for long-lived / shared servers)
 git config --system --add safe.directory '*'
 EOF
-
-# Add pip.conf
-COPY pip.conf /etc/xdg/pip/pip.conf
 
 CMD ["/bin/bash"]

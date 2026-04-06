@@ -75,10 +75,13 @@ export CUDA_VER=13.1.0
 export PYTHON_VER=3.13
 export ARCH=amd64
 export GH_TOKEN=$(gh auth token)
+
 export IMAGE_REPO=ci-conda
 docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-conda.Dockerfile context/
+
 export IMAGE_REPO=ci-wheel
 docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-wheel.Dockerfile context/
+
 export IMAGE_REPO=citestwheel
 docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile context/
 ```
