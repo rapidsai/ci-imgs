@@ -18,6 +18,9 @@ ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# Add pip.conf
+COPY pip.conf /etc/xdg/pip/pip.conf
+
 # Install all the tools that are just "download a binary and stick it on PATH".
 #
 # These can be together, and earlier, because they're very cache-friendly... the versions are
@@ -151,8 +154,10 @@ EOF
 ENV PYENV_ROOT="/pyenv"
 ENV PATH="${PYENV_ROOT}/versions/${PYTHON_VER}/bin/:${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
 
-# Create pyenvs
-RUN <<EOF
+# Set up requested Python version
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
 # install pyenv
 rapids-retry curl https://pyenv.run | bash
 
@@ -167,14 +172,18 @@ rapids-pip-retry install --upgrade pip
 rapids-pip-retry install \
   'certifi>=2026.1.4' \
   'rapids-dependency-file-generator==1.*'
+
 pyenv rehash
+
+# clear the pip cache
+pip cache purge
+
+# remove unnecessary pyenv stuff
+/tmp/build-scripts/clean-pyenv
 
 # Allow git to clone anywhere (these are images for isolated, short-lived CI containers,
 # don't need to worry about this setting intended for long-lived / shared servers)
 git config --system --add safe.directory '*'
 EOF
-
-# Add pip.conf
-COPY pip.conf /etc/xdg/pip/pip.conf
 
 CMD ["/bin/bash"]
