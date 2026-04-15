@@ -295,6 +295,6 @@ pip cache purge
 EOF
 
 # Add pip.conf
-COPY pip.conf /etc/xdg/pip/pip.conf
+COPY pip.conf /etc/pip.conf
 
 CMD ["/bin/bash"]
