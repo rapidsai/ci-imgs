@@ -19,7 +19,7 @@ ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Add pip.conf
-COPY pip.conf /etc/xdg/pip/pip.conf
+COPY pip.conf /etc/pip.conf
 
 # Install all the tools that are just "download a binary and stick it on PATH".
 #
