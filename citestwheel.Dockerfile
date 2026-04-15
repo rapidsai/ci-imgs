@@ -110,10 +110,12 @@ case "${LINUX_VER}" in
       ca-certificates
       curl
       dnf-plugins-core
+      findutils
       gcc
       git
       jq
       libffi-devel
+      make
       ncurses-devel
       patch
       readline-devel
