@@ -114,12 +114,14 @@ case "${LINUX_VER}" in
       ca-certificates
       curl
       dnf-plugins-core
+      findutils
       gcc
       git
       jq
       libffi-devel
-      patch
+      make
       ncurses-devel
+      patch
       readline-devel
       sqlite
       sqlite-devel
