@@ -3,7 +3,7 @@
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
-FROM nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
+FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER}
 
 ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset
