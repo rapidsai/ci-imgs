@@ -56,9 +56,9 @@ set -e
 case "${LINUX_VER}" in
   "ubuntu"*)
     rapids-retry apt-get update -y
-    apt-get install -y software-properties-common
-    # update git > 2.17
-    add-apt-repository ppa:git-core/ppa -y
+    # apt-get install -y software-properties-common
+    # # update git > 2.17
+    # add-apt-repository ppa:git-core/ppa -y
     rapids-retry apt-get update -y
     apt-get upgrade -y
 
