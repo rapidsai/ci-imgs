@@ -7,6 +7,10 @@ on:
     branches:
       - "pull-request/[0-9]+"
 
+permissions:
+  contents: read
+  pull-requests: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -20,8 +24,12 @@ jobs:
     if: always()
     with:
       needs: ${{ toJSON(needs) }}
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
   build-images:
     uses: ./.github/workflows/build-and-publish-images.yaml
     with:
       build_type: pull-request
-    secrets: inherit
+    secrets: inherit # zizmor: ignore[secrets-inherit]

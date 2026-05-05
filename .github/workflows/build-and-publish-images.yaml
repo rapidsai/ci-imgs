@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 name: build and publish imgs workflow
 
@@ -13,6 +13,10 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   compute-matrix:
     runs-on: ubuntu-latest
@@ -20,7 +24,9 @@ jobs:
       MATRIX: ${{ steps.compute-matrix.outputs.MATRIX }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Download gha-tools with git clone
         run: |
           git clone https://github.com/rapidsai/gha-tools.git -b main /tmp/gha-tools
@@ -45,7 +51,7 @@ jobs:
       max-parallel: 50
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
       fail-fast: false
-    secrets: inherit
+    secrets: inherit # zizmor: ignore[secrets-inherit]
     uses: ./.github/workflows/build-image.yaml
     with:
       ARCHES: ${{ toJSON(matrix.ARCHES) }}
@@ -64,13 +70,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Download gha-tools with git clone
         run: |
           git clone https://github.com/rapidsai/gha-tools.git -b main /tmp/gha-tools
           echo "/tmp/gha-tools/tools" >> "${GITHUB_PATH}"
       - name: Login to DockerHub
-        uses: docker/login-action@v4
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
           password: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
