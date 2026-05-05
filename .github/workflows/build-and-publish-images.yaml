@@ -13,6 +13,10 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   compute-matrix:
     runs-on: ubuntu-latest
@@ -47,7 +51,7 @@ jobs:
       max-parallel: 50
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
       fail-fast: false
-    secrets: inherit
+    secrets: inherit # zizmor: ignore[secrets-inherit]
     uses: ./.github/workflows/build-image.yaml
     with:
       ARCHES: ${{ toJSON(matrix.ARCHES) }}

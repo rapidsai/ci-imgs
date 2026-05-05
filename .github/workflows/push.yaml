@@ -25,4 +25,7 @@ jobs:
     uses: ./.github/workflows/build-and-publish-images.yaml
     with:
       build_type: branch
-    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: read
+    secrets: inherit # zizmor: ignore[secrets-inherit]
