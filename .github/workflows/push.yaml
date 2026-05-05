@@ -23,9 +23,11 @@ concurrency:
 jobs:
   build-images:
     uses: ./.github/workflows/build-and-publish-images.yaml
+    secrets:
+      GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
+      GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
     with:
       build_type: branch
     permissions:
       contents: read
       pull-requests: read
-    secrets: inherit # zizmor: ignore[secrets-inherit]
