@@ -46,6 +46,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Download gha-tools with git clone
         run: |
           git clone https://github.com/rapidsai/gha-tools.git -b main /tmp/gha-tools
