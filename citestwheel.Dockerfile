@@ -19,7 +19,7 @@ ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Add pip.conf
-COPY pip.conf /etc/xdg/pip/pip.conf
+COPY pip.conf /etc/pip.conf
 
 # Install all the tools that are just "download a binary and stick it on PATH".
 #
@@ -56,9 +56,6 @@ set -e
 case "${LINUX_VER}" in
   "ubuntu"*)
     rapids-retry apt-get update -y
-    apt-get install -y software-properties-common
-    # update git > 2.17
-    add-apt-repository ppa:git-core/ppa -y
     rapids-retry apt-get update -y
     apt-get upgrade -y
 
