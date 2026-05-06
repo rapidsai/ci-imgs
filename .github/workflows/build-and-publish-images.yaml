@@ -8,6 +8,11 @@ on:
       build_type:
         required: true
         type: string
+    secrets:
+      GPUCIBOT_DOCKERHUB_USER:
+        required: true
+      GPUCIBOT_DOCKERHUB_TOKEN:
+        required: true
 
 defaults:
   run:
@@ -35,7 +40,7 @@ jobs:
         id: compute-matrix
         run: |
           MATRIX=$(ci/compute-matrix.sh)
-          echo "MATRIX=${MATRIX}" | tee -a ${GITHUB_OUTPUT}
+          echo "MATRIX=${MATRIX}" | tee -a "${GITHUB_OUTPUT}"
         env:
           BUILD_TYPE: ${{ inputs.BUILD_TYPE }}
       - name: Validate latest.yaml entries exist in matrix
