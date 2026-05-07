@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 name: publish
 run-name: "publish${{ (inputs.upstream_repository != '') && format(' - triggered by: {0}', inputs.upstream_repository) || '' }}"
@@ -23,6 +23,11 @@ concurrency:
 jobs:
   build-images:
     uses: ./.github/workflows/build-and-publish-images.yaml
+    secrets:
+      GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
+      GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
     with:
       build_type: branch
-    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: read

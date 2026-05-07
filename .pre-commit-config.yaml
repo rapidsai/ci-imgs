@@ -26,3 +26,7 @@ repos:
           (?x)
               [.](jq|py|sh|toml|yml|yaml)$|
               Dockerfile$
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.24.1
+    hooks:
+      - id: zizmor
