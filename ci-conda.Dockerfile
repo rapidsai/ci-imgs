@@ -110,8 +110,8 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
-rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
 rapids-conda-retry update --all -y -n base
+rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   dnf install -y findutils
   dnf clean all
