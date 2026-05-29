@@ -2,6 +2,6 @@
 *
 !condarc.tmpl
 !scripts/clean-pyenv
-!scripts/configure-apt
+!scripts/configure-system-package-managers
 !scripts/install-tools
 !pip.conf
