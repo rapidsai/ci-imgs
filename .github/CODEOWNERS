@@ -1,2 +1,5 @@
 # CI code owners
 * @rapidsai/ci-codeowners
+
+# Ops code owners
+/SECURITY.md             @rapidsai/ops-codeowners
