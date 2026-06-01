@@ -36,9 +36,9 @@ RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
-# configure apt (do this first because it affects installs in later scripts)
+# configure package managers first (do this first because it affects installs in later scripts)
 LINUX_VER=${LINUX_VER} \
-  /tmp/build-scripts/configure-apt
+  /tmp/build-scripts/configure-system-package-managers
 
 # install AWS CLI, gha-tools, and gh CLI
 #
