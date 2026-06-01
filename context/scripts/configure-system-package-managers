@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# [description]
+#
+#   Updates settings for system package managers, like 'apt' and 'dnf'.
+#
+#   For 'dnf', this script generally prefers editing /etc/dnf/dnf.conf because
+#   support for dropping configuration into /etc/dnf/dnf.conf.d wasn't
+#   available until dnf 5:
+#
+#     * https://dnf.readthedocs.io/en/latest/conf_ref.html#files
+#     * https://dnf5.readthedocs.io/en/stable/dnf5.conf.5.html#example-of-configuration-files)
+#
+
+set -e -u -o pipefail
+
+case "${LINUX_VER}" in
+    "ubuntu"*)
+      echo 'APT::Update::Error-Mode "any";' > /etc/apt/apt.conf.d/warnings-as-errors
+      echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
+      echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
+      echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
+      ;;
+    "rockylinux"*)
+      # Note that `dnf` defaults to 10 retries, so no additional configuration for retries is required here.
+
+      # use --nobest in every 'dnf update'
+      #
+      # This allows 'dnf' to fall back to older packages when
+      # resolving conflicts like https://github.com/rapidsai/ci-imgs/issues/411
+      #
+      if grep -q '^best=' /etc/dnf/dnf.conf; then \
+          sed -i 's/^best=.*/best=False/' /etc/dnf/dnf.conf; \
+      else \
+         echo "best=False" >> /etc/dnf/dnf.conf; \
+      fi
+      ;;
+    *)
+      echo "Unsupported LINUX_VER: ${LINUX_VER}"
+      exit 1
+    ;;
+esac

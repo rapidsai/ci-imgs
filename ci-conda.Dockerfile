@@ -66,9 +66,9 @@ RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
-# configure apt (do this first because it affects installs in later scripts)
+# configure package managers first (do this first because it affects installs in later scripts)
 LINUX_VER=${LINUX_VER} \
-  /tmp/build-scripts/configure-apt
+  /tmp/build-scripts/configure-system-package-managers
 
 # install AWS CLI, gh CLI, gha-tools, sccache, and yq
 AWS_CLI_VER=${AWS_CLI_VER} \
@@ -99,6 +99,11 @@ chmod g+ws /opt/conda
 # Ensure new files/dirs have group write permissions
 umask 002
 
+# force-reinstall 'conda' first, to clear out any files
+# left behind from updates
+rapids-conda-retry install -y -n base --force-reinstall 'conda>=26.5.0'
+
+
 # install expected Python version
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
 PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
@@ -110,8 +115,12 @@ if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
 else
     PYTHON_ABI_TAG="cpython"
 fi
+
 rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+
+# ensure all packages are updated
 rapids-conda-retry update --all -y -n base
+
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   dnf install -y findutils
   dnf clean all
