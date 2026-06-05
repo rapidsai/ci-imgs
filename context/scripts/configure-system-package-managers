@@ -20,6 +20,19 @@ case "${LINUX_VER}" in
       echo 'APT::Acquire::Retries "10";' > /etc/apt/apt.conf.d/retries
       echo 'APT::Acquire::https::Timeout "240";' > /etc/apt/apt.conf.d/https-timeout
       echo 'APT::Acquire::http::Timeout "240";' > /etc/apt/apt.conf.d/http-timeout
+
+      # Don't install documentation files (manpages, docs, etc.). apt/dpkg has no
+      # '--nodocs' flag, so this is configured via dpkg path-exclude rules instead.
+      # Note: this only affects packages installed after this point, not docs
+      # already present in the base image.
+      cat > /etc/dpkg/dpkg.cfg.d/01_nodoc <<'CFG'
+path-exclude /usr/share/doc/*
+path-include /usr/share/doc/*/copyright
+path-exclude /usr/share/man/*
+path-exclude /usr/share/groff/*
+path-exclude /usr/share/info/*
+path-exclude /usr/share/lintian/*
+CFG
       ;;
     "rockylinux"*)
       # Note that `dnf` defaults to 10 retries, so no additional configuration for retries is required here.
@@ -33,6 +46,15 @@ case "${LINUX_VER}" in
           sed -i 's/^best=.*/best=False/' /etc/dnf/dnf.conf; \
       else \
          echo "best=False" >> /etc/dnf/dnf.conf; \
+      fi
+
+      # Don't install documentation files (manpages, docs, etc.) for any 'dnf'
+      # transaction. This makes 'nodocs' the global default, so individual
+      # '--nodocs' / '--setopt=tsflags=nodocs' flags aren't required.
+      if grep -q '^tsflags=' /etc/dnf/dnf.conf; then \
+          sed -i 's/^tsflags=.*/tsflags=nodocs/' /etc/dnf/dnf.conf; \
+      else \
+         echo "tsflags=nodocs" >> /etc/dnf/dnf.conf; \
       fi
       ;;
     *)

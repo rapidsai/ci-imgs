@@ -189,8 +189,12 @@ case "${LINUX_VER}" in
         tar -xzvf openssl-1.1.1k.tar.gz
     cd openssl-1.1.1k
     ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
-    make
-    make install
+    # 'install_sw' installs just the libraries, headers, and binaries.
+    # Plain 'install' also (slowly) generates and installs the HTML manpages, which we don't need.
+    #
+    # ref: https://github.com/openssl/openssl/blob/OpenSSL_1_1_1-stable/INSTALL
+    #
+    make -j"$(nproc)" install_sw
     popd
     rm -rf /tmp/openssl*
     ;;
@@ -217,6 +221,10 @@ RUN \
 <<EOF
 # install pyenv
 rapids-retry curl https://pyenv.run | bash
+
+# Skip building CPython's own test modules. RAPIDS CI builds and tests wheels,
+# not CPython itself, so these just slow down the build.
+export PYTHON_CONFIGURE_OPTS="--disable-test-modules"
 
 case "${LINUX_VER}" in
   "ubuntu"*)
