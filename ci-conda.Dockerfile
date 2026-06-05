@@ -294,6 +294,12 @@ pip cache purge
 /opt/conda/bin/git config --system --add safe.directory '*'
 EOF
 
+# opt out of conda sharded repodata
+#
+# TODO: remove these when https://github.com/conda/infrastructure/issues/1286#issuecomment-4628580232 is resolved
+ENV CONDA_PLUGINS_USE_SHARDED_REPODATA=false
+ENV RATTLER_SHARDED=false
+
 # Add pip.conf
 COPY pip.conf /etc/pip.conf
 
