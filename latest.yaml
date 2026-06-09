@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Define the values used for the "latest" tag
 ci-conda:
-  CUDA_VER: "13.3.0"
+  CUDA_VER: "13.2.0"
   PYTHON_VER: "3.14"
   LINUX_VER: "ubuntu24.04"
 ci-wheel:
