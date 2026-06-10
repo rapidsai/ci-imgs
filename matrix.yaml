@@ -12,9 +12,10 @@ PYTHON_VER:
   - "3.13"
   - "3.14"
 LINUX_VER:
+  - "rockylinux8"
   - "ubuntu22.04"
   - "ubuntu24.04"
-  - "rockylinux8"
+  - "ubuntu26.04"
 CI_IMAGE_CONFIG:
   - IMAGE_REPO: "ci-conda"
     dockerfile: ci-conda.Dockerfile
@@ -30,14 +31,26 @@ exclude:
   # Exclusions from CUDA's OS support matrix
   - LINUX_VER: "ubuntu24.04"
     CUDA_VER: "12.2.2"
+  - LINUX_VER: "ubuntu26.04"
+    CUDA_VER: "12.2.2"
+  - LINUX_VER: "ubuntu26.04"
+    CUDA_VER: "12.9.2"
+  - LINUX_VER: "ubuntu26.04"
+    CUDA_VER: "13.0.3"
+  - LINUX_VER: "ubuntu26.04"
+    CUDA_VER: "13.2.1"
 
   # Only build ci-wheel for the latest CUDA of each major version,
   # and any others used for builds in CI
   - CUDA_VER: "12.2.2"
+    IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "13.2.1"
     IMAGE_REPO: "ci-wheel"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)
   - LINUX_VER: "ubuntu22.04"
     IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu24.04"
+    IMAGE_REPO: "ci-wheel"
+  - LINUX_VER: "ubuntu26.04"
     IMAGE_REPO: "ci-wheel"
