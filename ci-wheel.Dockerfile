@@ -90,6 +90,7 @@ case "${LINUX_VER}" in
       libsqlite3-dev
       libssl-dev
       libtool
+      libzstd-dev
       openssh-client
       patch
       protobuf-compiler
@@ -193,6 +194,19 @@ case "${LINUX_VER}" in
     make install
     popd
     rm -rf /tmp/openssl*
+    # Python 3.14 adds stdlib compression.zstd and requires libzstd >=1.4.5.
+    # Rocky 8 packages libzstd 1.4.4, so provide a newer zstd before pyenv
+    # builds Python. See https://github.com/pyenv/pyenv/wiki.
+    ZSTD_VERSION=1.5.7
+    pushd /tmp
+    rapids-retry wget -q "https://github.com/facebook/zstd/releases/download/v${ZSTD_VERSION}/zstd-${ZSTD_VERSION}.tar.gz"
+    tar -xzvf "zstd-${ZSTD_VERSION}.tar.gz"
+    cd "zstd-${ZSTD_VERSION}"
+    make -j"$(nproc)" lib-release
+    make -C lib install PREFIX=/usr LIBDIR=/usr/lib64
+    ldconfig
+    popd
+    rm -rf /tmp/zstd*
     ;;
   *)
     echo "Unsupported LINUX_VER: ${LINUX_VER}"
