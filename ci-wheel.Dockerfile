@@ -237,7 +237,16 @@ case "${LINUX_VER}" in
     pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
   "rockylinux"*)
-    # Need to specify the openssl location because of the install from source
+    # Activate gcc-toolset so its toolchain is used when building CPython and other libraries
+    # from source below.
+    #
+    # In some situations, CPython's ./configure may record an absolute path for
+    # the compiler. Not ideal, but if that's going to happen we want it to be the one
+    # used for building RAPIDS packages, because scikit-build-core retries that value
+    # with `sysconfig.get_config_var("CXX")`.
+    source /etc/profile.d/enable_devtools.sh
+
+    # Need to specify the openssl location because of the install from source.
     CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
   *)
