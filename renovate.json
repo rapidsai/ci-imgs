@@ -8,6 +8,13 @@
   ],
   "packageRules": [
     {
+      "description": "Wait for 7 days post-release before updating",
+      "matchPackageNames": [
+        "*"
+      ],
+      "minimumReleaseAge": "7 days"
+    },
+    {
       "description": "Update GitHub Actions together",
       "groupName": "github-actions",
       "matchManagers": [
