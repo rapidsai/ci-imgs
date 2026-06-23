@@ -190,8 +190,13 @@ case "${LINUX_VER}" in
         tar -xzvf openssl-1.1.1k.tar.gz
     cd openssl-1.1.1k
     ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
-    make
-    make install
+    # 'install_sw' installs just the libraries, headers, and binaries.
+    # Plain 'install' also (slowly) generates and installs the HTML manpages, which we don't need.
+    #
+    # ref: https://github.com/openssl/openssl/blob/OpenSSL_1_1_1-stable/INSTALL
+    #
+    make -j"$(nproc)"
+    make install_sw
     popd
     rm -rf /tmp/openssl*
     # Python 3.14 adds stdlib compression.zstd and requires libzstd >=1.4.5.
@@ -231,6 +236,15 @@ RUN \
 <<EOF
 # install pyenv
 rapids-retry curl https://pyenv.run | bash
+
+# explicitly parallelize builds run by pyenv's 'python-build' plugin.
+#
+# ref: https://github.com/pyenv/pyenv/blob/b52a8e3f52c3be68cf46c751ed40a180dfc48ba4/plugins/python-build/README.md?plain=1#L190
+export MAKE_OPTS="-j$(nproc)"
+
+# Skip building CPython's own test modules. RAPIDS CI builds and tests wheels,
+# not CPython itself, so these just slow down the build.
+export PYTHON_CONFIGURE_OPTS="--disable-test-modules"
 
 case "${LINUX_VER}" in
   "ubuntu"*)
