@@ -90,6 +90,7 @@ case "${LINUX_VER}" in
       libsqlite3-dev
       libssl-dev
       libtool
+      libzstd-dev
       openssh-client
       patch
       protobuf-compiler
@@ -197,6 +198,19 @@ case "${LINUX_VER}" in
     make -j"$(nproc)" install_sw
     popd
     rm -rf /tmp/openssl*
+    # Python 3.14 adds stdlib compression.zstd and requires libzstd >=1.4.5.
+    # Rocky 8 packages libzstd 1.4.4, so provide a newer zstd before pyenv
+    # builds Python. See https://github.com/pyenv/pyenv/wiki.
+    ZSTD_VERSION=1.5.7
+    pushd /tmp
+    rapids-retry wget -q "https://github.com/facebook/zstd/releases/download/v${ZSTD_VERSION}/zstd-${ZSTD_VERSION}.tar.gz"
+    tar -xzvf "zstd-${ZSTD_VERSION}.tar.gz"
+    cd "zstd-${ZSTD_VERSION}"
+    make -j"$(nproc)" lib-release
+    make -C lib install PREFIX=/usr LIBDIR=/usr/lib64
+    ldconfig
+    popd
+    rm -rf /tmp/zstd*
     ;;
   *)
     echo "Unsupported LINUX_VER: ${LINUX_VER}"
@@ -231,7 +245,16 @@ case "${LINUX_VER}" in
     pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
   "rockylinux"*)
-    # Need to specify the openssl location because of the install from source
+    # Activate gcc-toolset so its toolchain is used when building CPython and other libraries
+    # from source below.
+    #
+    # In some situations, CPython's ./configure may record an absolute path for
+    # the compiler. Not ideal, but if that's going to happen we want it to be the one
+    # used for building RAPIDS packages, because scikit-build-core retries that value
+    # with `sysconfig.get_config_var("CXX")`.
+    source /etc/profile.d/enable_devtools.sh
+
+    # Need to specify the openssl location because of the install from source.
     CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
     ;;
   *)
