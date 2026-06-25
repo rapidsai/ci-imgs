@@ -75,7 +75,6 @@ case "${LINUX_VER}" in
       libxml2-dev
       libxmlsec1-dev
       libzstd-dev
-      llvm
       make
       patch
       ssh
