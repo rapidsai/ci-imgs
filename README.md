@@ -71,8 +71,8 @@ If you have the `gh` CLI installed and authenticated, you can use `gh auth token
 
 ```sh
 export LINUX_VER=rockylinux8
-export CUDA_VER=13.1.0
-export PYTHON_VER=3.13
+export CUDA_VER=13.3.0
+export PYTHON_VER=3.14
 export ARCH=amd64
 export GH_TOKEN=$(gh auth token)
 
