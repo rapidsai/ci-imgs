@@ -29,14 +29,6 @@ jobs:
       contents: read
       id-token: write
       pull-requests: read
-  build-images:
-    uses: ./.github/workflows/build-and-publish-images.yaml
-    needs: changed-files
-    with:
-      build_type: pull-request
-    secrets:
-      GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
-      GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
   changed-files:
     permissions:
       actions: read
@@ -60,3 +52,11 @@ jobs:
           - '!SECURITY.md'
           - '!ci/release/update-version.sh
           - '!renovate.json'
+  build-images:
+    uses: ./.github/workflows/build-and-publish-images.yaml
+    needs: changed-files
+    with:
+      build_type: pull-request
+    secrets:
+      GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
+      GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
