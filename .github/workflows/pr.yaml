@@ -58,4 +58,5 @@ jobs:
           - '!LICENSE'
           - '!README.md'
           - '!SECURITY.md'
+          - '!ci/release/update-version.sh
           - '!renovate.json'
