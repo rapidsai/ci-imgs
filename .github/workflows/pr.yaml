@@ -50,7 +50,7 @@ jobs:
           - '!LICENSE'
           - '!README.md'
           - '!SECURITY.md'
-          - '!ci/release/update-version.sh
+          - '!ci/release/update-version.sh'
           - '!renovate.json'
   build-images:
     uses: ./.github/workflows/build-and-publish-images.yaml
