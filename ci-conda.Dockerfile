@@ -227,7 +227,6 @@ fi
 
 # TODO: remove the ceiling on 'rattler-build' (https://github.com/rapidsai/build-planning/issues/259)
 PACKAGES_TO_INSTALL=(
-  'anaconda-client>=1.13.1'
   'ca-certificates>=2026.1.4'
   'certifi>=2026.1.4'
   'conda-build>=25.11.1'

@@ -277,7 +277,6 @@ pyenv global ${PYTHON_VER}
 rapids-pip-retry install --upgrade 'pip>=25.3'
 
 PACKAGES_TO_INSTALL=(
-  'anaconda-client>=1.13.0'
   'auditwheel>=6.2.0'
   'certifi>=2026.1.4'
   'conda-package-handling>=2.4.0'
