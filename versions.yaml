@@ -10,10 +10,5 @@ YQ_VER: 4.53.3
 AWS_CLI_VER: 2.28.1
 # renovate: datasource=docker depName=condaforge/miniforge3 versioning=docker
 MINIFORGE_VER: 26.1.0-0
-# conda 26.5.3 build 1 has non-relocatable launchers. See
-# https://github.com/conda-forge/conda-feedstock/issues/304.
-# Keep this pinned to build 0 until a fixed conda package is available.
-CONDA_VER: 26.5.3
-CONDA_BUILD_NUMBER: 0
 # renovate: datasource=github-releases depName=rapidsai/sccache
 SCCACHE_VER: 0.14.0-rapids.19
