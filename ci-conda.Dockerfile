@@ -101,9 +101,8 @@ chmod g+ws /opt/conda
 # Ensure new files/dirs have group write permissions
 umask 002
 
-# conda 26.5.3 build 1 has launchers with '#!/usr/bin/env python'. When a
-# non-base environment is active, those launchers use that environment's
-# Python and fail to import the conda module from the base environment.
+# conda 26.5.3 build 1 has non-relocatable launchers. See
+# https://github.com/conda-forge/conda-feedstock/issues/304.
 CONDA_SPEC="conda=${CONDA_VER}=*_${CONDA_BUILD_NUMBER}"
 echo "conda ${CONDA_VER} *_${CONDA_BUILD_NUMBER}" >> /opt/conda/conda-meta/pinned
 
@@ -313,9 +312,8 @@ EOF
 # Add pip.conf
 COPY pip.conf /etc/pip.conf
 
-# Verify that conda uses the base environment's Python even when another
-# environment's Python appears first on PATH. This reproduces the failure
-# caused by conda 26.5.3 build 1 without requiring another conda solve.
+# Verify that conda commands can be run in a child environment. See
+# https://github.com/conda-forge/conda-feedstock/issues/304.
 RUN <<EOF
 test_env=$(mktemp -d)
 trap 'rm -rf "${test_env}"' EXIT
