@@ -39,8 +39,6 @@ EOF
 FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda
 
 ARG CONDA_ARCH=notset
-ARG CONDA_BUILD_NUMBER=notset
-ARG CONDA_VER=notset
 ARG CUDA_VER=notset
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PYTHON_VER=notset
@@ -101,14 +99,9 @@ chmod g+ws /opt/conda
 # Ensure new files/dirs have group write permissions
 umask 002
 
-# conda 26.5.3 build 1 has non-relocatable launchers. See
-# https://github.com/conda-forge/conda-feedstock/issues/304.
-CONDA_SPEC="conda=${CONDA_VER}=*_${CONDA_BUILD_NUMBER}"
-echo "conda ${CONDA_VER} *_${CONDA_BUILD_NUMBER}" >> /opt/conda/conda-meta/pinned
-
 # force-reinstall 'conda' first, to clear out any files
 # left behind from updates
-rapids-conda-retry install -y -n base --force-reinstall "${CONDA_SPEC}"
+rapids-conda-retry install -y -n base --force-reinstall 'conda>=26.5.0'
 
 
 # install expected Python version
