@@ -305,4 +305,13 @@ EOF
 # Add pip.conf
 COPY pip.conf /etc/pip.conf
 
+# Verify that conda commands can be run in a child environment. See
+# https://github.com/conda-forge/conda-feedstock/issues/304.
+RUN <<EOF
+test_env=$(mktemp -d)
+trap 'rm -rf "${test_env}"' EXIT
+/opt/conda/bin/python -m venv "${test_env}"
+PATH="${test_env}/bin:/opt/conda/condabin:${PATH}" conda info
+EOF
+
 CMD ["/bin/bash"]
