@@ -18,7 +18,7 @@ repos:
       - id: shellcheck
         args: ["--severity=warning"]
   - repo: https://github.com/rapidsai/pre-commit-hooks
-    rev: v1.6.0
+    rev: v1.6.1
     hooks:
       - id: verify-copyright
         args: [--fix, --spdx]
@@ -27,6 +27,6 @@ repos:
               [.](jq|py|sh|toml|yml|yaml)$|
               Dockerfile$
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.26.1
+    rev: v1.27.0
     hooks:
       - id: zizmor

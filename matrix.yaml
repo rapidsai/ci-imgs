@@ -41,6 +41,8 @@ exclude:
   # and any others used for builds in CI
   - CUDA_VER: "12.2.2"
     IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "13.0.3"
+    IMAGE_REPO: "ci-wheel"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)
   - LINUX_VER: "ubuntu22.04"

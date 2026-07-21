@@ -62,6 +62,7 @@ case "${LINUX_VER}" in
       build-essential
       ca-certificates
       curl
+      gdb
       git
       jq
       libbz2-dev
@@ -112,6 +113,7 @@ case "${LINUX_VER}" in
       dnf-plugins-core
       findutils
       gcc
+      gdb
       git
       jq
       libffi-devel
