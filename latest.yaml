@@ -6,7 +6,7 @@ ci-conda:
   PYTHON_VER: "3.14"
   LINUX_VER: "ubuntu26.04"
 ci-wheel:
-  CUDA_VER: "13.0.3"
+  CUDA_VER: "13.3.0"
   PYTHON_VER: "3.14"
   # Wheels should always be built with the oldest supported glibc version
   LINUX_VER: "rockylinux8"
