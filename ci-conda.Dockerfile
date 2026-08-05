@@ -236,7 +236,7 @@ PACKAGES_TO_INSTALL=(
   'jq>=1.8.1'
   'packaging>=25.0'
   "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-  'rapids-dependency-file-generator==1.*'
+  'rapids-dependency-file-generator==1.*,>=1.22'
   'rattler-build>=0.55.0,<0.58'
 )
 
