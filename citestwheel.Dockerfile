@@ -199,7 +199,7 @@ python --version
 rapids-pip-retry install --upgrade pip
 rapids-pip-retry install \
   'certifi>=2026.1.4' \
-  'rapids-dependency-file-generator==1.*'
+  'rapids-dependency-file-generator==1.*,>=1.22'
 
 pyenv rehash
 

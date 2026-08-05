@@ -283,7 +283,7 @@ PACKAGES_TO_INSTALL=(
   'dunamai>=1.25.0'
   'patchelf>=0.17.2.4'
   'pydistcheck==0.11.*'
-  'rapids-dependency-file-generator==1.*'
+  'rapids-dependency-file-generator==1.*,>=1.22'
   'twine>=6.2.0'
   'wheel>=0.45.1'
 )
