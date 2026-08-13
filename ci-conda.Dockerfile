@@ -206,12 +206,12 @@ COPY condarc.tmpl /tmp/condarc.tmpl
 
 # Install CI tools using conda
 RUN <<EOF
-# Install prereq for envsubst
-rapids-conda-retry install -y \
-  gettext
-
-# create condarc file from env vars
-cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
+# update condarc file from env vars
+sed \
+  -e "s|\$RAPIDS_CONDA_BLD_ROOT_DIR|${RAPIDS_CONDA_BLD_ROOT_DIR}|g" \
+  -e "s|\$RAPIDS_CONDA_BLD_OUTPUT_DIR|${RAPIDS_CONDA_BLD_OUTPUT_DIR}|g" \
+  /tmp/condarc.tmpl \
+  > /opt/conda/.condarc
 rm -f /tmp/condarc.tmpl
 
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
