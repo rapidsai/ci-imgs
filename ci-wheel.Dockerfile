@@ -277,13 +277,14 @@ pyenv global ${PYTHON_VER}
 rapids-pip-retry install --upgrade 'pip>=25.3'
 
 PACKAGES_TO_INSTALL=(
+  'abi3audit>=0.0.26'
   'auditwheel>=6.2.0'
   'certifi>=2026.1.4'
   'conda-package-handling>=2.4.0'
   'dunamai>=1.25.0'
   'patchelf>=0.17.2.4'
   'pydistcheck==0.11.*'
-  'rapids-dependency-file-generator==1.*'
+  'rapids-dependency-file-generator==1.*,>=1.22'
   'twine>=6.2.0'
   'wheel>=0.45.1'
 )

@@ -21,8 +21,14 @@ umask 002
 /tmp/build-scripts/install-tools \
   --gha-tools
 
-# Example of pinned package in case you require an override
-# echo '<PACKAGE_NAME>==<VERSION>' >> /opt/conda/conda-meta/pinned
+# set up pins that apply to all later solves
+#
+# * 'conda': avoid solves that downgrade conda, because they can put the environment into a hard-to-fix state
+#
+mkdir -p /opt/conda/conda-meta
+cat > /opt/conda/conda-meta/pinned <<EOF_PINNED
+conda >=26.7
+EOF_PINNED
 
 # update everything before other environment changes, to ensure mixing
 # an older conda with newer packages still works well
@@ -206,12 +212,12 @@ COPY condarc.tmpl /tmp/condarc.tmpl
 
 # Install CI tools using conda
 RUN <<EOF
-# Install prereq for envsubst
-rapids-conda-retry install -y \
-  gettext
-
-# create condarc file from env vars
-cat /tmp/condarc.tmpl | envsubst | tee /opt/conda/.condarc; \
+# update condarc file from env vars
+sed \
+  -e "s|\$RAPIDS_CONDA_BLD_ROOT_DIR|${RAPIDS_CONDA_BLD_ROOT_DIR}|g" \
+  -e "s|\$RAPIDS_CONDA_BLD_OUTPUT_DIR|${RAPIDS_CONDA_BLD_OUTPUT_DIR}|g" \
+  /tmp/condarc.tmpl \
+  > /opt/conda/.condarc
 rm -f /tmp/condarc.tmpl
 
 PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
@@ -236,7 +242,7 @@ PACKAGES_TO_INSTALL=(
   'jq>=1.8.1'
   'packaging>=25.0'
   "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-  'rapids-dependency-file-generator==1.*'
+  'rapids-dependency-file-generator==1.*,>=1.22'
   'rattler-build>=0.55.0,<0.58'
 )
 
