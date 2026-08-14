@@ -22,10 +22,11 @@ umask 002
   --gha-tools
 
 # set up pins that apply to all later solves
+#
+# * 'conda': avoid solves that downgrade conda, because they can put the environment into a hard-to-fix state
+#
 mkdir -p /opt/conda/conda-meta
 cat > /opt/conda/conda-meta/pinned <<EOF_PINNED
-# avoid solves that downgrade conda, because they can put the environment
-# into a hard-to-fix state
 conda >=26.7
 EOF_PINNED
 
