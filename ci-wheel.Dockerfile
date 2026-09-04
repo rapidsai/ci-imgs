@@ -279,6 +279,7 @@ rapids-pip-retry install --upgrade 'pip>=25.3'
 PACKAGES_TO_INSTALL=(
   'abi3audit>=0.0.26'
   'auditwheel>=6.2.0'
+  'build>=1.5.1'
   'certifi>=2026.1.4'
   'conda-package-handling>=2.4.0'
   'dunamai>=1.25.0'
