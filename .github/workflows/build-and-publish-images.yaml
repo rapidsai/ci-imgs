@@ -56,7 +56,7 @@ jobs:
       max-parallel: 50
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
       fail-fast: false
-    uses: ./.github/workflows/build-image.yaml
+    uses: $/.github/workflows/build-image.yaml
     secrets:
       GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
       GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}

@@ -53,7 +53,7 @@ jobs:
           - '!ci/release/update-version.sh'
           - '!renovate.json'
   build-images:
-    uses: ./.github/workflows/build-and-publish-images.yaml
+    uses: $/.github/workflows/build-and-publish-images.yaml
     needs: changed-files
     if: fromJSON(needs.changed-files.outputs.changed_file_groups).build_images
     with:
