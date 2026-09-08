@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   build-images:
-    uses: ./.github/workflows/build-and-publish-images.yaml
+    uses: $/.github/workflows/build-and-publish-images.yaml
     secrets:
       GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
       GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
