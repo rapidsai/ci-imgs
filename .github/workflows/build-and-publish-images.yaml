@@ -74,6 +74,7 @@ jobs:
     needs: [docker, compute-matrix]
     strategy:
       matrix: ${{ fromJSON(needs.compute-matrix.outputs.MATRIX) }}
+      fail-fast: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
