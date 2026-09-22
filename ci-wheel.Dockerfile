@@ -6,7 +6,7 @@ ARG LINUX_VER=notset
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
-FROM ${BASE_IMAGE}
+FROM ${BASE_IMAGE} AS ci-wheel-core
 
 ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset
@@ -37,6 +37,8 @@ COPY pip.conf /etc/pip.conf
 ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG GH_CLI_VER=notset
+ARG GHA_TOOLS_BOOTSTRAP_SHA256=notset
+ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
 ARG LINUX_VER=notset
 ARG REAL_ARCH=notset
 ARG SCCACHE_VER=notset
@@ -55,6 +57,8 @@ LINUX_VER=${LINUX_VER} \
 AWS_CLI_VER=${AWS_CLI_VER} \
 CPU_ARCH=${CPU_ARCH} \
 GH_CLI_VER=${GH_CLI_VER} \
+GHA_TOOLS_SHA256=${GHA_TOOLS_BOOTSTRAP_SHA256} \
+GHA_TOOLS_VERSION=${GHA_TOOLS_BOOTSTRAP_VERSION} \
 REAL_ARCH=${REAL_ARCH} \
 SCCACHE_VER=${SCCACHE_VER} \
   /tmp/build-scripts/install-tools \
@@ -307,5 +311,18 @@ mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
 # don't need to worry about this setting intended for long-lived / shared servers)
 git config --system --add safe.directory '*'
 EOF
+
+# Keep the frequently updated runtime gha-tools payload in the final layer so
+# updating it can reuse every expensive image-construction layer above.
+FROM ci-wheel-core AS ci-wheel
+
+ARG GHA_TOOLS_SHA256=notset
+ARG GHA_TOOLS_VERSION=notset
+
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+  GHA_TOOLS_SHA256=${GHA_TOOLS_SHA256} \
+  GHA_TOOLS_VERSION=${GHA_TOOLS_VERSION} \
+    /tmp/build-scripts/install-tools --gha-tools
 
 CMD ["/bin/bash"]

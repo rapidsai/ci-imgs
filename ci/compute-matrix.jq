@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 def compute_arch($x):
@@ -45,6 +45,12 @@ def compute_image_name_no_rapids_version($x):
   "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + "-" + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
   $x + {IMAGE_NAME_NO_RAPIDS_VERSION: .};
 
+# Compute the persistent branch cache name, including for pull requests. Pull
+# requests can read this cache but write only to their PR-specific cache.
+def compute_cache_image_name($x):
+  "rapidsai/" + $x.IMAGE_REPO + ":cuda" + $x.CUDA_VER + "-" + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
+  $x + {CACHE_IMAGE_NAME: .};
+
 # Checks the current entry to see if it matches the given exclude
 def matches($entry; $exclude):
   all($exclude | to_entries | .[]; $entry[.key] == .value);
@@ -73,6 +79,7 @@ def compute_matrix($input):
     filter_excludes(.; $excludes) |
     compute_arch(.) |
     compute_image_name(.) |
-    compute_image_name_no_rapids_version(.)
+    compute_image_name_no_rapids_version(.) |
+    compute_cache_image_name(.)
   ] |
   {include: .};

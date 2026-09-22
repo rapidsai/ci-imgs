@@ -67,6 +67,8 @@ jobs:
       PYTHON_VER: ${{ matrix.PYTHON_VER }}
       IMAGE_REPO: ${{ matrix.IMAGE_REPO }}
       IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
+      CACHE_IMAGE_NAME: ${{ matrix.CACHE_IMAGE_NAME }}
+      CACHE_WRITE_IMAGE_NAME: ${{ matrix.IMAGE_NAME_NO_RAPIDS_VERSION }}
       DOCKERFILE: ${{ matrix.DOCKERFILE }}
       DOCKER_TARGET: ${{ matrix.DOCKER_TARGET }}
   build-multiarch-manifest:

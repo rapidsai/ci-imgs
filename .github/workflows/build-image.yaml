@@ -23,6 +23,12 @@ on:
       IMAGE_NAME:
         required: true
         type: string
+      CACHE_IMAGE_NAME:
+        required: true
+        type: string
+      CACHE_WRITE_IMAGE_NAME:
+        required: true
+        type: string
       DOCKERFILE:
         required: true
         type: string
@@ -89,6 +95,10 @@ jobs:
             ${{ steps.generate-build-args.outputs.ARGS }}
           target: ${{ inputs.DOCKER_TARGET }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
+          cache-from: |
+            type=registry,ref=${{ inputs.CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
+            type=registry,ref=${{ inputs.CACHE_WRITE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
+          cache-to: type=registry,ref=${{ inputs.CACHE_WRITE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }},mode=max,compression=zstd,oci-mediatypes=true,image-manifest=true
           # Enable zstd compression (gzip is default)
           # Compression level 15 is rough based on empirical testing
           # https://github.com/rapidsai/ci-imgs/pull/281#issuecomment-3001509856

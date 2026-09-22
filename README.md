@@ -86,6 +86,15 @@ export IMAGE_REPO=citestwheel
 docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile context/
 ```
 
+### Updating `gha-tools`
+
+`ci-conda` and `ci-wheel` use two independent `gha-tools` pins in `versions.yaml`:
+
+- `GHA_TOOLS_BOOTSTRAP_VERSION` supplies the retry helpers used while building the expensive image layers. Update it only when image construction needs new helper behavior.
+- `GHA_TOOLS_VERSION` is the version shipped to users. It is installed in the final image layer so routine updates can reuse all earlier layers.
+
+Update the corresponding SHA-256 value whenever either version changes. CI stores a separate registry-backed BuildKit cache for each image variant and architecture. Pull requests read the branch cache but write to a PR-specific cache, while branch caches use the unversioned image name so they remain reusable across RAPIDS release-number changes.
+
 ## Cleaning Up
 
 Every build first writes images to the https://hub.docker.com/r/rapidsai/staging repo on DockerHub,
