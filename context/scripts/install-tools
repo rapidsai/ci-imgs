@@ -43,7 +43,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-TOOL_INSTALL_DIR="/usr/local/bin"
+TOOL_INSTALL_DIR="${TOOL_INSTALL_DIR:-/usr/local/bin}"
 
 # avoid leaking apt-get install'd packages out of this script
 PACKAGES_TO_INSTALL=()
@@ -74,7 +74,15 @@ fi
 # install gha-tools first, as other things below depend on it
 if (( gha_tools_flag == 1 )); then
   echo "installing 'gha-tools'"
-  wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C "${TOOL_INSTALL_DIR}"
+  : "${GHA_TOOLS_VERSION:?GHA_TOOLS_VERSION must be set}"
+  : "${GHA_TOOLS_SHA256:?GHA_TOOLS_SHA256 must be set}"
+  gha_tools_archive=$(mktemp)
+  wget -q \
+    "https://github.com/rapidsai/gha-tools/releases/download/v${GHA_TOOLS_VERSION}/tools.tar.gz" \
+    -O "${gha_tools_archive}"
+  echo "${GHA_TOOLS_SHA256}  ${gha_tools_archive}" | sha256sum --check --status
+  tar -xzf "${gha_tools_archive}" -C "${TOOL_INSTALL_DIR}"
+  rm -f "${gha_tools_archive}"
   echo "done installing 'gha-tools' to '${TOOL_INSTALL_DIR}'"
 fi
 

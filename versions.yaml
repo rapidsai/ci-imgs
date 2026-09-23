@@ -12,3 +12,10 @@ AWS_CLI_VER: 2.28.1
 MINIFORGE_VER: 26.1.0-0
 # renovate: datasource=github-releases depName=rapidsai/sccache
 SCCACHE_VER: 0.17.0-rapids.4
+# Keep this bootstrap pin stable. It supplies retry helpers used while the images
+# are built and should only move when those build-time helpers need an update.
+GHA_TOOLS_BOOTSTRAP_VERSION: 0.0.213
+GHA_TOOLS_BOOTSTRAP_SHA256: b1ecd475a068cdbe608ee44f78f4585b9a4a0f5829086f57a1ffeb0ff0d58047
+# renovate: datasource=github-releases depName=rapidsai/gha-tools
+GHA_TOOLS_VERSION: 0.0.213
+GHA_TOOLS_SHA256: b1ecd475a068cdbe608ee44f78f4585b9a4a0f5829086f57a1ffeb0ff0d58047
