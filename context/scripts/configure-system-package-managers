@@ -56,6 +56,15 @@ CFG
       else \
          echo "tsflags=nodocs" >> /etc/dnf/dnf.conf; \
       fi
+
+      # Don't install weak dependencies (Recommends/Supplements) for any 'dnf'
+      # transaction. This makes it the global default, so individual
+      # '--setopt=install_weak_deps=False' flags aren't required.
+      if grep -q '^install_weak_deps=' /etc/dnf/dnf.conf; then \
+          sed -i 's/^install_weak_deps=.*/install_weak_deps=False/' /etc/dnf/dnf.conf; \
+      else \
+         echo "install_weak_deps=False" >> /etc/dnf/dnf.conf; \
+      fi
       ;;
     *)
       echo "Unsupported LINUX_VER: ${LINUX_VER}"

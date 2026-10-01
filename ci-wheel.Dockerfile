@@ -6,27 +6,7 @@ ARG LINUX_VER=notset
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
-FROM ${BASE_IMAGE}
-
-ARG CONDA_ARCH=notset
-ARG CUDA_VER=notset
-ARG DEBIAN_FRONTEND=noninteractive
-ARG PYTHON_VER=notset
-
-# Set RAPIDS versions env variables
-ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
-ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
-ENV RAPIDS_DEPENDENCIES="latest"
-ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
-ENV RAPIDS_WHEEL_BLD_OUTPUT_DIR=/tmp/wheelhouse
-
-ENV PYENV_ROOT="/pyenv"
-ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
-
-SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
-
-# Add pip.conf
-COPY pip.conf /etc/pip.conf
+FROM ${BASE_IMAGE} AS os-base
 
 # Install all the tools that are just "download a binary and stick it on PATH".
 #
@@ -36,10 +16,44 @@ COPY pip.conf /etc/pip.conf
 # And safe here because they're unaffected by pip, the Python interpreter or other Python packages.
 ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
+ARG DEBIAN_FRONTEND=noninteractive
 ARG GH_CLI_VER=notset
 ARG LINUX_VER=notset
 ARG REAL_ARCH=notset
 ARG SCCACHE_VER=notset
+
+# du -x --max-depth=4 -B1M / 2>/dev/null | sort -rn | head -21
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+# configure package managers first (do this first because it affects installs in later scripts)
+LINUX_VER=${LINUX_VER} \
+  /tmp/build-scripts/configure-system-package-managers
+
+# remove stuff that isn't necessary for wheel builds
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    apt-get purge -y \
+      cuda-nsight-* \
+      nsight-*
+
+    apt-get autoremove -y
+    ;;
+  "rockylinux"*)
+    dnf remove -y \
+      'cuda-nsight-*' \
+      'nsight-*'
+
+    dnf autoremove -y
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+EOF
+
+# add / update system packages
 RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
@@ -185,6 +199,36 @@ case "${LINUX_VER}" in
       #!/bin/bash\n \
       source /opt/rh/gcc-toolset-14/enable \
     ' > /etc/profile.d/enable_devtools.sh
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+
+# clean up docs and other unnecessary stuff
+rm -rf \
+  /usr/share/doc \
+  /usr/share/info \
+  /usr/share/man
+EOF
+
+# treat the system-installed things as a single layer
+FROM scratch
+COPY --from=os-base / /
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# layer 2: OpenSSL + Zstandard
+ARG LINUX_VER=notset
+
+RUN \
+  --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+  ;;
+  "rockylinux"*)
     pushd tmp
     rapids-retry wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
         tar -xzvf openssl-1.1.1k.tar.gz
@@ -226,11 +270,22 @@ rm -rf \
   /usr/share/man
 EOF
 
-# Set AUDITWHEEL_* env vars for use with auditwheel
-ARG MANYLINUX_VER=notset
-ARG POLICY=${MANYLINUX_VER}
-ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
+# layer 3: pip.conf
+COPY pip.conf /etc/pip.conf
 
+# layer 4: Python
+# Set RAPIDS versions env variables
+ARG CONDA_ARCH=notset
+ARG CUDA_VER=notset
+ARG PYTHON_VER=notset
+
+ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
+ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
+ENV RAPIDS_DEPENDENCIES="latest"
+ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
+ENV RAPIDS_WHEEL_BLD_OUTPUT_DIR=/tmp/wheelhouse
+ENV PYENV_ROOT="/pyenv"
+ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
 RUN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
@@ -270,6 +325,19 @@ case "${LINUX_VER}" in
 esac
 
 pyenv global ${PYTHON_VER}
+EOF
+
+# layer 4: 'pip'-installed dependencies
+
+# Set AUDITWHEEL_* env vars for use with auditwheel
+ARG MANYLINUX_VER=notset
+ARG POLICY=${MANYLINUX_VER}
+ARG REAL_ARCH=notset
+ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
+
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
 # `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
 # use so should be compatible with `pyenv`
 #
