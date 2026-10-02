@@ -71,19 +71,20 @@ If you have the `gh` CLI installed and authenticated, you can use `gh auth token
 
 ```sh
 export LINUX_VER=rockylinux8
-export CUDA_VER=12.2.2
+export CUDA_VER=12.9.2
 export PYTHON_VER=3.11
 export ARCH=amd64
 export GH_TOKEN=$(gh auth token)
 
 export IMAGE_REPO=ci-conda
-docker build $(ci/compute-build-args.sh) --progress=plain --secret id=GH_TOKEN -f ci-conda.Dockerfile context/
+docker build $(ci/compute-build-args.sh) --progress=plain --secret id=GH_TOKEN -f ci-conda.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
 
 export IMAGE_REPO=ci-wheel
-docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-wheel.Dockerfile context/
+./ci/sync-base-env.sh "nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}" ./ci-wheel.Dockerfile
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -t rapidsai/ci-wheel:local -f ci-wheel.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
 
 export IMAGE_REPO=citestwheel
-docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile context/
+docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
 ```
 
 ## Cleaning Up

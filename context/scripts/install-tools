@@ -98,6 +98,7 @@ if (( aws_cli_flag == 1 )); then
   unzip -q /tmp/awscliv2.zip -d /tmp
   /tmp/aws/install
   rm -rf /tmp/aws /tmp/awscliv2.zip
+  find /usr/local/aws-cli -type d -path '*/awscli/examples' -exec rm -rf '{}' \+
 fi
 
 # install sccache
@@ -119,7 +120,7 @@ fi
 if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
     if type -f apt-get >/dev/null 2>&1; then
         apt-get purge -y \
-          "${PACKAGE_TO_INSTALL[@]}"
+          "${PACKAGES_TO_INSTALL[@]}"
         apt-get autoremove -y
         rm -rf \
           /var/cache/apt/archives \
