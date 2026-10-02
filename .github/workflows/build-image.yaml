@@ -80,7 +80,7 @@ jobs:
           ARCH: ${{ matrix.ARCH }}
           IMAGE_REPO: ${{ inputs.IMAGE_REPO }}
       - name: Modify dockerfiles
-        if: ${{ inputs.DOCKERFILE == "ci-wheel.Dockerfile" }}
+        if: ${{ inputs.DOCKERFILE == 'ci-wheel.Dockerfile' }}
         id: modify-dockerfiles
         env:
           CUDA_VER: ${{ inputs.CUDA_VER }}
