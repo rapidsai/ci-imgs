@@ -98,7 +98,6 @@ if (( aws_cli_flag == 1 )); then
   unzip -q /tmp/awscliv2.zip -d /tmp
   /tmp/aws/install
   rm -rf /tmp/aws /tmp/awscliv2.zip
-  find /usr/local/aws-cli -type d -path '*/awscli/examples' -exec rm -rf '{}' \+
 fi
 
 # install sccache
