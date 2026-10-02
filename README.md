@@ -77,11 +77,11 @@ export ARCH=amd64
 export GH_TOKEN=$(gh auth token)
 
 export IMAGE_REPO=ci-conda
-docker build $(ci/compute-build-args.sh) --progress=plain --secret id=GH_TOKEN -f ci-conda.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-conda.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
 
 export IMAGE_REPO=ci-wheel
 ./ci/sync-base-env.sh "nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}" ./ci-wheel.Dockerfile
-docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -t rapidsai/ci-wheel:local -f ci-wheel.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-wheel.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
 
 export IMAGE_REPO=citestwheel
 docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
