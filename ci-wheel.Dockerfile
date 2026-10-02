@@ -356,31 +356,45 @@ EOF
 # An image split into 100 layers will require more data transfer
 # than an identical image split into 10 layers.
 #
-FROM scratch
+FROM scratch AS output
 
-# layer 1: CUDA and other misc. stuff (slower-changing)
+# layers 1-3: split the largest CUDA libraries into their own layers
+COPY --parents --from=os-base --exclude=usr/local/bin --exclude=usr/local/aws-cli \
+     /usr/local/**/libcublas* \
+     /
+COPY --parents --from=os-base --exclude=usr/local/bin --exclude=usr/local/aws-cli \
+     /usr/local/**/libcusparse* \
+     /usr/local/**/libcusolver* \
+     /
+COPY --parents --from=os-base --exclude=usr/local/bin --exclude=usr/local/aws-cli \
+     /usr/local/**/libcufft* \
+     /usr/local/**/libcurand* \
+     /usr/local/**/libnpp* \
+     /
+
+# layer 4: remaining CUDA and other misc. stuff
 COPY --from=os-base --exclude=bin --exclude=aws-cli /usr/local /usr/local
 
-# layers 2-3: other things in /usr/local (faster-changing)
+# layers 5-6: other things in /usr/local (later because it's faster-changing)
 COPY --from=os-base /usr/local/bin /usr/local/bin
 COPY --from=os-base /usr/local/aws-cli /usr/local/aws-cli
 
-# layer 4: shared libraries
+# layer 7: shared libraries
 COPY --from=os-base /usr/lib64 /usr/lib64
 
-# layer 5: more shared libraries
+# layer 8: more shared libraries
 COPY --from=os-base /usr/lib /usr/lib
 
-# layer 6: Python
+# layer 9: Python
 COPY --from=os-base /pyenv /pyenv
 
-# layer 7: tools
+# layer 10: tools
 COPY --from=os-base /usr/bin /usr/bin
 
-# layer 8: more tools
+# layer 11: more tools
 COPY --from=os-base /opt /opt
 
-# layer 9: everything else
+# layer 12: everything else
 COPY --from=os-base       \
      --exclude=usr/local \
      --exclude=usr/lib64 \
