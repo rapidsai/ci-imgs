@@ -119,7 +119,7 @@ fi
 if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
     if type -f apt-get >/dev/null 2>&1; then
         apt-get purge -y \
-          "${PACKAGE_TO_INSTALL[@]}"
+          "${PACKAGES_TO_INSTALL[@]}"
         apt-get autoremove -y
         rm -rf \
           /var/cache/apt/archives \

@@ -6,48 +6,54 @@ ARG LINUX_VER=notset
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
 
-FROM ${BASE_IMAGE}
-
-ARG CONDA_ARCH=notset
-ARG CUDA_VER=notset
-ARG DEBIAN_FRONTEND=noninteractive
-ARG PYTHON_VER=notset
-
-# Set RAPIDS versions env variables
-ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"
-ENV RAPIDS_CUDA_VERSION="${CUDA_VER}"
-ENV RAPIDS_DEPENDENCIES="latest"
-ENV RAPIDS_PY_VERSION="${PYTHON_VER}"
-ENV RAPIDS_WHEEL_BLD_OUTPUT_DIR=/tmp/wheelhouse
-
-ENV PYENV_ROOT="/pyenv"
-ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
+FROM ${BASE_IMAGE} AS os-base
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Add pip.conf
-COPY pip.conf /etc/pip.conf
-
-# Install all the tools that are just "download a binary and stick it on PATH".
-#
-# These can be together, and earlier, because they're very cache-friendly... the versions are
-# pinned so the layer content shouldn't change.
-#
-# And safe here because they're unaffected by pip, the Python interpreter or other Python packages.
-ARG AWS_CLI_VER=notset
-ARG CPU_ARCH=notset
-ARG GH_CLI_VER=notset
+ARG DEBIAN_FRONTEND=noninteractive
 ARG LINUX_VER=notset
-ARG REAL_ARCH=notset
-ARG SCCACHE_VER=notset
 RUN \
-  --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
 # configure package managers first (do this first because it affects installs in later scripts)
 LINUX_VER=${LINUX_VER} \
   /tmp/build-scripts/configure-system-package-managers
 
+# remove stuff that isn't necessary for wheel builds
+PACKAGES_TO_REMOVE=(
+  "cuda-compat-*"
+  "cuda-gdb-*"
+  "cuda-nsight-*"
+  "nsight-*"
+)
+case "${LINUX_VER}" in
+  "ubuntu"*)
+    apt-get purge -y \
+      "${PACKAGES_TO_REMOVE[@]}"
+    apt-get autoremove -y
+    ;;
+  "rockylinux"*)
+    dnf remove -y \
+      "${PACKAGES_TO_REMOVE[@]}"
+    dnf autoremove -y
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+EOF
+
+# Install all the tools that are just "download a binary and stick it on PATH".
+ARG AWS_CLI_VER=notset
+ARG CPU_ARCH=notset
+ARG GH_CLI_VER=notset
+ARG REAL_ARCH=notset
+ARG SCCACHE_VER=notset
+RUN \
+  --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
 # install AWS CLI, gh CLI, gha-tools, and sccache
 #
 # notes:
@@ -62,7 +68,10 @@ SCCACHE_VER=${SCCACHE_VER} \
     --gh-cli \
     --gha-tools \
     --sccache
+EOF
 
+# install other tools and libraries
+RUN <<EOF
 case "${LINUX_VER}" in
   "ubuntu"*)
     rapids-retry apt-get update -y
@@ -78,7 +87,6 @@ case "${LINUX_VER}" in
       git
       jq
       libbz2-dev
-      libcudnn8-dev
       libcurl4-openssl-dev
       libffi-dev
       liblapack-dev
@@ -127,7 +135,9 @@ case "${LINUX_VER}" in
     ;;
   "rockylinux"*)
     dnf update -y
-    dnf install --nodocs -y epel-release
+    dnf install --nodocs -y \
+      dnf-plugins-core \
+      epel-release
     dnf config-manager --set-enabled powertools
     dnf update -y
     PACKAGES_TO_INSTALL=(
@@ -139,13 +149,11 @@ case "${LINUX_VER}" in
       ca-certificates
       cmake
       curl
-      dnf-plugins-core
       gcc-toolset-14-gcc
       gcc-toolset-14-gcc-c++
       git
       jq
       lapack-devel
-      libcudnn8-devel
       libcurl-devel
       libffi-devel
       libtool
@@ -185,6 +193,25 @@ case "${LINUX_VER}" in
       #!/bin/bash\n \
       source /opt/rh/gcc-toolset-14/enable \
     ' > /etc/profile.d/enable_devtools.sh
+    ;;
+  *)
+    echo "Unsupported LINUX_VER: ${LINUX_VER}"
+    exit 1
+    ;;
+esac
+
+# clean up docs and other unnecessary stuff
+rm -rf \
+  /usr/share/doc \
+  /usr/share/info \
+  /usr/share/man
+EOF
+
+RUN <<EOF
+case "${LINUX_VER}" in
+  "ubuntu"*)
+  ;;
+  "rockylinux"*)
     pushd tmp
     rapids-retry wget -q https://www.openssl.org/source/openssl-1.1.1k.tar.gz
         tar -xzvf openssl-1.1.1k.tar.gz
@@ -226,11 +253,10 @@ rm -rf \
   /usr/share/man
 EOF
 
-# Set AUDITWHEEL_* env vars for use with auditwheel
-ARG MANYLINUX_VER=notset
-ARG POLICY=${MANYLINUX_VER}
-ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${REAL_ARCH} AUDITWHEEL_PLAT=${POLICY}_${REAL_ARCH}
-
+# Set up Python
+ARG PYTHON_VER=notset
+ENV PYENV_ROOT="/pyenv"
+ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
 RUN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
@@ -248,7 +274,7 @@ export PYTHON_CONFIGURE_OPTS="--disable-test-modules"
 
 case "${LINUX_VER}" in
   "ubuntu"*)
-    pyenv install --verbose "${RAPIDS_PY_VERSION}"
+    pyenv install --verbose "${PYTHON_VER}"
     ;;
   "rockylinux"*)
     # Activate gcc-toolset so its toolchain is used when building CPython and other libraries
@@ -261,7 +287,7 @@ case "${LINUX_VER}" in
     source /etc/profile.d/enable_devtools.sh
 
     # Need to specify the openssl location because of the install from source.
-    CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${RAPIDS_PY_VERSION}"
+    CPPFLAGS="-I/usr/include/openssl" LDFLAGS="-L/usr/lib" pyenv install --verbose "${PYTHON_VER}"
     ;;
   *)
     echo "Unsupported LINUX_VER: ${LINUX_VER}"
@@ -270,6 +296,14 @@ case "${LINUX_VER}" in
 esac
 
 pyenv global ${PYTHON_VER}
+EOF
+
+COPY pip.conf /etc/pip.conf
+
+ENV RAPIDS_WHEEL_BLD_OUTPUT_DIR=/tmp/wheelhouse
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+<<EOF
 # `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
 # use so should be compatible with `pyenv`
 #
@@ -307,5 +341,96 @@ mkdir -p ${RAPIDS_WHEEL_BLD_OUTPUT_DIR}
 # don't need to worry about this setting intended for long-lived / shared servers)
 git config --system --add safe.directory '*'
 EOF
+
+# Re-organize image layers.
+#
+# This removes any overhead from changes (e.g. 'dnf update' changing package versions).
+#
+# trade-offs
+# ----------
+#
+# 'docker pull' can pull layers in parallel (default: 3), so
+# splitting into more layers allows for faster pull times via
+# parallel pulls. (ref: https://docs.docker.com/reference/cli/dockerd/)
+#
+# Having more layers reduces the benefits from compression.
+# An image split into 100 layers will require more data transfer
+# than an identical image split into 10 layers.
+#
+FROM scratch AS output
+
+# layers 1-3: split the largest CUDA libraries into their own layers
+COPY --parents --from=os-base --exclude=usr/local/bin --exclude=usr/local/aws-cli \
+     /usr/local/**/libcublas* \
+     /
+COPY --parents --from=os-base --exclude=usr/local/bin --exclude=usr/local/aws-cli \
+     /usr/local/**/libcusparse* \
+     /usr/local/**/libcusolver* \
+     /
+COPY --parents --from=os-base --exclude=usr/local/bin --exclude=usr/local/aws-cli \
+     /usr/local/**/libcufft* \
+     /usr/local/**/libcurand* \
+     /usr/local/**/libnpp* \
+     /
+
+# layer 4: remaining CUDA and other misc. stuff
+COPY --from=os-base --exclude=bin --exclude=aws-cli /usr/local /usr/local
+
+# layers 5-6: other things in /usr/local (later because it's faster-changing)
+COPY --from=os-base /usr/local/bin /usr/local/bin
+COPY --from=os-base /usr/local/aws-cli /usr/local/aws-cli
+
+# layer 7: shared libraries
+COPY --from=os-base /usr/lib64 /usr/lib64
+
+# layer 8: more shared libraries
+COPY --from=os-base /usr/lib /usr/lib
+
+# layer 9: Python
+COPY --from=os-base /pyenv /pyenv
+
+# layer 10: tools
+COPY --from=os-base /usr/bin /usr/bin
+
+# layer 11: more tools
+COPY --from=os-base /opt /opt
+
+# layer 12: everything else
+COPY --from=os-base       \
+     --exclude=usr/local \
+     --exclude=usr/lib64 \
+     --exclude=usr/lib   \
+     --exclude=pyenv     \
+     --exclude=usr/bin   \
+     --exclude=opt       \
+     / /
+
+# BEGIN base-image ENV (used by ci/sync-base-env.sh, do not edit)
+# END base-image ENV (used by ci/sync-base-env.sh, do not edit)
+
+# set output env variables
+
+# RAPIDS_* env vars
+ARG CONDA_ARCH=notset
+ARG CUDA_VER=notset
+ARG PYTHON_VER=notset
+ENV RAPIDS_CONDA_ARCH="${CONDA_ARCH}"           \
+    RAPIDS_CUDA_VERSION="${CUDA_VER}"           \
+    RAPIDS_DEPENDENCIES="latest"                \
+    RAPIDS_PY_VERSION="${PYTHON_VER}"           \
+    RAPIDS_WHEEL_BLD_OUTPUT_DIR=/tmp/wheelhouse
+
+# other output env vars
+ARG MANYLINUX_VER=notset
+ARG POLICY=${MANYLINUX_VER}
+ARG REAL_ARCH=notset
+ENV PYENV_ROOT="/pyenv"                      \
+    AUDITWHEEL_POLICY="${POLICY}"            \
+    AUDITWHEEL_ARCH="${REAL_ARCH}"           \
+    AUDITWHEEL_PLAT="${POLICY}_${REAL_ARCH}"
+
+ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
+
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 CMD ["/bin/bash"]
