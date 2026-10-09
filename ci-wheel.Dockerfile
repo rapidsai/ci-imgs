@@ -80,7 +80,6 @@ case "${LINUX_VER}" in
       automake
       build-essential
       ca-certificates
-      cmake
       curl
       debianutils
       gcc
@@ -93,7 +92,6 @@ case "${LINUX_VER}" in
       libncurses5-dev
       libnuma-dev
       libopenblas-dev
-      libopenslide-dev
       libreadline-dev
       libsqlite3-dev
       libssl-dev
@@ -160,7 +158,6 @@ case "${LINUX_VER}" in
       ncurses-devel
       numactl
       numactl-devel
-      openslide-devel
       openssh-clients
       patch
       protobuf-compiler
@@ -204,7 +201,10 @@ esac
 rm -rf \
   /usr/share/doc \
   /usr/share/info \
-  /usr/share/man
+  /usr/share/man \
+  /var/cache/apt/* \
+  /var/cache/dnf/* \
+  /var/cache/yum/*
 EOF
 
 RUN <<EOF
@@ -222,8 +222,8 @@ case "${LINUX_VER}" in
     #
     # ref: https://github.com/openssl/openssl/blob/OpenSSL_1_1_1-stable/INSTALL
     #
-    make -j"$(nproc)"
-    make install_sw
+    make -j"$(nproc)" build_libs
+    make install_dev
     popd
     rm -rf /tmp/openssl*
     # Python 3.14 adds stdlib compression.zstd and requires libzstd >=1.4.5.
