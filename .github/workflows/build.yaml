@@ -45,7 +45,7 @@ jobs:
           aws-region: us-east-2
           role-duration-seconds: 3600
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-rc-producer-${{ github.repository_id }}
-      - uses: rapidsai/shared-actions/release-candidate-context@837f3939f7dc55759d1b4a0b365f0f1b7a43c1b3
+      - uses: rapidsai/shared-actions/release-candidate-context@5e09350bc3ba58dd97ada5a482771ce702592019
         id: context
         with:
           source-sha: ${{ inputs.sha }}
@@ -70,11 +70,39 @@ jobs:
       contents: read
       id-token: write
       packages: read
+    env:
+      RAPIDS_SHA: ${{ inputs.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.sha }}
           persist-credentials: false
+      - name: Install isolated Conda indexer
+        run: |
+          candidate_docker_config=$(mktemp -d "${RUNNER_TEMP}/candidate-docker-config.XXXXXX")
+          echo "DOCKER_CONFIG=${candidate_docker_config}" >> "${GITHUB_ENV}"
+          python3 -m venv "${RUNNER_TEMP}/container-index-tools"
+          "${RUNNER_TEMP}/container-index-tools/bin/python" -m pip install conda-index==0.13.0
+          echo "${RUNNER_TEMP}/container-index-tools/bin" >> "${GITHUB_PATH}"
+      - uses: aws-actions/configure-aws-credentials@517a711dbcd0e402f90c77e7e2f81e849156e31d # v6.2.2
+        with:
+          aws-region: us-east-2
+          role-duration-seconds: 3600
+          role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-rc-producer-${{ github.repository_id }}
+      - name: Prepare frozen candidate build inputs
+        uses: rapidsai/shared-actions/release-candidate-dependencies@5e09350bc3ba58dd97ada5a482771ce702592019
+        env:
+          RELEASE_CANDIDATE_SHARED_ACTIONS_REPOSITORY: rapidsai/shared-actions
+          RELEASE_CANDIDATE_SHARED_ACTIONS_REVISION: 5e09350bc3ba58dd97ada5a482771ce702592019
+        with:
+          candidate-train-sha256: ${{ needs.candidate-matrix.outputs.train }}
+          artifact-family: container
+          candidate-unit-id: container:ci-images
+          implementation-mode: direct
+          prepare-conda-channel: 'true'
+          arch: ${{ matrix.ARCH }}
+          cuda-version: ${{ matrix.CUDA_VER }}
+          python-version: ${{ matrix.PYTHON_VER }}
       - name: Set up Docker Context for Buildx
         run: docker context create builders
       - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
@@ -128,16 +156,15 @@ jobs:
           role-duration-seconds: 3600
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-rc-producer-${{ github.repository_id }}
       - name: Publish run-bound private image catalog
-        uses: rapidsai/shared-actions/release-catalog@837f3939f7dc55759d1b4a0b365f0f1b7a43c1b3
-        env:
-          SHARED_ACTIONS_REPO: rapidsai/shared-actions
-          SHARED_ACTIONS_REF: 837f3939f7dc55759d1b4a0b365f0f1b7a43c1b3
+        uses: rapidsai/shared-actions/release-catalog-dispatch@5e09350bc3ba58dd97ada5a482771ce702592019
         with:
           config: >-
             {"release_catalog_key":"container:ci-images",
             "artifact_directory":".release-candidate-artifacts/container",
             "artifacts":[{"path":"*.tar.gz","package_identity_file":"package-identity.json"}]}
-          source-sha: ${{ inputs.sha }}
           source-artifact-name: ci-images-${{ strategy.job-index }}-${{ matrix.ARCH }}
           candidate-train-sha256: ${{ needs.candidate-matrix.outputs.train }}
+          candidate-matrix-arch: ${{ matrix.ARCH }}
+          candidate-matrix-cuda-version: ${{ matrix.CUDA_VER }}
+          candidate-matrix-python-version: ${{ matrix.PYTHON_VER }}
           upload-to-s3: 'true'
