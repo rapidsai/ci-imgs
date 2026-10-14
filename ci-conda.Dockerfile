@@ -9,6 +9,9 @@ ARG MINIFORGE_VER=notset
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
 
+ARG GHA_TOOLS_BOOTSTRAP_SHA256=notset
+ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
+
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 RUN \
@@ -18,7 +21,9 @@ RUN \
 umask 002
 
 # install gha-tools for rapids-conda-retry
-/tmp/build-scripts/install-tools \
+GHA_TOOLS_SHA256=${GHA_TOOLS_BOOTSTRAP_SHA256} \
+GHA_TOOLS_VERSION=${GHA_TOOLS_BOOTSTRAP_VERSION} \
+  /tmp/build-scripts/install-tools \
   --gha-tools
 
 # set up pins that apply to all later solves
@@ -42,7 +47,7 @@ PATH="/opt/conda/bin:$PATH" \
   conda clean -aiptfy
 EOF
 
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda
+FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda-core
 
 ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset
@@ -65,6 +70,8 @@ ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG LINUX_VER=notset
 ARG GH_CLI_VER=notset
+ARG GHA_TOOLS_BOOTSTRAP_SHA256=notset
+ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
 ARG REAL_ARCH=notset
 ARG SCCACHE_VER=notset
 ARG YQ_VER=notset
@@ -80,6 +87,8 @@ LINUX_VER=${LINUX_VER} \
 AWS_CLI_VER=${AWS_CLI_VER} \
 CPU_ARCH=${CPU_ARCH} \
 GH_CLI_VER=${GH_CLI_VER} \
+GHA_TOOLS_SHA256=${GHA_TOOLS_BOOTSTRAP_SHA256} \
+GHA_TOOLS_VERSION=${GHA_TOOLS_BOOTSTRAP_VERSION} \
 REAL_ARCH=${REAL_ARCH} \
 SCCACHE_VER=${SCCACHE_VER} \
 YQ_VER=${YQ_VER} \
@@ -319,5 +328,18 @@ trap 'rm -rf "${test_env}"' EXIT
 /opt/conda/bin/python -m venv "${test_env}"
 PATH="${test_env}/bin:/opt/conda/condabin:${PATH}" conda info
 EOF
+
+# Keep the frequently updated runtime gha-tools payload in the final layer so
+# updating it can reuse every expensive image-construction layer above.
+FROM ci-conda-core AS ci-conda
+
+ARG GHA_TOOLS_SHA256=notset
+ARG GHA_TOOLS_VERSION=notset
+
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+  GHA_TOOLS_SHA256=${GHA_TOOLS_SHA256} \
+  GHA_TOOLS_VERSION=${GHA_TOOLS_VERSION} \
+    /tmp/build-scripts/install-tools --gha-tools
 
 CMD ["/bin/bash"]

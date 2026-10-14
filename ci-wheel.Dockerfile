@@ -48,6 +48,8 @@ EOF
 ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG GH_CLI_VER=notset
+ARG GHA_TOOLS_BOOTSTRAP_SHA256=notset
+ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
 ARG REAL_ARCH=notset
 ARG SCCACHE_VER=notset
 RUN \
@@ -61,6 +63,8 @@ RUN \
 AWS_CLI_VER=${AWS_CLI_VER} \
 CPU_ARCH=${CPU_ARCH} \
 GH_CLI_VER=${GH_CLI_VER} \
+GHA_TOOLS_SHA256=${GHA_TOOLS_BOOTSTRAP_SHA256} \
+GHA_TOOLS_VERSION=${GHA_TOOLS_BOOTSTRAP_VERSION} \
 REAL_ARCH=${REAL_ARCH} \
 SCCACHE_VER=${SCCACHE_VER} \
   /tmp/build-scripts/install-tools \
@@ -357,7 +361,7 @@ EOF
 # An image split into 100 layers will require more data transfer
 # than an identical image split into 10 layers.
 #
-FROM scratch AS output
+FROM scratch AS ci-wheel-core
 
 # layers 1-3: split the largest CUDA libraries into their own layers
 COPY --parents --from=os-base --exclude=usr/local/bin --exclude=usr/local/aws-cli \
@@ -432,5 +436,17 @@ ENV PYENV_ROOT="/pyenv"                      \
 ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Updating runtime gha-tools reuses the restructured core image layers.
+FROM ci-wheel-core AS ci-wheel
+
+ARG GHA_TOOLS_SHA256=notset
+ARG GHA_TOOLS_VERSION=notset
+
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+  GHA_TOOLS_SHA256=${GHA_TOOLS_SHA256} \
+  GHA_TOOLS_VERSION=${GHA_TOOLS_VERSION} \
+    /tmp/build-scripts/install-tools --gha-tools
 
 CMD ["/bin/bash"]
