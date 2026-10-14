@@ -29,19 +29,19 @@ MANYLINUX_VER: ${MANYLINUX_VER}
 CONDA_ARCH: ${CONDA_ARCH}
 "
 
-# Candidate images use the approved anonymous Docker Hub mirror. Keep the normal
-# production image references in versions.yaml and Dockerfile defaults unchanged.
+# Candidate images use canonical Docker Hub references so the runner's configured
+# Docker and BuildKit mirrors handle every pull. Keep production defaults unchanged.
 if [[ "${CANDIDATE_IMAGE_MIRROR:-false}" == "true" ]]; then
   case "${IMAGE_REPO}" in
     ci-conda)
-      ARGS+=$'\nCUDA_BASE_IMAGE: dockerhub.nvidia.com/nvidia/cuda:'"${CUDA_VER}-base-${LINUX_VER}"
-      ARGS+=$'\nMINIFORGE_BASE_IMAGE: dockerhub.nvidia.com/condaforge/miniforge3:'"$(yq -r '.MINIFORGE_VER' versions.yaml)"
+      ARGS+=$'\nCUDA_BASE_IMAGE: docker.io/nvidia/cuda:'"${CUDA_VER}-base-${LINUX_VER}"
+      ARGS+=$'\nMINIFORGE_BASE_IMAGE: docker.io/condaforge/miniforge3:'"$(yq -r '.MINIFORGE_VER' versions.yaml)"
       ;;
     ci-wheel)
-      ARGS+=$'\nBASE_IMAGE: dockerhub.nvidia.com/nvidia/cuda:'"${CUDA_VER}-devel-${LINUX_VER}"
+      ARGS+=$'\nBASE_IMAGE: docker.io/nvidia/cuda:'"${CUDA_VER}-devel-${LINUX_VER}"
       ;;
     citestwheel)
-      ARGS+=$'\nCUDA_BASE_IMAGE: dockerhub.nvidia.com/nvidia/cuda:'"${CUDA_VER}-base-${LINUX_VER}"
+      ARGS+=$'\nCUDA_BASE_IMAGE: docker.io/nvidia/cuda:'"${CUDA_VER}-base-${LINUX_VER}"
       ;;
     *)
       echo "Unsupported IMAGE_REPO for candidate image mirror: ${IMAGE_REPO}" >&2

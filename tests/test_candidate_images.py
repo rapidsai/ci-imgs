@@ -135,20 +135,20 @@ def test_candidate_workflow_never_logs_in_pushes_or_exports_registry_cache():
         (
             "ci-conda",
             {
-                "CUDA_BASE_IMAGE": "dockerhub.nvidia.com/nvidia/cuda:13.3.0-base-ubuntu22.04",
-                "MINIFORGE_BASE_IMAGE": "dockerhub.nvidia.com/condaforge/miniforge3:26.1.0-0",
+                "CUDA_BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-base-ubuntu22.04",
+                "MINIFORGE_BASE_IMAGE": "docker.io/condaforge/miniforge3:26.1.0-0",
             },
         ),
         (
             "ci-wheel",
             {
-                "BASE_IMAGE": "dockerhub.nvidia.com/nvidia/cuda:13.3.0-devel-rockylinux8",
+                "BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-devel-rockylinux8",
             },
         ),
         (
             "citestwheel",
             {
-                "CUDA_BASE_IMAGE": "dockerhub.nvidia.com/nvidia/cuda:13.3.0-base-ubuntu22.04",
+                "CUDA_BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-base-ubuntu22.04",
             },
         ),
     ],
@@ -182,10 +182,8 @@ def test_candidate_build_args_select_mirror_images(tmp_path, image_repo, expecte
     for key, value in expected_args.items():
         assert args[key] == value
     if image_repo == "ci-wheel":
-        assert (
-            "BASE_IMAGE=dockerhub.nvidia.com/nvidia/cuda:13.3.0-devel-rockylinux8"
-            in output
-        )
+        assert "BASE_IMAGE=docker.io/nvidia/cuda:13.3.0-devel-rockylinux8" in output
+    assert "dockerhub.nvidia.com" not in output
 
 
 def test_normal_build_args_and_dockerfile_defaults_keep_public_images(tmp_path):
@@ -234,9 +232,9 @@ def test_candidate_workflow_syncs_wheel_environment_from_selected_base_image():
         if step.get("name") == "Preserve the CI wheel base environment"
     )
 
-    assert (
-        buildx["with"]["driver-opts"]
-        == "image=dockerhub.nvidia.com/moby/buildkit:buildx-stable-1"
+    assert "driver-opts" not in buildx["with"]
+    assert buildx["with"]["buildkitd-flags"] == (
+        "--debug --config /etc/buildkit/buildkitd.toml"
     )
     assert args["env"]["CANDIDATE_IMAGE_MIRROR"] == "true"
     assert sync["env"]["BASE_IMAGE"] == "${{ steps.args.outputs.BASE_IMAGE }}"
