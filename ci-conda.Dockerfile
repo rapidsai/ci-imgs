@@ -6,8 +6,10 @@
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG MINIFORGE_VER=notset
+ARG MINIFORGE_BASE_IMAGE=condaforge/miniforge3:${MINIFORGE_VER}
+ARG CUDA_BASE_IMAGE=nvidia/cuda:${CUDA_VER}-base-${LINUX_VER}
 
-FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
+FROM ${MINIFORGE_BASE_IMAGE} AS miniforge-upstream
 
 ARG GHA_TOOLS_BOOTSTRAP_SHA256=notset
 ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
@@ -47,7 +49,7 @@ PATH="/opt/conda/bin:$PATH" \
   conda clean -aiptfy
 EOF
 
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda-core
+FROM ${CUDA_BASE_IMAGE} AS ci-conda-core
 
 ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset

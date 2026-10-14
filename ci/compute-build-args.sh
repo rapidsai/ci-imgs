@@ -28,14 +28,40 @@ REAL_ARCH: $(arch)
 MANYLINUX_VER: ${MANYLINUX_VER}
 CONDA_ARCH: ${CONDA_ARCH}
 "
+
+# Candidate images use the approved anonymous Docker Hub mirror. Keep the normal
+# production image references in versions.yaml and Dockerfile defaults unchanged.
+if [[ "${CANDIDATE_IMAGE_MIRROR:-false}" == "true" ]]; then
+  case "${IMAGE_REPO}" in
+    ci-conda)
+      ARGS+=$'\nCUDA_BASE_IMAGE: dockerhub.nvidia.com/nvidia/cuda:'"${CUDA_VER}-base-${LINUX_VER}"
+      ARGS+=$'\nMINIFORGE_BASE_IMAGE: dockerhub.nvidia.com/condaforge/miniforge3:'"$(yq -r '.MINIFORGE_VER' versions.yaml)"
+      ;;
+    ci-wheel)
+      ARGS+=$'\nBASE_IMAGE: dockerhub.nvidia.com/nvidia/cuda:'"${CUDA_VER}-devel-${LINUX_VER}"
+      ;;
+    citestwheel)
+      ARGS+=$'\nCUDA_BASE_IMAGE: dockerhub.nvidia.com/nvidia/cuda:'"${CUDA_VER}-base-${LINUX_VER}"
+      ;;
+    *)
+      echo "Unsupported IMAGE_REPO for candidate image mirror: ${IMAGE_REPO}" >&2
+      exit 1
+      ;;
+  esac
+fi
+
 export ARGS
 
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
+BUILD_ARGS=$(yq -r '. + env(ARGS) | to_entries | map(.key + "=" + .value) | join(" \n")' versions.yaml)
 cat <<EOF > "${GITHUB_OUTPUT:-/dev/stdout}"
 ARGS<<EOT
-$(yq -r '. + env(ARGS) | to_entries | map(.key + "=" + .value) | join(" \n")' versions.yaml)
+${BUILD_ARGS}
 EOT
 EOF
+if [[ "${CANDIDATE_IMAGE_MIRROR:-false}" == "true" && "${IMAGE_REPO}" == "ci-wheel" ]]; then
+  printf 'BASE_IMAGE=%s\n' "$(yq -r '.BASE_IMAGE' <<< "$(yq -o=json '. + env(ARGS)' versions.yaml)")" >> "${GITHUB_OUTPUT:-/dev/stdout}"
+fi
 else
   yq -r '. + env(ARGS) | to_entries | map("--build-arg " + .key + "=" + .value) | join(" ")' versions.yaml
 fi

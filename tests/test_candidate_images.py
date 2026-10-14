@@ -127,3 +127,117 @@ def test_candidate_workflow_never_logs_in_pushes_or_exports_registry_cache():
                 assert step["with"]["outputs"].startswith("type=oci,")
                 assert step["with"]["context"] == "context"
     assert "container:ci-images" in (ROOT / ".github/workflows/build.yaml").read_text()
+
+
+@pytest.mark.parametrize(
+    "image_repo,expected_args",
+    [
+        (
+            "ci-conda",
+            {
+                "CUDA_BASE_IMAGE": "dockerhub.nvidia.com/nvidia/cuda:13.3.0-base-ubuntu22.04",
+                "MINIFORGE_BASE_IMAGE": "dockerhub.nvidia.com/condaforge/miniforge3:26.1.0-0",
+            },
+        ),
+        (
+            "ci-wheel",
+            {
+                "BASE_IMAGE": "dockerhub.nvidia.com/nvidia/cuda:13.3.0-devel-rockylinux8",
+            },
+        ),
+        (
+            "citestwheel",
+            {
+                "CUDA_BASE_IMAGE": "dockerhub.nvidia.com/nvidia/cuda:13.3.0-base-ubuntu22.04",
+            },
+        ),
+    ],
+)
+def test_candidate_build_args_select_mirror_images(tmp_path, image_repo, expected_args):
+    output_file = tmp_path / "github-output"
+    env = {
+        **os.environ,
+        "GITHUB_ACTIONS": "true",
+        "GITHUB_OUTPUT": str(output_file),
+        "RAPIDS_VERSION_MAJOR_MINOR": "26.12",
+        "CUDA_VER": "13.3.0",
+        "LINUX_VER": "rockylinux8" if image_repo == "ci-wheel" else "ubuntu22.04",
+        "PYTHON_VER": "3.14",
+        "ARCH": "amd64",
+        "IMAGE_REPO": image_repo,
+        "CANDIDATE_IMAGE_MIRROR": "true",
+    }
+    subprocess.run(["bash", "ci/compute-build-args.sh"], cwd=ROOT, env=env, check=True)
+
+    output = output_file.read_text()
+    args_block = output.split("ARGS<<EOT\n", maxsplit=1)[1].split(
+        "\nEOT\n", maxsplit=1
+    )[0]
+    args = {
+        key: value.rstrip()
+        for key, value in (
+            line.split("=", maxsplit=1) for line in args_block.splitlines()
+        )
+    }
+    for key, value in expected_args.items():
+        assert args[key] == value
+    if image_repo == "ci-wheel":
+        assert (
+            "BASE_IMAGE=dockerhub.nvidia.com/nvidia/cuda:13.3.0-devel-rockylinux8"
+            in output
+        )
+
+
+def test_normal_build_args_and_dockerfile_defaults_keep_public_images(tmp_path):
+    env = {
+        **os.environ,
+        "GITHUB_ACTIONS": "true",
+        "GITHUB_OUTPUT": str(tmp_path / "github-output"),
+        "RAPIDS_VERSION_MAJOR_MINOR": "26.12",
+        "CUDA_VER": "13.3.0",
+        "LINUX_VER": "ubuntu22.04",
+        "PYTHON_VER": "3.14",
+        "ARCH": "amd64",
+        "IMAGE_REPO": "ci-conda",
+        "CANDIDATE_IMAGE_MIRROR": "false",
+    }
+    subprocess.run(["bash", "ci/compute-build-args.sh"], cwd=ROOT, env=env, check=True)
+    output = (tmp_path / "github-output").read_text()
+    assert "dockerhub.nvidia.com" not in output
+    assert "MINIFORGE_BASE_IMAGE=" not in output
+    assert "CUDA_BASE_IMAGE=" not in output
+
+    assert (
+        "ARG MINIFORGE_BASE_IMAGE=condaforge/miniforge3:${MINIFORGE_VER}"
+        in (ROOT / "ci-conda.Dockerfile").read_text()
+    )
+    assert (
+        "ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}"
+        in (ROOT / "ci-wheel.Dockerfile").read_text()
+    )
+    assert (
+        "ARG CUDA_BASE_IMAGE=nvidia/cuda:${CUDA_VER}-base-${LINUX_VER}"
+        in (ROOT / "citestwheel.Dockerfile").read_text()
+    )
+
+
+def test_candidate_workflow_syncs_wheel_environment_from_selected_base_image():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/build.yaml").read_text())
+    job = workflow["jobs"]["candidate-images"]
+    buildx = next(
+        step for step in job["steps"] if "setup-buildx-action" in step.get("uses", "")
+    )
+    args = next(step for step in job["steps"] if step.get("id") == "args")
+    sync = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Preserve the CI wheel base environment"
+    )
+
+    assert (
+        buildx["with"]["driver-opts"]
+        == "image=dockerhub.nvidia.com/moby/buildkit:buildx-stable-1"
+    )
+    assert args["env"]["CANDIDATE_IMAGE_MIRROR"] == "true"
+    assert sync["env"]["BASE_IMAGE"] == "${{ steps.args.outputs.BASE_IMAGE }}"
+    assert "${BASE_IMAGE}" in sync["run"]
