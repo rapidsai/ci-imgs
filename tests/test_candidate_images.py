@@ -181,9 +181,36 @@ def test_candidate_build_args_select_mirror_images(tmp_path, image_repo, expecte
     }
     for key, value in expected_args.items():
         assert args[key] == value
+    if image_repo == "citestwheel":
+        versions = yaml.safe_load((ROOT / "versions.yaml").read_text())
+        assert (
+            args["GHA_TOOLS_BOOTSTRAP_VERSION"]
+            == versions["GHA_TOOLS_BOOTSTRAP_VERSION"]
+        )
+        assert (
+            args["GHA_TOOLS_BOOTSTRAP_SHA256"] == versions["GHA_TOOLS_BOOTSTRAP_SHA256"]
+        )
     if image_repo == "ci-wheel":
         assert "BASE_IMAGE=docker.io/nvidia/cuda:13.3.0-devel-rockylinux8" in output
     assert "dockerhub.nvidia.com" not in output
+
+
+def test_citestwheel_declares_frozen_gha_tools_build_arguments_before_use():
+    dockerfile = (ROOT / "citestwheel.Dockerfile").read_text()
+    install_tools = dockerfile.index("/tmp/build-scripts/install-tools")
+
+    for name in ("GHA_TOOLS_BOOTSTRAP_SHA256", "GHA_TOOLS_BOOTSTRAP_VERSION"):
+        declaration = f"ARG {name}=notset"
+        assert declaration in dockerfile
+        assert dockerfile.index(declaration) < install_tools
+
+    first_install = dockerfile.index("/tmp/build-scripts/install-tools")
+    assert dockerfile.rfind(
+        "GHA_TOOLS_SHA256=${GHA_TOOLS_BOOTSTRAP_SHA256}", 0, first_install
+    ) > dockerfile.index("RUN ")
+    assert dockerfile.rfind(
+        "GHA_TOOLS_VERSION=${GHA_TOOLS_BOOTSTRAP_VERSION}", 0, first_install
+    ) > dockerfile.index("RUN ")
 
 
 def test_normal_build_args_and_dockerfile_defaults_keep_public_images(tmp_path):
