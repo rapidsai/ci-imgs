@@ -1,5 +1,5 @@
 #!/bin/bash
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
@@ -11,7 +11,7 @@ if [[
   exit 1
 fi
 
-RAPIDS_VERSION_MAJOR_MINOR=$(rapids-version-major-minor)
+RAPIDS_VERSION_MAJOR_MINOR=${RAPIDS_VERSION_MAJOR_MINOR:-$(rapids-version-major-minor)}
 
 MANYLINUX_VER="manylinux_2_28"
 

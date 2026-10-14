@@ -22,6 +22,7 @@ concurrency:
 
 jobs:
   build-images:
+    if: ${{ !startsWith(github.ref_name, 'release-test-') }}
     uses: $/.github/workflows/build-and-publish-images.yaml
     secrets:
       GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}

@@ -43,6 +43,7 @@ on:
 
 jobs:
   run:
+    if: ${{ !startsWith(github.ref_name, 'release-test-') }}
     name: build (${{ matrix.CUDA_VER }}, ${{ matrix.PYTHON_VER }}, ${{ matrix.LINUX_VER }}, ${{ matrix.ARCH }})
     timeout-minutes: 60
     strategy:
