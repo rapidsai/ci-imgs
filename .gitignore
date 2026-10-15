@@ -2,6 +2,7 @@
 *.a
 *.bak
 build/
+context/scripts/candidate-gha-tools/
 _build/
 build/
 *.bz

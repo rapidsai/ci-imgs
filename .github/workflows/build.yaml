@@ -104,6 +104,8 @@ jobs:
           arch: ${{ matrix.ARCH }}
           cuda-version: ${{ matrix.CUDA_VER }}
           python-version: ${{ matrix.PYTHON_VER }}
+      - name: Stage train-frozen gha-tools for image bootstrap
+        run: ci/stage-candidate-gha-tools.sh
       - name: Set up Docker Context for Buildx
         run: docker context create builders
       - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
@@ -121,6 +123,7 @@ jobs:
           ARCH: ${{ matrix.ARCH }}
           IMAGE_REPO: ${{ matrix.IMAGE_REPO }}
           CANDIDATE_IMAGE_MIRROR: 'true'
+          CANDIDATE_GHA_TOOLS_SOURCE: 'true'
         run: ci/compute-build-args.sh
       - name: Preserve the CI wheel base environment
         if: ${{ matrix.DOCKERFILE == 'ci-wheel.Dockerfile' }}

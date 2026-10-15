@@ -49,6 +49,7 @@ ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG GHA_TOOLS_BOOTSTRAP_SHA256=notset
+ARG GHA_TOOLS_CANDIDATE_REVISION=""
 ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
 ARG REAL_ARCH=notset
 ARG SCCACHE_VER=notset
@@ -362,6 +363,8 @@ EOF
 # than an identical image split into 10 layers.
 #
 FROM scratch AS ci-wheel-core
+
+ARG GHA_TOOLS_CANDIDATE_REVISION=""
 
 # layers 1-3: split the largest CUDA libraries into their own layers
 COPY --parents --from=os-base --exclude=usr/local/bin --exclude=usr/local/aws-cli \

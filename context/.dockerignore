@@ -4,4 +4,7 @@
 !scripts/clean-pyenv
 !scripts/configure-system-package-managers
 !scripts/install-tools
+!scripts/candidate-gha-tools/tools.tar.gz
+!scripts/candidate-gha-tools/revision.txt
+!scripts/candidate-gha-tools/sha256.txt
 !pip.conf

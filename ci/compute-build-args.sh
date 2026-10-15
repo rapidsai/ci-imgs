@@ -52,6 +52,14 @@ fi
 
 export ARGS
 
+if [[ "${CANDIDATE_GHA_TOOLS_SOURCE:-false}" == "true" ]]; then
+  if [[ ! "${RELEASE_CANDIDATE_GHA_TOOLS_REVISION:-}" =~ ^[0-9a-f]{40}$ ]]; then
+    echo 'Candidate image bootstrap requires the frozen gha-tools revision' >&2
+    exit 1
+  fi
+  ARGS+=$'\nGHA_TOOLS_CANDIDATE_REVISION: '"${RELEASE_CANDIDATE_GHA_TOOLS_REVISION}"
+fi
+
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
 BUILD_ARGS=$(yq -r '. + env(ARGS) | to_entries | map(.key + "=" + .value) | join(" \n")' versions.yaml)
 cat <<EOF > "${GITHUB_OUTPUT:-/dev/stdout}"

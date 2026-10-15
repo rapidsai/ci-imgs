@@ -74,6 +74,26 @@ fi
 # install gha-tools first, as other things below depend on it
 if (( gha_tools_flag == 1 )); then
   echo "installing 'gha-tools'"
+  if [[ -n "${GHA_TOOLS_CANDIDATE_REVISION:-}" ]]; then
+    if [[ ! "${GHA_TOOLS_CANDIDATE_REVISION}" =~ ^[0-9a-f]{40}$ ]]; then
+      echo 'Invalid candidate gha-tools revision' >&2
+      exit 1
+    fi
+    candidate_tools="$(dirname "${BASH_SOURCE[0]}")/candidate-gha-tools"
+    if [[ "$(cat "${candidate_tools}/revision.txt")" != "${GHA_TOOLS_CANDIDATE_REVISION}" ]]; then
+      echo 'Candidate gha-tools archive has the wrong revision' >&2
+      exit 1
+    fi
+    candidate_checksum=$(cat "${candidate_tools}/sha256.txt")
+    if [[ ! "${candidate_checksum}" =~ ^[0-9a-f]{64}$ ]]; then
+      echo 'Invalid candidate gha-tools archive checksum' >&2
+      exit 1
+    fi
+    printf '%s  %s\n' "${candidate_checksum}" "${candidate_tools}/tools.tar.gz" |
+      sha256sum --check --status
+    # git archive carries a tools/ prefix; release archives below are flat.
+    tar -xzf "${candidate_tools}/tools.tar.gz" --strip-components=1 -C "${TOOL_INSTALL_DIR}"
+  else
   : "${GHA_TOOLS_VERSION:?GHA_TOOLS_VERSION must be set}"
   : "${GHA_TOOLS_SHA256:?GHA_TOOLS_SHA256 must be set}"
   gha_tools_archive=$(mktemp)
@@ -83,6 +103,7 @@ if (( gha_tools_flag == 1 )); then
   echo "${GHA_TOOLS_SHA256}  ${gha_tools_archive}" | sha256sum --check --status
   tar -xzf "${gha_tools_archive}" -C "${TOOL_INSTALL_DIR}"
   rm -f "${gha_tools_archive}"
+  fi
   echo "done installing 'gha-tools' to '${TOOL_INSTALL_DIR}'"
 fi
 
