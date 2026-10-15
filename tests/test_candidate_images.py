@@ -260,9 +260,46 @@ def test_candidate_workflow_syncs_wheel_environment_from_selected_base_image():
     )
 
     assert "driver-opts" not in buildx["with"]
-    assert buildx["with"]["buildkitd-flags"] == (
-        "--debug --config /etc/buildkit/buildkitd.toml"
-    )
+    assert buildx["with"]["buildkitd-config"] == "/etc/buildkit/buildkitd.toml"
+    assert buildx["with"]["buildkitd-flags"] == "--debug"
     assert args["env"]["CANDIDATE_IMAGE_MIRROR"] == "true"
     assert sync["env"]["BASE_IMAGE"] == "${{ steps.args.outputs.BASE_IMAGE }}"
     assert "${BASE_IMAGE}" in sync["run"]
+
+
+def test_candidate_matrix_checks_host_config_before_expanding_image_matrix():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/build.yaml").read_text())
+    steps = workflow["jobs"]["candidate-matrix"]["steps"]
+    check_index = next(
+        index
+        for index, step in enumerate(steps)
+        if step.get("run") == "ci/check-candidate-buildkit-config.sh"
+    )
+    matrix_index = next(
+        index
+        for index, step in enumerate(steps)
+        if step.get("run") == "ci/resolve-candidate-train.sh"
+    )
+
+    assert check_index < matrix_index
+
+
+@pytest.mark.parametrize("readable", [True, False])
+def test_candidate_buildkit_config_check_is_fail_closed(tmp_path, readable):
+    config = tmp_path / "buildkitd.toml"
+    if readable:
+        config.write_text(
+            '[registry."docker.io"]\nmirrors = ["https://mirror.invalid"]\n'
+        )
+        config.chmod(0o600)
+
+    result = subprocess.run(
+        ["bash", str(ROOT / "ci/check-candidate-buildkit-config.sh")],
+        env={**os.environ, "CANDIDATE_BUILDKIT_CONFIG": str(config)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert (result.returncode == 0) is readable
+    assert "mirror.invalid" not in result.stdout + result.stderr
