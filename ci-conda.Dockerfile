@@ -231,7 +231,6 @@ else
     PYTHON_ABI_TAG="cpython"
 fi
 
-# TODO: remove the ceiling on 'rattler-build' (https://github.com/rapidsai/build-planning/issues/259)
 PACKAGES_TO_INSTALL=(
   'ca-certificates>=2026.1.4'
   'certifi>=2026.1.4'
@@ -243,7 +242,7 @@ PACKAGES_TO_INSTALL=(
   'packaging>=25.0'
   "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
   'rapids-dependency-file-generator==1.*,>=1.22'
-  'rattler-build>=0.55.0,<0.58'
+  'rattler-build>=0.76.1'
 )
 
 rapids-conda-retry install -y \
