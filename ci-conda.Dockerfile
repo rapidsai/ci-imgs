@@ -122,7 +122,7 @@ else
     PYTHON_ABI_TAG="cpython"
 fi
 
-rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+rapids-conda-retry install -y -n base315 "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
 
 # ensure all packages are updated
 rapids-conda-retry update --all -y -n base
