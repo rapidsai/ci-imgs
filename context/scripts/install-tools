@@ -117,7 +117,7 @@ if (( rust_flag == 1 )); then
   echo "installing 'rust'"
   rapids-retry wget -O /tmp/rust.tar.xz https://static.rust-lang.org/dist/rust-${RUST_VER}-${REAL_ARCH}-unknown-linux-gnu.tar.xz
   tar -C /tmp -xJf /tmp/rust.tar.xz
-  "/tmp/rust-${RUST_VER}-${REAL_ARCH}-unknown-linux-gnu/install.sh" --without=rust-docs
+  "/tmp/rust-${RUST_VER}-${REAL_ARCH}-unknown-linux-gnu/install.sh" --components=rustc,rust-std-${REAL_ARCH}-unknown-linux-gnu,cargo
   rm -rf /tmp/rust.tar.xz "/tmp/rust-${RUST_VER}-${REAL_ARCH}-unknown-linux-gnu"
 fi
 
