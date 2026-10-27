@@ -147,6 +147,8 @@ case "${LINUX_VER}" in
       bzip2
       bzip2-devel
       ca-certificates
+      cargo
+      clippy
       cmake
       curl
       gcc-toolset-14-gcc
@@ -165,6 +167,8 @@ case "${LINUX_VER}" in
       patch
       protobuf-compiler
       readline-devel
+      rust
+      rustfmt
       sqlite
       sqlite-devel
       unzip
