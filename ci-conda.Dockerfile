@@ -125,10 +125,10 @@ else
     PYTHON_ABI_TAG="cpython"
 fi
 
-rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION_NUMERIC},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
+rapids-conda-retry create -y -n base315 "python>=${PYTHON_VERSION_NUMERIC},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
 
 # ensure all packages are updated
-rapids-conda-retry update --all -y -n base
+rapids-conda-retry update --all -y -n base315
 
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   dnf install -y findutils
@@ -240,7 +240,6 @@ fi
 PACKAGES_TO_INSTALL=(
   'ca-certificates>=2026.1.4'
   'certifi>=2026.1.4'
-  'conda-build>=25.11.1'
   'conda-package-handling>=2.4.0'
   'dunamai>=1.25.0'
   'git>=2.52.0'
@@ -251,7 +250,7 @@ PACKAGES_TO_INSTALL=(
   'rattler-build>=0.76.1'
 )
 
-rapids-conda-retry install -y \
+rapids-conda-retry install -y -n base315 \
   "${PACKAGES_TO_INSTALL[@]}"
 
 conda clean -aiptfy
@@ -324,5 +323,7 @@ trap 'rm -rf "${test_env}"' EXIT
 /opt/conda/bin/python -m venv "${test_env}"
 PATH="${test_env}/bin:/opt/conda/condabin:${PATH}" conda info
 EOF
+
+ENV PATH=/opt/conda/envs/base315/bin:/opt/conda/bin:$PATH
 
 CMD ["/bin/bash"]
