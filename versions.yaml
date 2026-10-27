@@ -12,3 +12,5 @@ AWS_CLI_VER: 2.28.1
 MINIFORGE_VER: 26.1.0-0
 # renovate: datasource=github-releases depName=rapidsai/sccache
 SCCACHE_VER: 0.17.0-rapids.4
+# renovate: datasource=rust-toolchain depName=toolchain
+RUST_VER: 1.99.1

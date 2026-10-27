@@ -27,6 +27,17 @@
       "matchPackageNames": [
         "/^(aws/aws-cli|cli/cli|codecov-cli|mikefarah/yq)$/"
       ]
+    },
+    {
+      "description": "Update Rust toolchain",
+      "groupName": "rust-toolchain",
+      "matchManager": [
+        "rust-toolchain"
+      ],
+      "matchDepTypes": [
+        "toolchain"
+      ],
+      "rangeStrategy": "pin"
     }
   ],
   "customManagers": [

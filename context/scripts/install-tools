@@ -11,6 +11,7 @@ set -e -u -o pipefail
 aws_cli_flag=0
 gh_cli_flag=0
 gha_tools_flag=0
+rust_flag=0
 sccache_flag=0
 yq_flag=0
 
@@ -26,6 +27,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --gha-tools)
       gha_tools_flag=1
+      shift
+      ;;
+    --rust)
+      rust_flag=1
       shift
       ;;
     --sccache)
@@ -52,6 +57,13 @@ if ! type -f unzip >/dev/null 2>&1; then
 fi
 if ! type -f wget >/dev/null 2>&1; then
   PACKAGES_TO_INSTALL+=(wget)
+fi
+if ! type -f xz >/dev/null 2>&1; then
+  if type -f apt-get >/dev/null 2>&1; then
+    PACKAGES_TO_INSTALL+=(xz-utils)
+  else
+    PACKAGES_TO_INSTALL+=(xz)
+  fi
 fi
 
 if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
@@ -98,6 +110,15 @@ if (( aws_cli_flag == 1 )); then
   unzip -q /tmp/awscliv2.zip -d /tmp
   /tmp/aws/install
   rm -rf /tmp/aws /tmp/awscliv2.zip
+fi
+
+# install rust
+if (( rust_flag == 1 )); then
+  echo "installing 'rust'"
+  rapids-retry wget -O /tmp/rust.tar.xz https://static.rust-lang.org/dist/rust-${RUST_VER}-${REAL_ARCH}-unknown-linux-gnu.tar.xz
+  tar -C /tmp -xJf /tmp/rust.tar.xz
+  "/tmp/rust-${RUST_VER}-${REAL_ARCH}-unknown-linux-gnu/install.sh" --without=rust-docs
+  rm -rf /tmp/rust.tar.xz "/tmp/rust-${RUST_VER}-${REAL_ARCH}-unknown-linux-gnu"
 fi
 
 # install sccache

@@ -49,6 +49,7 @@ ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG REAL_ARCH=notset
+ARG RUST_VER=notset
 ARG SCCACHE_VER=notset
 RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
@@ -62,11 +63,13 @@ AWS_CLI_VER=${AWS_CLI_VER} \
 CPU_ARCH=${CPU_ARCH} \
 GH_CLI_VER=${GH_CLI_VER} \
 REAL_ARCH=${REAL_ARCH} \
+RUST_VER=${RUST_VER} \
 SCCACHE_VER=${SCCACHE_VER} \
   /tmp/build-scripts/install-tools \
     --aws-cli \
     --gh-cli \
     --gha-tools \
+    --rust \
     --sccache
 EOF
 
