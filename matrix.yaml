@@ -19,12 +19,19 @@ CI_IMAGE_CONFIG:
   - IMAGE_REPO: "ci-conda"
     dockerfile: ci-conda.Dockerfile
     docker_target: ""
+    rust: false
   - IMAGE_REPO: "ci-wheel"
     dockerfile: ci-wheel.Dockerfile
     docker_target: ""
+    rust: false
+  - IMAGE_REPO: "ci-rust-wheel"
+    dockerfile: ci-wheel.Dockerfile
+    docker_target: ""
+    rust: true
   - IMAGE_REPO: "citestwheel"
     dockerfile: citestwheel.Dockerfile
     docker_target: ""
+    rust: false
 exclude:
 
   # Exclusions from CUDA's OS support matrix
@@ -43,6 +50,10 @@ exclude:
     IMAGE_REPO: "ci-wheel"
   - CUDA_VER: "13.0.3"
     IMAGE_REPO: "ci-wheel"
+  - CUDA_VER: "12.2.2"
+    IMAGE_REPO: "ci-rust-wheel"
+  - CUDA_VER: "13.0.3"
+    IMAGE_REPO: "ci-rust-wheel"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)
   - LINUX_VER: "ubuntu22.04"
@@ -51,3 +62,9 @@ exclude:
     IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu26.04"
     IMAGE_REPO: "ci-wheel"
+  - LINUX_VER: "ubuntu22.04"
+    IMAGE_REPO: "ci-rust-wheel"
+  - LINUX_VER: "ubuntu24.04"
+    IMAGE_REPO: "ci-rust-wheel"
+  - LINUX_VER: "ubuntu26.04"
+    IMAGE_REPO: "ci-rust-wheel"

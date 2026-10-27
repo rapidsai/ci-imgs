@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 def compute_arch($x):
@@ -69,6 +69,7 @@ def compute_matrix($input):
     .IMAGE_REPO = .CI_IMAGE_CONFIG.IMAGE_REPO |
     .DOCKERFILE = .CI_IMAGE_CONFIG.dockerfile |
     .DOCKER_TARGET = .CI_IMAGE_CONFIG.docker_target |
+    .RUST = .CI_IMAGE_CONFIG.rust |
     del(.CI_IMAGE_CONFIG) |
     filter_excludes(.; $excludes) |
     compute_arch(.) |

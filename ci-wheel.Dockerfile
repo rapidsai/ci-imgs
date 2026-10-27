@@ -49,12 +49,18 @@ ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG REAL_ARCH=notset
+ARG RUST=notset
 ARG RUST_VER=notset
 ARG SCCACHE_VER=notset
 RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
+rust_args=()
+if [[ "${RUST}" = "true" ]]; then
+  rust_args=(--rust)
+fi
+
 # install AWS CLI, gh CLI, gha-tools, and sccache
 #
 # notes:
@@ -69,7 +75,7 @@ SCCACHE_VER=${SCCACHE_VER} \
     --aws-cli \
     --gh-cli \
     --gha-tools \
-    --rust \
+    "${rust_args[@]}" \
     --sccache
 EOF
 

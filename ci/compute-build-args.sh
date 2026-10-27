@@ -1,10 +1,13 @@
 #!/bin/bash
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
 if [[
-  "${IMAGE_REPO}" == "ci-wheel" &&
+  (
+    "${IMAGE_REPO}" == "ci-wheel" ||
+    "${IMAGE_REPO}" == "ci-rust-wheel"
+  ) &&
   "${LINUX_VER}" != "rockylinux8"
 ]]; then
   echo "Unsupported LINUX_VER: ${LINUX_VER} for ci-wheel image"
@@ -27,6 +30,7 @@ CPU_ARCH: ${ARCH}
 REAL_ARCH: $(arch)
 MANYLINUX_VER: ${MANYLINUX_VER}
 CONDA_ARCH: ${CONDA_ARCH}
+RUST: ${RUST-false}
 "
 export ARGS
 

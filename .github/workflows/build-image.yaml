@@ -29,6 +29,10 @@ on:
       DOCKER_TARGET:
         required: false
         type: string
+      RUST:
+        required: false
+        type: boolean
+        default: false
     secrets:
       GPUCIBOT_DOCKERHUB_USER:
         required: true
@@ -43,9 +47,6 @@ jobs:
       max-parallel: 50
       matrix:
         ARCH: ${{ fromJSON(inputs.ARCHES) }}
-        CUDA_VER: ["${{ inputs.CUDA_VER }}"]
-        LINUX_VER: ["${{ inputs.LINUX_VER }}"]
-        PYTHON_VER: ["${{ inputs.PYTHON_VER }}"]
       fail-fast: false
     runs-on: linux-${{ matrix.ARCH }}-cpu4
     steps:
@@ -79,6 +80,7 @@ jobs:
           PYTHON_VER: ${{ inputs.PYTHON_VER }}
           ARCH: ${{ matrix.ARCH }}
           IMAGE_REPO: ${{ inputs.IMAGE_REPO }}
+          RUST: ${{ inputs.RUST }}
       - name: Modify dockerfiles
         if: ${{ inputs.DOCKERFILE == 'ci-wheel.Dockerfile' }}
         id: modify-dockerfiles
