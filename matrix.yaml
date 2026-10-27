@@ -10,6 +10,8 @@ PYTHON_VER:
   - "3.12"
   - "3.13"
   - "3.14"
+  - "3.15"
+  - "3.15t"
 LINUX_VER:
   - "rockylinux8"
   - "ubuntu22.04"
@@ -50,4 +52,8 @@ exclude:
   - LINUX_VER: "ubuntu24.04"
     IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu26.04"
+    IMAGE_REPO: "ci-wheel"
+
+  # Only build 3.15t images for citestwheel and ci-conda
+  - PYTHON_VER: "3.15t"
     IMAGE_REPO: "ci-wheel"
