@@ -428,9 +428,11 @@ ARG REAL_ARCH=notset
 ENV PYENV_ROOT="/pyenv"                      \
     AUDITWHEEL_POLICY="${POLICY}"            \
     AUDITWHEEL_ARCH="${REAL_ARCH}"           \
-    AUDITWHEEL_PLAT="${POLICY}_${REAL_ARCH}"
+    AUDITWHEEL_PLAT="${POLICY}_${REAL_ARCH}" \
+    RUSTUP_HOME="/usr/local/rustup"          \
+    CARGO_HOME="/usr/local/cargo"
 
-ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
+ENV PATH="${CARGO_HOME}/bin:${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
