@@ -10,7 +10,7 @@ ci-wheel:
   PYTHON_VER: "3.14"
   # Wheels should always be built with the oldest supported glibc version
   LINUX_VER: "rockylinux8"
-ci-rust-wheel:
+ci-wheel-rust:
   CUDA_VER: "13.3.0"
   PYTHON_VER: "3.14"
   # Wheels should always be built with the oldest supported glibc version

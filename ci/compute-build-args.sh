@@ -6,7 +6,7 @@ set -euo pipefail
 if [[
   (
     "${IMAGE_REPO}" == "ci-wheel" ||
-    "${IMAGE_REPO}" == "ci-rust-wheel"
+    "${IMAGE_REPO}" == "ci-wheel-rust"
   ) &&
   "${LINUX_VER}" != "rockylinux8"
 ]]; then

@@ -24,7 +24,7 @@ CI_IMAGE_CONFIG:
     dockerfile: ci-wheel.Dockerfile
     docker_target: ""
     rust: false
-  - IMAGE_REPO: "ci-rust-wheel"
+  - IMAGE_REPO: "ci-wheel-rust"
     dockerfile: ci-wheel.Dockerfile
     docker_target: ""
     rust: true
@@ -51,9 +51,9 @@ exclude:
   - CUDA_VER: "13.0.3"
     IMAGE_REPO: "ci-wheel"
   - CUDA_VER: "12.2.2"
-    IMAGE_REPO: "ci-rust-wheel"
+    IMAGE_REPO: "ci-wheel-rust"
   - CUDA_VER: "13.0.3"
-    IMAGE_REPO: "ci-rust-wheel"
+    IMAGE_REPO: "ci-wheel-rust"
 
   # Only build ci-wheel for the oldest glibc (rockylinux8)
   - LINUX_VER: "ubuntu22.04"
@@ -63,8 +63,8 @@ exclude:
   - LINUX_VER: "ubuntu26.04"
     IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu22.04"
-    IMAGE_REPO: "ci-rust-wheel"
+    IMAGE_REPO: "ci-wheel-rust"
   - LINUX_VER: "ubuntu24.04"
-    IMAGE_REPO: "ci-rust-wheel"
+    IMAGE_REPO: "ci-wheel-rust"
   - LINUX_VER: "ubuntu26.04"
-    IMAGE_REPO: "ci-rust-wheel"
+    IMAGE_REPO: "ci-wheel-rust"
