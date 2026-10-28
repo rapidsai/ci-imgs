@@ -67,6 +67,7 @@ SCCACHE_VER=${SCCACHE_VER} \
     --aws-cli \
     --gh-cli \
     --gha-tools \
+    --rustup-init \
     --sccache
 EOF
 
@@ -102,7 +103,6 @@ case "${LINUX_VER}" in
       openssh-client
       patch
       protobuf-compiler
-      rustup
       software-properties-common
       unzip
       wget
@@ -166,7 +166,6 @@ case "${LINUX_VER}" in
       patch
       protobuf-compiler
       readline-devel
-      rustup
       sqlite
       sqlite-devel
       unzip
