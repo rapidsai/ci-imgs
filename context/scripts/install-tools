@@ -11,6 +11,7 @@ set -e -u -o pipefail
 aws_cli_flag=0
 gh_cli_flag=0
 gha_tools_flag=0
+rustup_init_flag=0
 sccache_flag=0
 yq_flag=0
 
@@ -26,6 +27,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --gha-tools)
       gha_tools_flag=1
+      shift
+      ;;
+    --rustup-init)
+      rustup_init_flag=1
       shift
       ;;
     --sccache)
@@ -98,6 +103,15 @@ if (( aws_cli_flag == 1 )); then
   unzip -q /tmp/awscliv2.zip -d /tmp
   /tmp/aws/install
   rm -rf /tmp/aws /tmp/awscliv2.zip
+fi
+
+# install rustup-init
+if (( rustup_init_flag == 1 )); then
+  echo "installing rustup-init"
+  rapids-retry wget -O /tmp/rustup-init https://sh.rustup.rs/
+  mv /tmp/rustup-init "${TOOL_INSTALL_DIR}/rustup-init"
+  chmod +x "${TOOL_INSTALL_DIR}/rustup-init"
+  echo "done installing 'rustup-init' CLI to '${TOOL_INSTALL_DIR}'"
 fi
 
 # install sccache
