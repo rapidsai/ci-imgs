@@ -57,7 +57,3 @@ exclude:
   # Only build 3.15t images for citestwheel and ci-conda
   - PYTHON_VER: "3.15t"
     IMAGE_REPO: "ci-wheel"
-  - PYTHON_VER: "3.15"
-    IMAGE_REPO: "ci-conda"
-  - PYTHON_VER: "3.15t"
-    IMAGE_REPO: "ci-conda"
