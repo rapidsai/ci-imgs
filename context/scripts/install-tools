@@ -110,6 +110,7 @@ if (( rustup_flag == 1 )); then
   echo "installing rustup"
   rapids-retry wget -O /tmp/rustup-init https://sh.rustup.rs/
   RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo sh -s /tmp/rustup-init -- --yes --no-update-default-toolchain
+  rm /tmp/rustup-init
   echo "done installing 'rustup' CLI to '${TOOL_INSTALL_DIR}'"
 fi
 
