@@ -53,7 +53,3 @@ exclude:
     IMAGE_REPO: "ci-wheel"
   - LINUX_VER: "ubuntu26.04"
     IMAGE_REPO: "ci-wheel"
-
-  # Only build 3.15t images for citestwheel and ci-conda
-  - PYTHON_VER: "3.15t"
-    IMAGE_REPO: "ci-wheel"
