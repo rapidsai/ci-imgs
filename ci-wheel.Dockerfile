@@ -67,7 +67,7 @@ SCCACHE_VER=${SCCACHE_VER} \
     --aws-cli \
     --gh-cli \
     --gha-tools \
-    --rustup-init \
+    --rustup \
     --sccache
 EOF
 
