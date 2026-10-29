@@ -11,6 +11,7 @@ set -e -u -o pipefail
 aws_cli_flag=0
 gh_cli_flag=0
 gha_tools_flag=0
+rustup_flag=0
 sccache_flag=0
 yq_flag=0
 
@@ -26,6 +27,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --gha-tools)
       gha_tools_flag=1
+      shift
+      ;;
+    --rustup)
+      rustup_flag=1
       shift
       ;;
     --sccache)
@@ -100,6 +105,15 @@ if (( aws_cli_flag == 1 )); then
   rm -rf /tmp/aws /tmp/awscliv2.zip
 fi
 
+# install rustup
+if (( rustup_flag == 1 )); then
+  echo "installing rustup"
+  rapids-retry wget -O /tmp/rustup-init https://sh.rustup.rs/
+  RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo sh /tmp/rustup-init --yes --no-update-default-toolchain
+  rm /tmp/rustup-init
+  echo "done installing 'rustup' CLI to '${TOOL_INSTALL_DIR}'"
+fi
+
 # install sccache
 if (( sccache_flag == 1 )); then
   echo "installing 'sccache'"
@@ -119,7 +133,7 @@ fi
 if [[ "${#PACKAGES_TO_INSTALL[@]}" != "0" ]]; then
     if type -f apt-get >/dev/null 2>&1; then
         apt-get purge -y \
-          "${PACKAGE_TO_INSTALL[@]}"
+          "${PACKAGES_TO_INSTALL[@]}"
         apt-get autoremove -y
         rm -rf \
           /var/cache/apt/archives \
