@@ -226,6 +226,7 @@ rm -f /tmp/condarc.tmpl
 PACKAGES_TO_INSTALL=(
   'ca-certificates>=2026.1.4'
   'certifi>=2026.1.4'
+  'conda-build>=25.11.1'
   'conda-package-handling>=2.4.0'
   'dunamai>=1.25.0'
   'git>=2.52.0'
