@@ -109,23 +109,22 @@ umask 002
 # left behind from updates
 rapids-conda-retry install -y -n base --force-reinstall 'conda>=26.5.0'
 
-
-# install expected Python version
-PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
-PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
+# PYTHON_VERSION may end in "t" for free-threaded builds (e.g. 3.15t)
+PYTHON_VERSION_NUMERIC=${PYTHON_VERSION%t}
+PYTHON_FREE_THREADED_SUFFIX=${PYTHON_VERSION#"$PYTHON_VERSION_NUMERIC"}
+PYTHON_MAJOR_VERSION=${PYTHON_VERSION_NUMERIC%%.*}
+PYTHON_MINOR_VERSION=${PYTHON_VERSION_NUMERIC#*.}
 PYTHON_UPPER_BOUND="${PYTHON_MAJOR_VERSION}.$((PYTHON_MINOR_VERSION+1)).0a0"
 PYTHON_MINOR_PADDED=$(printf "%02d" "$PYTHON_MINOR_VERSION")
 PYTHON_VERSION_PADDED="${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_PADDED}"
 if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
-    PYTHON_ABI_TAG="cp${PYTHON_MAJOR_VERSION}${PYTHON_MINOR_VERSION}"
+    PYTHON_ABI_TAG="cp${PYTHON_MAJOR_VERSION}${PYTHON_MINOR_VERSION}${PYTHON_FREE_THREADED_SUFFIX}"
 else
     PYTHON_ABI_TAG="cpython"
 fi
 
-rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-
-# ensure all packages are updated
-rapids-conda-retry update --all -y -n base
+# install expected Python version into a separate environment (to be activated as default)
+rapids-conda-retry create -y -n rapids "python>=${PYTHON_VERSION_NUMERIC},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
 
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   dnf install -y findutils
@@ -140,10 +139,10 @@ conda clean -aiptfy
 # Reassign root's primary group to root
 usermod -g root root
 
-# ensure conda environment is always activated
+# ensure non-base conda environment is always activated
 ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
-echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> /etc/skel/.bashrc
-echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> ~/.bashrc
+echo ". /opt/conda/etc/profile.d/conda.sh; conda activate rapids" >> /etc/skel/.bashrc
+echo ". /opt/conda/etc/profile.d/conda.sh; conda activate rapids" >> ~/.bashrc
 EOF
 
 # Set RAPIDS versions env variables
@@ -210,7 +209,11 @@ ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
 ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
 COPY condarc.tmpl /tmp/condarc.tmpl
 
-# Install CI tools using conda
+# Install CI tools using conda into `base` environment
+# Several of these can lag newly released Python versions, so we install them
+# into the `base` environment, not the activated `rapids` environment
+# The `base` environment is already on `$PATH` and CI can fall back to these
+# tools if they aren't available in the `rapids` env
 RUN <<EOF
 # update condarc file from env vars
 sed \
@@ -219,17 +222,6 @@ sed \
   /tmp/condarc.tmpl \
   > /opt/conda/.condarc
 rm -f /tmp/condarc.tmpl
-
-PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
-PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
-PYTHON_UPPER_BOUND="${PYTHON_MAJOR_VERSION}.$((PYTHON_MINOR_VERSION+1)).0a0"
-PYTHON_MINOR_PADDED=$(printf "%02d" "$PYTHON_MINOR_VERSION")
-PYTHON_VERSION_PADDED="${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_PADDED}"
-if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
-    PYTHON_ABI_TAG="cp${PYTHON_MAJOR_VERSION}${PYTHON_MINOR_VERSION}"
-else
-    PYTHON_ABI_TAG="cpython"
-fi
 
 PACKAGES_TO_INSTALL=(
   'ca-certificates>=2026.1.4'
@@ -240,12 +232,11 @@ PACKAGES_TO_INSTALL=(
   'git>=2.52.0'
   'jq>=1.8.1'
   'packaging>=25.0'
-  "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
   'rapids-dependency-file-generator==1.*,>=1.22'
   'rattler-build>=0.76.1'
 )
 
-rapids-conda-retry install -y \
+rapids-conda-retry install -n base -y \
   "${PACKAGES_TO_INSTALL[@]}"
 
 conda clean -aiptfy
