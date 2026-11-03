@@ -1,7 +1,13 @@
 #!/bin/bash
 # SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
-set -euo pipefail
+set -Eeuo pipefail
+phase=initialization
+preparation_failed() {
+  printf '::error::Benchmark preparation failed during %s (line %s, exit %s)\n' "${phase}" "$2" "$1" >&2
+  exit "$1"
+}
+trap 'preparation_failed "$?" "$LINENO"' ERR
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 if [[ -n ${BENCHMARK_SOURCE_DIR:-} ]]; then cd "${BENCHMARK_SOURCE_DIR}"; fi
 
@@ -14,6 +20,8 @@ cp versions.yaml prepared/
 cp "${script_dir}/"*.sh prepared/
 
 # Resolve floating release choices once, before any timed build.
+phase='resolving gha-tools releases'
+echo "${phase}"
 gh api 'repos/rapidsai/gha-tools/releases?per_page=100' > prepared/releases.json
 for slot in OLD NEW; do
   if [[ ${slot} == OLD ]]; then version=${OLD_VERSION}; else version=${NEW_VERSION}; fi
@@ -31,6 +39,7 @@ done
 rm prepared/*.tar.gz
 
 # Keep this installer identical across X/Y builds; only build arguments change.
+phase='preparing pinned gha-tools installer'
 awk '
   /wget -q https:\/\/github.com\/rapidsai\/gha-tools\/releases\/latest\/download/ {
     print "  : \"${GHA_TOOLS_VERSION:?}\" \"${GHA_TOOLS_SHA256:?}\""
@@ -49,16 +58,24 @@ awk '
 for kind in ci-wheel ci-conda; do
   if [[ ${kind} == ci-wheel ]]; then flavor=devel; else flavor=base; fi
   base="nvidia/cuda:${CUDA_VER}-${flavor}-rockylinux8"
-  digest=$(docker buildx imagetools inspect "${base}" | awk '$1 == "Digest:" {print $2; exit}')
+  phase="resolving ${base}"
+  echo "${phase}"
+  # Consume the complete output. An early-exiting filter can give the Docker CLI
+  # a broken pipe and make it exit 255, even after printing the requested digest.
+  digest=$(docker buildx imagetools inspect "${base}" --format '{{json .Manifest}}' | jq -er '.digest')
   [[ ${digest} =~ ^sha256:[a-f0-9]{64}$ ]]
   cp "${kind}.Dockerfile" "prepared/${kind}.source"
   if [[ ${kind} == ci-wheel ]]; then
     ci/sync-base-env.sh "${base}@${digest}" "prepared/${kind}.source"
   fi
   forge=$(awk '$1 == "MINIFORGE_VER:" {print $2}' versions.yaml)
-  forge_digest=$(docker buildx imagetools inspect "condaforge/miniforge3:${forge}" | awk '$1 == "Digest:" {print $2; exit}')
+  phase="resolving condaforge/miniforge3:${forge}"
+  echo "${phase}"
+  forge_digest=$(docker buildx imagetools inspect "condaforge/miniforge3:${forge}" --format '{{json .Manifest}}' | jq -er '.digest')
   [[ ${forge_digest} =~ ^sha256:[a-f0-9]{64}$ ]]
   for variant in baseline cache isolated; do
+    phase="generating ${kind}-${variant}.Dockerfile"
+    echo "${phase}"
     awk -v base="${base}@${digest}" -v forge="condaforge/miniforge3:${forge}@${forge_digest}" -v isolated="${variant}" '
       NR == FNR {
         if ($0 ~ /^RUN /) run_line = FNR
@@ -88,6 +105,7 @@ for kind in ci-wheel ci-conda; do
   done
   jq -n --arg base "${base}@${digest}" --arg forge "condaforge/miniforge3:${forge}@${forge_digest}" '{base:$base,miniforge:$forge}' > "prepared/${kind}-bases.json"
 done
+phase='recording frozen benchmark inputs'
 jq -n --arg sha "$(git rev-parse HEAD)" --arg cuda "${CUDA_VER}" --arg python "${PYTHON_VER}" \
   --arg rapids "$(cut -d . -f 1,2 VERSION)" \
   '{source_sha:$sha,cuda:$cuda,python:$python,rapids:$rapids,os:"rockylinux8"}' > prepared/inputs.json
