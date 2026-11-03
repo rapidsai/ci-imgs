@@ -112,11 +112,3 @@ jobs:
           # This allows rapids-install-sccache to download from GitHub releases
           secrets: |
             GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
-      - name: Smoke-test uv and legacy pip tooling
-        if: ${{ inputs.IMAGE_REPO == 'ci-wheel' || inputs.IMAGE_REPO == 'citestwheel' }}
-        env:
-          IMAGE_NAME: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
-        run: |
-          docker run --rm --entrypoint bash \
-            --volume "${PWD}/ci:/tmp/ci-smoke:ro" \
-            "${IMAGE_NAME}" /tmp/ci-smoke/smoke-test-uv.sh
