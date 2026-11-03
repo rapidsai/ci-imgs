@@ -7,7 +7,8 @@ This repository includes the following CI images for RAPIDS:
 - [`rapidsai/citestwheel`](https://hub.docker.com/r/rapidsai/citestwheel/tags): for testing wheels
 
 The `ci-wheel` and `citestwheel` images include a standalone `uv` in `/usr/local/bin`,
-with its version pinned in `versions.yaml`, and use it to install their Python tools.
+with its version pinned in `versions.yaml`. Existing Python tooling continues to be
+installed using pip; downstream jobs explicitly opt in to uv.
 
 ## Tagging Strategy
 

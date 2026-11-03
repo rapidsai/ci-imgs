@@ -197,12 +197,17 @@ pyenv install ${PYTHON_VER}
 pyenv global ${PYTHON_VER}
 python --version
 
-uv pip install --python "$(command -v python)" --no-cache --upgrade pip
-uv pip install --python "$(command -v python)" --no-cache \
+# `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
+# use so should be compatible with `pyenv`
+rapids-pip-retry install --upgrade pip
+rapids-pip-retry install \
   'certifi>=2026.1.4' \
   'rapids-dependency-file-generator==1.*,>=1.22'
 
 pyenv rehash
+
+# clear the pip cache
+pip cache purge
 
 # remove unnecessary pyenv stuff
 /tmp/build-scripts/clean-pyenv
