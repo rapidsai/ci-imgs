@@ -55,11 +55,12 @@ def test_candidate_matrix_preserves_all_production_variants():
 
 
 @pytest.mark.parametrize("arch", ["amd64", "arm64"])
-def test_archive_retains_real_bytes_and_frozen_identity(tmp_path, arch):
+@pytest.mark.parametrize("image_repo", ["ci-conda", "ci-wheel", "citestwheel"])
+def test_archive_retains_real_bytes_and_frozen_identity(tmp_path, arch, image_repo):
     archive = tmp_path / ".release-candidate-artifacts/container"
     archive.mkdir(parents=True)
     (archive / "image.tar").write_bytes(b"original OCI archive bytes")
-    image = "rapidsai/ci-wheel:26.12-cuda13.3.0-rockylinux8-py3.14"
+    image = f"rapidsai/{image_repo}:26.12-cuda13.3.0-rockylinux8-py3.14"
     subprocess.run(
         ["bash", str(ROOT / "ci/prepare-candidate-image.sh")],
         cwd=tmp_path,
@@ -74,18 +75,59 @@ def test_archive_retains_real_bytes_and_frozen_identity(tmp_path, arch):
     assert (
         gzip.decompress(
             (
-                archive / f"image-26.12-cuda13.3.0-rockylinux8-py3.14-{arch}.tar.gz"
+                archive
+                / f"image-{image_repo}-26.12-cuda13.3.0-rockylinux8-py3.14-{arch}.tar.gz"
             ).read_bytes()
         )
         == b"original OCI archive bytes"
     )
     assert json.loads((archive / "package-identity.json").read_text()) == {
         "ecosystem": "container",
-        "name": "docker.io/rapidsai/ci-wheel",
+        "name": f"docker.io/rapidsai/{image_repo}",
         "version": "26.12",
         "build": f"26.12-cuda13.3.0-rockylinux8-py3.14-{arch}",
         "platform": f"linux/{arch}",
     }
+
+
+def test_all_candidate_matrix_archives_have_unique_catalog_paths(tmp_path):
+    environment = {
+        **os.environ,
+        "RAPIDS_VERSION_MAJOR_MINOR": "26.12",
+        "BUILD_TYPE": "branch",
+    }
+    matrix = subprocess.run(
+        ["bash", "ci/compute-candidate-matrix.sh"],
+        cwd=ROOT,
+        env=environment,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    paths = []
+    for index, row in enumerate(json.loads(matrix.stdout)["include"]):
+        work = tmp_path / str(index)
+        archive = work / ".release-candidate-artifacts/container"
+        archive.mkdir(parents=True)
+        (archive / "image.tar").write_bytes(b"OCI archive")
+        subprocess.run(
+            ["bash", str(ROOT / "ci/prepare-candidate-image.sh")],
+            cwd=work,
+            env={
+                **environment,
+                "ARCH": row["ARCH"],
+                "IMAGE_NAME": row["IMAGE_NAME"],
+            },
+            check=True,
+            capture_output=True,
+        )
+        files = list(archive.glob("*.tar.gz"))
+        assert len(files) == 1
+        paths.append(files[0].name)
+    assert len(paths) == 208
+    assert len(set(paths)) == len(paths), (
+        "different images collide in the train catalog"
+    )
 
 
 @pytest.mark.parametrize(

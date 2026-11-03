@@ -12,6 +12,8 @@ if [[ ! "${ARCH}" =~ ^(amd64|arm64)$ ]] ||
   exit 1
 fi
 variant="${IMAGE_NAME#*:}-${ARCH}"
+image_repository="${IMAGE_NAME%%:*}"
+image_repository="${image_repository#rapidsai/}"
 if [[ "${variant}" != "${RAPIDS_VERSION_MAJOR_MINOR}-"* ]]; then
   echo 'Image variant does not match the frozen container version' >&2
   exit 1
@@ -19,7 +21,7 @@ fi
 mkdir -p .release-candidate-artifacts/container
 gzip --no-name .release-candidate-artifacts/container/image.tar
 mv .release-candidate-artifacts/container/image.tar.gz \
-  ".release-candidate-artifacts/container/image-${variant}.tar.gz"
+  ".release-candidate-artifacts/container/image-${image_repository}-${variant}.tar.gz"
 jq -n --arg name "docker.io/${IMAGE_NAME%%:*}" \
   --arg version "${RAPIDS_VERSION_MAJOR_MINOR}" --arg build "${variant}" --arg platform "linux/${ARCH}" \
   '{ecosystem:"container",name:$name,version:$version,build:$build,platform:$platform}' \
