@@ -52,7 +52,7 @@ jobs:
         with:
           source-sha: ${{ inputs.sha }}
           audit-boundary: 'true'
-      - name: Resolve frozen train and complete image matrix
+      - name: Resolve frozen train and release build image matrix
         id: matrix
         env:
           TRAIN_SHA256: ${{ steps.context.outputs.train-sha256 }}

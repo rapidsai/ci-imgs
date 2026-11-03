@@ -12,7 +12,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_candidate_matrix_preserves_all_production_variants():
+def test_candidate_matrix_preserves_build_images_and_defers_test_images():
     env = {**os.environ, "RAPIDS_VERSION_MAJOR_MINOR": "26.12", "BUILD_TYPE": "branch"}
     production = subprocess.run(
         ["yq", "-o", "json", "matrix.yaml"],
@@ -42,15 +42,18 @@ def test_candidate_matrix_preserves_all_production_variants():
     expected = [
         {**{key: value for key, value in row.items() if key != "ARCHES"}, "ARCH": arch}
         for row in json.loads(production.stdout)["include"]
+        if row["IMAGE_REPO"] != "citestwheel"
         for arch in row["ARCHES"]
     ]
     assert json.loads(candidate.stdout)["include"] == expected
-    assert len(expected) == 208
+    assert len(expected) == 190
+    assert "citestwheel" in {
+        row["IMAGE_REPO"] for row in json.loads(production.stdout)["include"]
+    }
     assert {row["ARCH"] for row in expected} == {"amd64", "arm64"}
     assert {row["IMAGE_REPO"] for row in expected} == {
         "ci-conda",
         "ci-wheel",
-        "citestwheel",
     }
 
 
@@ -124,7 +127,7 @@ def test_all_candidate_matrix_archives_have_unique_catalog_paths(tmp_path):
         files = list(archive.glob("*.tar.gz"))
         assert len(files) == 1
         paths.append(files[0].name)
-    assert len(paths) == 208
+    assert len(paths) == len(json.loads(matrix.stdout)["include"])
     assert len(set(paths)) == len(paths), (
         "different images collide in the train catalog"
     )

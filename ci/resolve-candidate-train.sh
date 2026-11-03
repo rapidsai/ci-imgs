@@ -32,6 +32,7 @@ if [[ "${source_version}" != "${version}" ]]; then
   exit 1
 fi
 matrix=$(RAPIDS_VERSION_MAJOR_MINOR="${version}" ci/compute-candidate-matrix.sh)
-ci/validate-latest.sh "${matrix}"
+# Private candidates omit test images and do not publish latest tags.
+# The regular image workflow validates latest.yaml against its full matrix.
 echo "version=${version}" >> "${GITHUB_OUTPUT}"
 echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"

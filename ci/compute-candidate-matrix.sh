@@ -13,6 +13,8 @@ export RAPIDS_VERSION_MAJOR_MINOR
 yq -o json matrix.yaml | jq -c '
   include "ci/compute-matrix";
   compute_matrix(.) |
-  {include: [.include[] | . as $variant | .ARCHES[] as $arch |
+  # Test images can be built separately; only build images gate the release.
+  {include: [.include[] | select(.IMAGE_REPO != "citestwheel") |
+    . as $variant | .ARCHES[] as $arch |
     $variant + {ARCH: $arch} | del(.ARCHES)]}
 '

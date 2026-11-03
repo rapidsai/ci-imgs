@@ -96,6 +96,15 @@ docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile -t rapidsai/$
 
 Update the corresponding SHA-256 value whenever either version changes. CI stores a separate registry-backed BuildKit cache for each image variant and architecture. Pull requests read the branch cache but write to a PR-specific cache, while branch caches use the unversioned image name so they remain reusable across RAPIDS release-number changes.
 
+## Release candidate image scope
+
+The private release candidate workflow builds `ci-conda` and `ci-wheel` images.
+It omits `citestwheel` so test image construction and failures do not delay the
+release. Test images may be built later through the regular image workflow;
+that work is independent of release readiness. The regular workflow retains
+the full image matrix and its `latest.yaml` validation. Private candidates do
+not publish `latest` tags.
+
 ## Cleaning Up
 
 Every build first writes images to the https://hub.docker.com/r/rapidsai/staging repo on DockerHub,
