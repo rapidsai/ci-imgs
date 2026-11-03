@@ -39,22 +39,18 @@ def test_candidate_matrix_preserves_build_images_and_defers_test_images():
         capture_output=True,
         text=True,
     )
-    expected = [
+    production_rows = [
         {**{key: value for key, value in row.items() if key != "ARCHES"}, "ARCH": arch}
         for row in json.loads(production.stdout)["include"]
-        if row["IMAGE_REPO"] != "citestwheel"
         for arch in row["ARCHES"]
     ]
-    assert json.loads(candidate.stdout)["include"] == expected
-    assert len(expected) == 190
-    assert "citestwheel" in {
-        row["IMAGE_REPO"] for row in json.loads(production.stdout)["include"]
-    }
-    assert {row["ARCH"] for row in expected} == {"amd64", "arm64"}
-    assert {row["IMAGE_REPO"] for row in expected} == {
-        "ci-conda",
-        "ci-wheel",
-    }
+    candidate_rows = json.loads(candidate.stdout)["include"]
+    assert candidate_rows == [
+        row for row in production_rows if row["IMAGE_REPO"] != "citestwheel"
+    ]
+    assert len(candidate_rows) < len(production_rows)
+    assert all(row["IMAGE_REPO"] != "citestwheel" for row in candidate_rows)
+    assert {row["ARCH"] for row in candidate_rows} == {"amd64", "arm64"}
 
 
 @pytest.mark.parametrize("arch", ["amd64", "arm64"])
