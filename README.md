@@ -6,9 +6,8 @@ This repository includes the following CI images for RAPIDS:
 - [`rapidsai/ci-wheel`](https://hub.docker.com/r/rapidsai/ci-wheel/tags): for building and publishing RAPIDS wheels (including pure-Python and manylinux-compliant wheels)
 - [`rapidsai/citestwheel`](https://hub.docker.com/r/rapidsai/citestwheel/tags): for testing wheels
 
-All three image families include a standalone `uv` in `/usr/local/bin`, with its version
-pinned in `versions.yaml`. Wheel images also use it to install their Python tools.
-Conda package installation continues to use Conda.
+The `ci-wheel` and `citestwheel` images include a standalone `uv` in `/usr/local/bin`,
+with its version pinned in `versions.yaml`, and use it to install their Python tools.
 
 ## Tagging Strategy
 
