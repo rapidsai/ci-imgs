@@ -14,6 +14,7 @@ gha_tools_flag=0
 rustup_flag=0
 sccache_flag=0
 yq_flag=0
+uv_flag=0
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -35,6 +36,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --sccache)
       sccache_flag=1
+      shift
+      ;;
+    --uv)
+      uv_flag=1
       shift
       ;;
     --yq)
@@ -81,6 +86,15 @@ if (( gha_tools_flag == 1 )); then
   echo "installing 'gha-tools'"
   wget -q https://github.com/rapidsai/gha-tools/releases/latest/download/tools.tar.gz -O - | tar -xz -C "${TOOL_INSTALL_DIR}"
   echo "done installing 'gha-tools' to '${TOOL_INSTALL_DIR}'"
+fi
+
+# Keep uv outside Python environments so activating a venv or conda env preserves it.
+if (( uv_flag == 1 )); then
+  uv_installer=$(mktemp)
+  rapids-retry wget -q "https://astral.sh/uv/${UV_VER}/install.sh" -O "${uv_installer}"
+  UV_UNMANAGED_INSTALL="${TOOL_INSTALL_DIR}" sh "${uv_installer}"
+  rm -f "${uv_installer}"
+  uv --version
 fi
 
 # install gh CLI

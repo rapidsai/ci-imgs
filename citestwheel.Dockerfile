@@ -32,6 +32,7 @@ ARG CPU_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG LINUX_VER=notset
 ARG REAL_ARCH=notset
+ARG UV_VER=notset
 RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
@@ -47,9 +48,11 @@ LINUX_VER=${LINUX_VER} \
 AWS_CLI_VER=${AWS_CLI_VER} \
 GH_CLI_VER=${GH_CLI_VER} \
 REAL_ARCH=${REAL_ARCH} \
+UV_VER=${UV_VER} \
   /tmp/build-scripts/install-tools \
     --aws-cli \
     --gh-cli \
+    --uv \
     --gha-tools
 
 set -e
@@ -194,17 +197,12 @@ pyenv install ${PYTHON_VER}
 pyenv global ${PYTHON_VER}
 python --version
 
-# `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
-# use so should be compatible with `pyenv`
-rapids-pip-retry install --upgrade pip
-rapids-pip-retry install \
+uv pip install --python "$(command -v python)" --no-cache --upgrade pip
+uv pip install --python "$(command -v python)" --no-cache \
   'certifi>=2026.1.4' \
   'rapids-dependency-file-generator==1.*,>=1.22'
 
 pyenv rehash
-
-# clear the pip cache
-pip cache purge
 
 # remove unnecessary pyenv stuff
 /tmp/build-scripts/clean-pyenv

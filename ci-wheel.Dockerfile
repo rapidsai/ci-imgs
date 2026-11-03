@@ -49,6 +49,7 @@ ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG REAL_ARCH=notset
+ARG UV_VER=notset
 ARG SCCACHE_VER=notset
 RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
@@ -62,10 +63,12 @@ AWS_CLI_VER=${AWS_CLI_VER} \
 CPU_ARCH=${CPU_ARCH} \
 GH_CLI_VER=${GH_CLI_VER} \
 REAL_ARCH=${REAL_ARCH} \
+UV_VER=${UV_VER} \
 SCCACHE_VER=${SCCACHE_VER} \
   /tmp/build-scripts/install-tools \
     --aws-cli \
     --gh-cli \
+    --uv \
     --gha-tools \
     --rustup \
     --sccache
@@ -305,11 +308,8 @@ ENV RAPIDS_WHEEL_BLD_OUTPUT_DIR=/tmp/wheelhouse
 RUN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
-# `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
-# use so should be compatible with `pyenv`
-#
 # >=25.3 floor is there to ensure we have a version that respects '--build-constraint'
-rapids-pip-retry install --upgrade 'pip>=25.3'
+uv pip install --python "$(command -v python)" --no-cache --upgrade 'pip>=25.3'
 
 PACKAGES_TO_INSTALL=(
   'abi3audit>=0.0.26'
@@ -324,13 +324,10 @@ PACKAGES_TO_INSTALL=(
   'twine>=6.2.0'
   'wheel>=0.45.1'
 )
-rapids-pip-retry install \
+uv pip install --python "$(command -v python)" --no-cache \
   "${PACKAGES_TO_INSTALL[@]}"
 
 pyenv rehash
-
-# clear the pip cache
-pip cache purge
 
 # remove unnecessary pyenv stuff
 /tmp/build-scripts/clean-pyenv
