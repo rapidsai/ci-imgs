@@ -52,8 +52,8 @@ UV_VER=${UV_VER} \
   /tmp/build-scripts/install-tools \
     --aws-cli \
     --gh-cli \
-    --uv \
-    --gha-tools
+    --gha-tools \
+    --uv
 
 set -e
 case "${LINUX_VER}" in

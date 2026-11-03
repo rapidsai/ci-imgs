@@ -49,8 +49,8 @@ ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG GH_CLI_VER=notset
 ARG REAL_ARCH=notset
-ARG UV_VER=notset
 ARG SCCACHE_VER=notset
+ARG UV_VER=notset
 RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
@@ -63,15 +63,15 @@ AWS_CLI_VER=${AWS_CLI_VER} \
 CPU_ARCH=${CPU_ARCH} \
 GH_CLI_VER=${GH_CLI_VER} \
 REAL_ARCH=${REAL_ARCH} \
-UV_VER=${UV_VER} \
 SCCACHE_VER=${SCCACHE_VER} \
+UV_VER=${UV_VER} \
   /tmp/build-scripts/install-tools \
     --aws-cli \
     --gh-cli \
-    --uv \
     --gha-tools \
     --rustup \
-    --sccache
+    --sccache \
+    --uv
 EOF
 
 # install other tools and libraries
