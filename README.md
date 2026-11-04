@@ -94,34 +94,41 @@ docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile -t rapidsai/$
 ## Build cache
 
 CI stores a registry-backed BuildKit cache for each image variant and architecture.
-Branch builds read and update caches such as
+Publications from `main`, including manually triggered publications, read and
+refresh the shared cache, for example:
 `rapidsai/ci-wheel:cuda13.4.3-rockylinux8-py3.14-buildcache-arm64`.
 These names omit the RAPIDS release version so a release-number update can reuse
 the existing build layers.
 
-Pull requests read the branch cache and their own cache, but write only to a
-PR-specific staging tag such as
-`rapidsai/staging:ci-wheel-467-cuda13.4.3-rockylinux8-py3.14-buildcache-arm64`.
+Every other ref reads the shared main cache and its own scoped cache, but writes
+only to its scoped staging tag:
+`rapidsai/staging:ci-wheel-ref-{ref_hash}-cuda13.4.3-rockylinux8-py3.14-buildcache-arm64`.
+The `{ref_hash}` is the first 32 hexadecimal characters of the SHA-256 of
+`{repository}:{full_ref}`. It keeps tag names valid and distinct even when ref
+names contain slashes or punctuation. PR builds use their existing
+`refs/heads/pull-request/<number>` refs, so they use this same mechanism rather
+than an additional PR cache. Manual publications from release or feature branches
+also use scoped caches and cannot refresh the main cache.
 Each build exports intermediate-stage layers (`mode=max`) so subsequent builds on
 fresh runners can reuse them. A missing cache leaves the build to populate it.
 
-The cache lookup happens for each build step. For PR builds, BuildKit considers
+The cache lookup happens for each build step. For non-main builds, BuildKit considers
 both imported caches and can reuse matching steps from either. If neither has a
 matching entry, that step runs normally. See Docker's
 [multiple-cache documentation](https://docs.docker.com/build/cache/backends/#multiple-caches).
 
 ```mermaid
 flowchart TD
-    build{"Build type"} -->|Pull request| pr["Import branch cache and this PR's cache"]
-    build -->|Branch| branch["Import branch cache"]
+    build{"Publishing from main?"} -->|No| pr["Import shared main cache and this ref's cache"]
+    build -->|Yes, automatic or manual| branch["Import shared main cache"]
     pr --> hit{"Matching cache entry for this step?"}
     branch --> hit
     hit -->|Yes| reuse["Reuse cached step"]
     hit -->|No / cache missing| execute["Execute step normally"]
     reuse --> output{"Export build cache"}
     execute --> output
-    output -->|Pull request| prwrite["Write only this PR's staging cache"]
-    output -->|Branch| branchwrite["Update branch cache"]
+    output -->|Other ref| prwrite["Write only this ref's staging cache"]
+    output -->|Main publication| branchwrite["Refresh shared main cache"]
 ```
 
 This does not change the image contents or the installation of `gha-tools`.

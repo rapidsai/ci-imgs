@@ -23,7 +23,7 @@ on:
       IMAGE_NAME:
         required: true
         type: string
-      CACHE_IMAGE_NAME:
+      MAIN_CACHE_IMAGE_NAME:
         required: true
         type: string
       CACHE_WRITE_IMAGE_NAME:
@@ -107,7 +107,7 @@ jobs:
           target: ${{ inputs.DOCKER_TARGET }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
           cache-from: |
-            type=registry,ref=${{ inputs.CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
+            type=registry,ref=${{ inputs.MAIN_CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
             type=registry,ref=${{ inputs.CACHE_WRITE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
           cache-to: type=registry,ref=${{ inputs.CACHE_WRITE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }},mode=max,compression=zstd,oci-mediatypes=true,image-manifest=true
           # Enable zstd compression (gzip is default)
