@@ -105,6 +105,25 @@ PR-specific staging tag such as
 Each build exports intermediate-stage layers (`mode=max`) so subsequent builds on
 fresh runners can reuse them. A missing cache leaves the build to populate it.
 
+The cache lookup happens for each build step. For PR builds, BuildKit considers
+both imported caches and can reuse matching steps from either. If neither has a
+matching entry, that step runs normally. See Docker's
+[multiple-cache documentation](https://docs.docker.com/build/cache/backends/#multiple-caches).
+
+```mermaid
+flowchart TD
+    build{"Build type"} -->|Pull request| pr["Import branch cache and this PR's cache"]
+    build -->|Branch| branch["Import branch cache"]
+    pr --> hit{"Matching cache entry for this step?"}
+    branch --> hit
+    hit -->|Yes| reuse["Reuse cached step"]
+    hit -->|No / cache missing| execute["Execute step normally"]
+    reuse --> output{"Export build cache"}
+    execute --> output
+    output -->|Pull request| prwrite["Write only this PR's staging cache"]
+    output -->|Branch| branchwrite["Update branch cache"]
+```
+
 This does not change the image contents or the installation of `gha-tools`.
 
 ## Cleaning Up
