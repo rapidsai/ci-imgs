@@ -12,10 +12,6 @@ on:
       upstream_job:
         required: false
         type: string
-      gha_tools_only:
-        description: Refresh gha-tools on the published images without rebuilding dependencies
-        type: boolean
-        default: false
   push:
     branches:
       - main
@@ -32,7 +28,6 @@ jobs:
       GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
     with:
       build_type: branch
-      gha_tools_only: ${{ inputs.gha_tools_only || inputs.upstream_repository == 'gha-tools' }}
     permissions:
       contents: read
       pull-requests: read

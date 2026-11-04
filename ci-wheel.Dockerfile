@@ -3,20 +3,8 @@
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
-ARG PYTHON_VER=notset
 
 ARG BASE_IMAGE=nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}
-
-# Update only the tools on an already published image. The full image build
-# remains the default target at the end of this file.
-ARG GHA_TOOLS_BASE_IMAGE=rapidsai/ci-wheel:cuda${CUDA_VER}-${LINUX_VER}-py${PYTHON_VER}
-FROM ${GHA_TOOLS_BASE_IMAGE} AS gha-tools-update
-
-SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
-
-RUN \
-  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
-  /tmp/build-scripts/install-tools --gha-tools
 
 FROM ${BASE_IMAGE} AS os-base
 
@@ -452,3 +440,11 @@ ENV PATH="${CARGO_HOME}/bin:${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 CMD ["/bin/bash"]
+
+# Always refresh the shipped tools last. CI disables caching only for this stage,
+# allowing all image-construction stages above to reuse their cached results.
+FROM output AS gha-tools-update
+
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+  /tmp/build-scripts/install-tools --gha-tools

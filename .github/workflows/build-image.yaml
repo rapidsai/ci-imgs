@@ -80,7 +80,7 @@ jobs:
           ARCH: ${{ matrix.ARCH }}
           IMAGE_REPO: ${{ inputs.IMAGE_REPO }}
       - name: Modify dockerfiles
-        if: ${{ inputs.DOCKERFILE == 'ci-wheel.Dockerfile' && inputs.DOCKER_TARGET != 'gha-tools-update' }}
+        if: ${{ inputs.DOCKERFILE == 'ci-wheel.Dockerfile' }}
         id: modify-dockerfiles
         env:
           CUDA_VER: ${{ inputs.CUDA_VER }}
@@ -99,9 +99,8 @@ jobs:
           build-args: |
             ${{ steps.generate-build-args.outputs.ARGS }}
           target: ${{ inputs.DOCKER_TARGET }}
-          # The installer downloads the latest release, so always execute it in
-          # the update target even when registry caching is enabled separately.
-          no-cache-filters: ${{ inputs.DOCKER_TARGET == 'gha-tools-update' && 'gha-tools-update' || '' }}
+          # Refresh the final tools layer without invalidating construction stages.
+          no-cache-filters: gha-tools-update
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
           # Enable zstd compression (gzip is default)
           # Compression level 15 is rough based on empirical testing

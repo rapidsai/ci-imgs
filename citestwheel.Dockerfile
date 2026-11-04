@@ -3,20 +3,7 @@
 
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
-ARG PYTHON_VER=notset
-
-# Update only the tools on an already published image. Keep the full image build
-# last so it remains the default when no target is selected.
-ARG GHA_TOOLS_BASE_IMAGE=rapidsai/citestwheel:cuda${CUDA_VER}-${LINUX_VER}-py${PYTHON_VER}
-FROM ${GHA_TOOLS_BASE_IMAGE} AS gha-tools-update
-
-SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
-
-RUN \
-  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
-  /tmp/build-scripts/install-tools --gha-tools
-
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER}
+FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS citestwheel
 
 ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset
@@ -231,3 +218,11 @@ git config --system --add safe.directory '*'
 EOF
 
 CMD ["/bin/bash"]
+
+# Always refresh the shipped tools last. CI disables caching only for this stage,
+# allowing all image-construction stages above to reuse their cached results.
+FROM citestwheel AS gha-tools-update
+
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+  /tmp/build-scripts/install-tools --gha-tools

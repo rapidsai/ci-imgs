@@ -8,9 +8,6 @@ on:
       build_type:
         required: true
         type: string
-      gha_tools_only:
-        type: boolean
-        default: false
     secrets:
       GPUCIBOT_DOCKERHUB_USER:
         required: true
@@ -46,7 +43,6 @@ jobs:
           echo "MATRIX=${MATRIX}" | tee -a "${GITHUB_OUTPUT}"
         env:
           BUILD_TYPE: ${{ inputs.BUILD_TYPE }}
-          GHA_TOOLS_ONLY: ${{ inputs.gha_tools_only }}
       - name: Validate latest.yaml entries exist in matrix
         env:
           MATRIX: ${{ steps.compute-matrix.outputs.MATRIX }}
