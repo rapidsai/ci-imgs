@@ -29,6 +29,10 @@ on:
       CACHE_WRITE_IMAGE_NAME:
         required: true
         type: string
+      ENABLE_CACHE:
+        description: Temporary benchmark control
+        type: boolean
+        default: true
       DOCKERFILE:
         required: true
         type: string
@@ -107,9 +111,9 @@ jobs:
           target: ${{ inputs.DOCKER_TARGET }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
           cache-from: |
-            type=registry,ref=${{ inputs.MAIN_CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
-            type=registry,ref=${{ inputs.CACHE_WRITE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
-          cache-to: type=registry,ref=${{ inputs.CACHE_WRITE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }},mode=max,compression=zstd,oci-mediatypes=true,image-manifest=true
+            ${{ inputs.ENABLE_CACHE && format('type=registry,ref={0}-buildcache-{1}', inputs.MAIN_CACHE_IMAGE_NAME, matrix.ARCH) || '' }}
+            ${{ inputs.ENABLE_CACHE && format('type=registry,ref={0}-buildcache-{1}', inputs.CACHE_WRITE_IMAGE_NAME, matrix.ARCH) || '' }}
+          cache-to: ${{ inputs.ENABLE_CACHE && format('type=registry,ref={0}-buildcache-{1},mode=max,compression=zstd,oci-mediatypes=true,image-manifest=true', inputs.CACHE_WRITE_IMAGE_NAME, matrix.ARCH) || '' }}
           # Enable zstd compression (gzip is default)
           # Compression level 15 is rough based on empirical testing
           # https://github.com/rapidsai/ci-imgs/pull/281#issuecomment-3001509856
