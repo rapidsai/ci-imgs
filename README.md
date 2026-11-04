@@ -6,6 +6,10 @@ This repository includes the following CI images for RAPIDS:
 - [`rapidsai/ci-wheel`](https://hub.docker.com/r/rapidsai/ci-wheel/tags): for building and publishing RAPIDS wheels (including pure-Python and manylinux-compliant wheels)
 - [`rapidsai/citestwheel`](https://hub.docker.com/r/rapidsai/citestwheel/tags): for testing wheels
 
+The `ci-wheel` and `citestwheel` images include a standalone `uv` in `/usr/local/bin`,
+with its version pinned in `versions.yaml`. Existing Python tooling continues to be
+installed using pip; downstream jobs explicitly opt in to uv.
+
 ## Tagging Strategy
 
 Images built from the `main` branch in CI are double-published with the following tags:
@@ -71,29 +75,21 @@ If you have the `gh` CLI installed and authenticated, you can use `gh auth token
 
 ```sh
 export LINUX_VER=rockylinux8
-export CUDA_VER=13.3.0
+export CUDA_VER=13.4.3
 export PYTHON_VER=3.14
 export ARCH=amd64
 export GH_TOKEN=$(gh auth token)
 
 export IMAGE_REPO=ci-conda
-docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-conda.Dockerfile context/
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-conda.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
 
 export IMAGE_REPO=ci-wheel
-docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-wheel.Dockerfile context/
+./ci/sync-base-env.sh "nvidia/cuda:${CUDA_VER}-devel-${LINUX_VER}" ./ci-wheel.Dockerfile
+docker build $(ci/compute-build-args.sh) --secret id=GH_TOKEN -f ci-wheel.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
 
 export IMAGE_REPO=citestwheel
-docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile context/
+docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
 ```
-
-### Updating `gha-tools`
-
-`ci-conda` and `ci-wheel` use two independent `gha-tools` pins in `versions.yaml`:
-
-- `GHA_TOOLS_BOOTSTRAP_VERSION` supplies the retry helpers used while building the expensive image layers. Update it only when image construction needs new helper behavior.
-- `GHA_TOOLS_VERSION` is the version shipped to users. It is installed in the final image layer so routine updates can reuse all earlier layers.
-
-Update the corresponding SHA-256 value whenever either version changes.
 
 ## Cleaning Up
 

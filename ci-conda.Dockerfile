@@ -6,11 +6,20 @@
 ARG CUDA_VER=notset
 ARG LINUX_VER=notset
 ARG MINIFORGE_VER=notset
+ARG PYTHON_VER=notset
+
+# Update only the tools on an already published image. Keep the full image build
+# last so it remains the default when no target is selected.
+ARG GHA_TOOLS_BASE_IMAGE=rapidsai/ci-conda:cuda${CUDA_VER}-${LINUX_VER}-py${PYTHON_VER}
+FROM ${GHA_TOOLS_BASE_IMAGE} AS gha-tools-update
+
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+  /tmp/build-scripts/install-tools --gha-tools
 
 FROM condaforge/miniforge3:${MINIFORGE_VER} AS miniforge-upstream
-
-ARG GHA_TOOLS_BOOTSTRAP_SHA256=notset
-ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
@@ -21,9 +30,7 @@ RUN \
 umask 002
 
 # install gha-tools for rapids-conda-retry
-GHA_TOOLS_SHA256=${GHA_TOOLS_BOOTSTRAP_SHA256} \
-GHA_TOOLS_VERSION=${GHA_TOOLS_BOOTSTRAP_VERSION} \
-  /tmp/build-scripts/install-tools \
+/tmp/build-scripts/install-tools \
   --gha-tools
 
 # set up pins that apply to all later solves
@@ -47,7 +54,7 @@ PATH="/opt/conda/bin:$PATH" \
   conda clean -aiptfy
 EOF
 
-FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda-core
+FROM nvidia/cuda:${CUDA_VER}-base-${LINUX_VER} AS ci-conda
 
 ARG CONDA_ARCH=notset
 ARG CUDA_VER=notset
@@ -70,8 +77,6 @@ ARG AWS_CLI_VER=notset
 ARG CPU_ARCH=notset
 ARG LINUX_VER=notset
 ARG GH_CLI_VER=notset
-ARG GHA_TOOLS_BOOTSTRAP_SHA256=notset
-ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
 ARG REAL_ARCH=notset
 ARG SCCACHE_VER=notset
 ARG YQ_VER=notset
@@ -87,8 +92,6 @@ LINUX_VER=${LINUX_VER} \
 AWS_CLI_VER=${AWS_CLI_VER} \
 CPU_ARCH=${CPU_ARCH} \
 GH_CLI_VER=${GH_CLI_VER} \
-GHA_TOOLS_SHA256=${GHA_TOOLS_BOOTSTRAP_SHA256} \
-GHA_TOOLS_VERSION=${GHA_TOOLS_BOOTSTRAP_VERSION} \
 REAL_ARCH=${REAL_ARCH} \
 SCCACHE_VER=${SCCACHE_VER} \
 YQ_VER=${YQ_VER} \
@@ -118,23 +121,22 @@ umask 002
 # left behind from updates
 rapids-conda-retry install -y -n base --force-reinstall 'conda>=26.5.0'
 
-
-# install expected Python version
-PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
-PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
+# PYTHON_VERSION may end in "t" for free-threaded builds (e.g. 3.15t)
+PYTHON_VERSION_NUMERIC=${PYTHON_VERSION%t}
+PYTHON_FREE_THREADED_SUFFIX=${PYTHON_VERSION#"$PYTHON_VERSION_NUMERIC"}
+PYTHON_MAJOR_VERSION=${PYTHON_VERSION_NUMERIC%%.*}
+PYTHON_MINOR_VERSION=${PYTHON_VERSION_NUMERIC#*.}
 PYTHON_UPPER_BOUND="${PYTHON_MAJOR_VERSION}.$((PYTHON_MINOR_VERSION+1)).0a0"
 PYTHON_MINOR_PADDED=$(printf "%02d" "$PYTHON_MINOR_VERSION")
 PYTHON_VERSION_PADDED="${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_PADDED}"
 if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
-    PYTHON_ABI_TAG="cp${PYTHON_MAJOR_VERSION}${PYTHON_MINOR_VERSION}"
+    PYTHON_ABI_TAG="cp${PYTHON_MAJOR_VERSION}${PYTHON_MINOR_VERSION}${PYTHON_FREE_THREADED_SUFFIX}"
 else
     PYTHON_ABI_TAG="cpython"
 fi
 
-rapids-conda-retry install -y -n base "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
-
-# ensure all packages are updated
-rapids-conda-retry update --all -y -n base
+# install expected Python version into a separate environment (to be activated as default)
+rapids-conda-retry create -y -n rapids "python>=${PYTHON_VERSION_NUMERIC},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
 
 if [[ "$LINUX_VER" == "rockylinux"* ]]; then
   dnf install -y findutils
@@ -149,10 +151,10 @@ conda clean -aiptfy
 # Reassign root's primary group to root
 usermod -g root root
 
-# ensure conda environment is always activated
+# ensure non-base conda environment is always activated
 ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
-echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> /etc/skel/.bashrc
-echo ". /opt/conda/etc/profile.d/conda.sh; conda activate base" >> ~/.bashrc
+echo ". /opt/conda/etc/profile.d/conda.sh; conda activate rapids" >> /etc/skel/.bashrc
+echo ". /opt/conda/etc/profile.d/conda.sh; conda activate rapids" >> ~/.bashrc
 EOF
 
 # Set RAPIDS versions env variables
@@ -219,7 +221,11 @@ ENV RAPIDS_CONDA_BLD_ROOT_DIR=/tmp/conda-bld-workspace
 ENV RAPIDS_CONDA_BLD_OUTPUT_DIR=/tmp/conda-bld-output
 COPY condarc.tmpl /tmp/condarc.tmpl
 
-# Install CI tools using conda
+# Install CI tools using conda into `base` environment
+# Several of these can lag newly released Python versions, so we install them
+# into the `base` environment, not the activated `rapids` environment
+# The `base` environment is already on `$PATH` and CI can fall back to these
+# tools if they aren't available in the `rapids` env
 RUN <<EOF
 # update condarc file from env vars
 sed \
@@ -229,18 +235,6 @@ sed \
   > /opt/conda/.condarc
 rm -f /tmp/condarc.tmpl
 
-PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
-PYTHON_MINOR_VERSION=${PYTHON_VERSION#*.}
-PYTHON_UPPER_BOUND="${PYTHON_MAJOR_VERSION}.$((PYTHON_MINOR_VERSION+1)).0a0"
-PYTHON_MINOR_PADDED=$(printf "%02d" "$PYTHON_MINOR_VERSION")
-PYTHON_VERSION_PADDED="${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_PADDED}"
-if [[ "$PYTHON_VERSION_PADDED" > "3.12" ]]; then
-    PYTHON_ABI_TAG="cp${PYTHON_MAJOR_VERSION}${PYTHON_MINOR_VERSION}"
-else
-    PYTHON_ABI_TAG="cpython"
-fi
-
-# TODO: remove the ceiling on 'rattler-build' (https://github.com/rapidsai/build-planning/issues/259)
 PACKAGES_TO_INSTALL=(
   'ca-certificates>=2026.1.4'
   'certifi>=2026.1.4'
@@ -250,12 +244,11 @@ PACKAGES_TO_INSTALL=(
   'git>=2.52.0'
   'jq>=1.8.1'
   'packaging>=25.0'
-  "python>=${PYTHON_VERSION},<${PYTHON_UPPER_BOUND}=*_${PYTHON_ABI_TAG}"
   'rapids-dependency-file-generator==1.*,>=1.22'
-  'rattler-build>=0.55.0,<0.58'
+  'rattler-build>=0.76.1'
 )
 
-rapids-conda-retry install -y \
+rapids-conda-retry install -n base -y \
   "${PACKAGES_TO_INSTALL[@]}"
 
 conda clean -aiptfy
@@ -328,18 +321,5 @@ trap 'rm -rf "${test_env}"' EXIT
 /opt/conda/bin/python -m venv "${test_env}"
 PATH="${test_env}/bin:/opt/conda/condabin:${PATH}" conda info
 EOF
-
-# Keep the frequently updated runtime gha-tools payload in the final layer so
-# updating it can reuse every expensive image-construction layer above.
-FROM ci-conda-core AS ci-conda
-
-ARG GHA_TOOLS_SHA256=notset
-ARG GHA_TOOLS_VERSION=notset
-
-RUN \
-  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
-  GHA_TOOLS_SHA256=${GHA_TOOLS_SHA256} \
-  GHA_TOOLS_VERSION=${GHA_TOOLS_VERSION} \
-    /tmp/build-scripts/install-tools --gha-tools
 
 CMD ["/bin/bash"]
