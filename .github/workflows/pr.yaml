@@ -21,6 +21,7 @@ jobs:
     needs:
       - build-images
       - changed-files
+      - validate
     uses: rapidsai/shared-workflows/.github/workflows/pr-builder.yaml@main
     if: always()
     with:
@@ -29,6 +30,10 @@ jobs:
       contents: read
       id-token: write
       pull-requests: read
+  validate:
+    uses: $/.github/workflows/validate.yaml
+    permissions:
+      contents: read
   changed-files:
     permissions:
       actions: read
@@ -43,6 +48,7 @@ jobs:
           - '!.github/CODEOWNERS'
           - '!.github/copy-pr-bot.yaml'
           - '!.github/ops-bot.yaml'
+          - '!.github/workflows/validate.yaml'
           - '!.github/zizmor.yml'
           - '!.gitignore'
           - '!.pre-commit-config.yaml'
@@ -51,6 +57,7 @@ jobs:
           - '!README.md'
           - '!SECURITY.md'
           - '!ci/release/update-version.sh'
+          - '!ci/test-build-cache.sh'
           - '!renovate.json'
   build-images:
     uses: $/.github/workflows/build-and-publish-images.yaml

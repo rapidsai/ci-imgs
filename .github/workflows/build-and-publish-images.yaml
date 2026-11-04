@@ -32,8 +32,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Check build cache scopes
-        run: ci/test-build-cache.sh
       - name: Download gha-tools with git clone
         run: |
           git clone https://github.com/rapidsai/gha-tools.git -b main /tmp/gha-tools
