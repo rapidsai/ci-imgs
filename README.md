@@ -91,6 +91,22 @@ export IMAGE_REPO=citestwheel
 docker build $(ci/compute-build-args.sh) -f citestwheel.Dockerfile -t rapidsai/${IMAGE_REPO}:local context/
 ```
 
+## Build cache
+
+CI stores a registry-backed BuildKit cache for each image variant and architecture.
+Branch builds read and update caches such as
+`rapidsai/ci-wheel:cuda13.4.3-rockylinux8-py3.14-buildcache-arm64`.
+These names omit the RAPIDS release version so a release-number update can reuse
+the existing build layers.
+
+Pull requests read the branch cache and their own cache, but write only to a
+PR-specific staging tag such as
+`rapidsai/staging:ci-wheel-467-cuda13.4.3-rockylinux8-py3.14-buildcache-arm64`.
+Each build exports intermediate-stage layers (`mode=max`) so subsequent builds on
+fresh runners can reuse them. A missing cache leaves the build to populate it.
+
+This does not change the image contents or the installation of `gha-tools`.
+
 ## Cleaning Up
 
 Every build first writes images to the https://hub.docker.com/r/rapidsai/staging repo on DockerHub,
