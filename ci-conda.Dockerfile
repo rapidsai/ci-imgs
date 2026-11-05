@@ -311,3 +311,11 @@ PATH="${test_env}/bin:/opt/conda/condabin:${PATH}" conda info
 EOF
 
 CMD ["/bin/bash"]
+
+# Always refresh the shipped tools last. CI disables caching only for this stage,
+# allowing all image-construction stages above to reuse their cached results.
+FROM ci-conda AS gha-tools-update
+
+RUN \
+  --mount=type=bind,source=scripts,target=/tmp/build-scripts \
+  /tmp/build-scripts/install-tools --gha-tools
