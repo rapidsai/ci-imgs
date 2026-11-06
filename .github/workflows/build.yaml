@@ -47,7 +47,7 @@ jobs:
           aws-region: us-east-2
           role-duration-seconds: 3600
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-rc-producer-${{ github.repository_id }}
-      - uses: rapidsai/shared-actions/release-candidate-context@10a2bb85aa2032447995b7c22ccf9c43a0dc74d0
+      - uses: rapidsai/shared-actions/release-candidate-context@5381edb5bd40dd1e8a76c6fac1c2842247f860bf
         id: context
         with:
           source-sha: ${{ inputs.sha }}
@@ -90,10 +90,10 @@ jobs:
           role-duration-seconds: 3600
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-rc-producer-${{ github.repository_id }}
       - name: Prepare frozen candidate build inputs
-        uses: rapidsai/shared-actions/release-candidate-dependencies@10a2bb85aa2032447995b7c22ccf9c43a0dc74d0
+        uses: rapidsai/shared-actions/release-candidate-dependencies@5381edb5bd40dd1e8a76c6fac1c2842247f860bf
         env:
           RELEASE_CANDIDATE_SHARED_ACTIONS_REPOSITORY: rapidsai/shared-actions
-          RELEASE_CANDIDATE_SHARED_ACTIONS_REVISION: 10a2bb85aa2032447995b7c22ccf9c43a0dc74d0
+          RELEASE_CANDIDATE_SHARED_ACTIONS_REVISION: 5381edb5bd40dd1e8a76c6fac1c2842247f860bf
         with:
           candidate-train-sha256: ${{ needs.candidate-matrix.outputs.train }}
           artifact-family: container
@@ -161,7 +161,7 @@ jobs:
           role-duration-seconds: 3600
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-rc-producer-${{ github.repository_id }}
       - name: Publish run-bound private image catalog
-        uses: rapidsai/shared-actions/release-catalog-dispatch@10a2bb85aa2032447995b7c22ccf9c43a0dc74d0
+        uses: rapidsai/shared-actions/release-catalog-dispatch@5381edb5bd40dd1e8a76c6fac1c2842247f860bf
         with:
           config: >-
             {"release_catalog_key":"container:ci-images",
