@@ -1,0 +1,10 @@
+#!/bin/bash
+# SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+set -euo pipefail
+
+# Never execute a partial installer or retry diagnostics from a download pipe.
+installer="$(mktemp)"
+trap 'rm -f -- "$installer"' EXIT
+rapids-retry curl -fsSL --output "$installer" https://pyenv.run
+bash "$installer"

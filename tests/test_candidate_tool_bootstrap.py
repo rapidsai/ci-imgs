@@ -198,7 +198,15 @@ def test_ordinary_install_ignores_staged_candidate_archive(staged_tools):
     tools.mkdir()
     wget = tools / "wget"
     wget.write_text(
-        '#!/bin/bash\nprintf "%s" "$2" > "$FIXTURE_REQUEST"\ncp "$FIXTURE_ARCHIVE" "$4"\n'
+        "#!/bin/bash\n"
+        "while (( $# )); do\n"
+        '  case "$1" in\n'
+        '    https://*) printf "%s" "$1" > "$FIXTURE_REQUEST" ;;\n'
+        "    -O) output=$2; shift ;;\n"
+        "  esac\n"
+        "  shift\n"
+        "done\n"
+        'cp "$FIXTURE_ARCHIVE" "$output"\n'
     )
     wget.chmod(0o755)
     output = root / "installed"

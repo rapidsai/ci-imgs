@@ -266,7 +266,7 @@ RUN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
 <<EOF
 # install pyenv
-rapids-retry curl https://pyenv.run | bash
+/tmp/build-scripts/install-pyenv
 
 # explicitly parallelize builds run by pyenv's 'python-build' plugin.
 #

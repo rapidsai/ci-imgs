@@ -44,6 +44,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 TOOL_INSTALL_DIR="${TOOL_INSTALL_DIR:-/usr/local/bin}"
+download_dir="$(mktemp -d)"
+trap 'rm -rf -- "$download_dir"' EXIT
 
 # avoid leaking apt-get install'd packages out of this script
 PACKAGES_TO_INSTALL=()
@@ -96,8 +98,8 @@ if (( gha_tools_flag == 1 )); then
   else
   : "${GHA_TOOLS_VERSION:?GHA_TOOLS_VERSION must be set}"
   : "${GHA_TOOLS_SHA256:?GHA_TOOLS_SHA256 must be set}"
-  gha_tools_archive=$(mktemp)
-  wget -q \
+  gha_tools_archive="${download_dir}/tools.tar.gz"
+  wget -q --tries=4 --retry-on-http-error=429,500,502,503,504 --waitretry=10 \
     "https://github.com/rapidsai/gha-tools/releases/download/v${GHA_TOOLS_VERSION}/tools.tar.gz" \
     -O "${gha_tools_archive}"
   echo "${GHA_TOOLS_SHA256}  ${gha_tools_archive}" | sha256sum --check --status
@@ -111,10 +113,10 @@ fi
 # NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
 if (( gh_cli_flag == 1 )); then
   echo "installing 'gh' CLI"
-  rapids-retry wget -q https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz
-  tar -xf gh_*.tar.gz
-  mv gh_*/bin/gh "${TOOL_INSTALL_DIR}"
-  rm -rf gh_*
+  rapids-retry wget -q --tries=1 "https://github.com/cli/cli/releases/download/v${GH_CLI_VER}/gh_${GH_CLI_VER}_linux_${CPU_ARCH}.tar.gz" \
+    -O "${download_dir}/gh.tar.gz"
+  tar -xf "${download_dir}/gh.tar.gz" -C "${download_dir}"
+  mv "${download_dir}"/gh_*/bin/gh "${TOOL_INSTALL_DIR}"
   echo "done installing 'gh' CLI to '${TOOL_INSTALL_DIR}'"
 fi
 
@@ -122,11 +124,10 @@ fi
 if (( aws_cli_flag == 1 )); then
   echo "installing AWS CLI"
   # ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions
-  rapids-retry wget -O /tmp/awscliv2.zip \
+  rapids-retry wget --tries=1 -O "${download_dir}/awscliv2.zip" \
     "https://awscli.amazonaws.com/awscli-exe-linux-${REAL_ARCH}-${AWS_CLI_VER}.zip"
-  unzip -q /tmp/awscliv2.zip -d /tmp
-  /tmp/aws/install
-  rm -rf /tmp/aws /tmp/awscliv2.zip
+  unzip -q "${download_dir}/awscliv2.zip" -d "${download_dir}"
+  "${download_dir}/aws/install"
 fi
 
 # install sccache
@@ -139,8 +140,8 @@ fi
 # install yq
 if (( yq_flag == 1 )); then
   echo "installing 'yq'"
-  rapids-retry wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O /tmp/yq
-  mv /tmp/yq "${TOOL_INSTALL_DIR}"
+  rapids-retry wget -q --tries=1 https://github.com/mikefarah/yq/releases/download/v${YQ_VER}/yq_linux_${CPU_ARCH} -O "${download_dir}/yq"
+  mv "${download_dir}/yq" "${TOOL_INSTALL_DIR}"
   chmod +x "${TOOL_INSTALL_DIR}/yq"
 fi
 
