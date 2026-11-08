@@ -83,3 +83,11 @@ def compute_matrix($input):
     compute_cache_image_name(.)
   ] |
   {include: .};
+
+# Single release-candidate contract for both the producer and train planner.
+# Test images are independent; only build images gate candidate release builds.
+def compute_candidate_matrix($input):
+  compute_matrix($input) |
+  {include: [.include[] | select(.IMAGE_REPO != "citestwheel") |
+    . as $variant | .ARCHES[] as $arch |
+    $variant + {ARCH: $arch} | del(.ARCHES)]};
