@@ -108,8 +108,8 @@ jobs:
           target: ${{ inputs.DOCKER_TARGET }}
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
           cache-from: |
-            type=registry,ref=${{ inputs.MAIN_CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
             type=registry,ref=${{ inputs.PR_CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
+            type=registry,ref=${{ inputs.MAIN_CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
           cache-to: type=registry,ref=${{ inputs.PR_CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }},mode=max,compression=zstd,oci-mediatypes=true,image-manifest=true
           # Enable zstd compression (gzip is default)
           # Compression level 15 is rough based on empirical testing
