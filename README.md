@@ -6,6 +6,10 @@ This repository includes the following CI images for RAPIDS:
 - [`rapidsai/ci-wheel`](https://hub.docker.com/r/rapidsai/ci-wheel/tags): for building and publishing RAPIDS wheels (including pure-Python and manylinux-compliant wheels)
 - [`rapidsai/citestwheel`](https://hub.docker.com/r/rapidsai/citestwheel/tags): for testing wheels
 
+The `ci-wheel` and `citestwheel` images include a standalone `uv` in `/usr/local/bin`,
+with its version pinned in `versions.yaml`. Existing Python tooling continues to be
+installed using pip; downstream jobs explicitly opt in to uv.
+
 ## Tagging Strategy
 
 Images built from the `main` branch in CI are double-published with the following tags:
@@ -71,7 +75,7 @@ If you have the `gh` CLI installed and authenticated, you can use `gh auth token
 
 ```sh
 export LINUX_VER=rockylinux8
-export CUDA_VER=13.3.0
+export CUDA_VER=13.4.3
 export PYTHON_VER=3.14
 export ARCH=amd64
 export GH_TOKEN=$(gh auth token)

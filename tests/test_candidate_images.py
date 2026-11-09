@@ -13,7 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_candidate_matrix_preserves_build_images_and_defers_test_images():
-    env = {**os.environ, "RAPIDS_VERSION_MAJOR_MINOR": "26.12", "BUILD_TYPE": "branch"}
+    env = {
+        **os.environ,
+        "RAPIDS_VERSION_MAJOR_MINOR": "26.12",
+        "BUILD_TYPE": "branch",
+        "GITHUB_REF": "refs/heads/main",
+    }
     production = subprocess.run(
         ["yq", "-o", "json", "matrix.yaml"],
         cwd=ROOT,
@@ -40,7 +45,14 @@ def test_candidate_matrix_preserves_build_images_and_defers_test_images():
         text=True,
     )
     production_rows = [
-        {**{key: value for key, value in row.items() if key != "ARCHES"}, "ARCH": arch}
+        {
+            **{
+                key: value
+                for key, value in row.items()
+                if key not in {"ARCHES", "PR_CACHE_IMAGE_NAME"}
+            },
+            "ARCH": arch,
+        }
         for row in json.loads(production.stdout)["include"]
         for arch in row["ARCHES"]
     ]
@@ -53,13 +65,90 @@ def test_candidate_matrix_preserves_build_images_and_defers_test_images():
     assert {row["ARCH"] for row in candidate_rows} == {"amd64", "arm64"}
 
 
+def test_candidate_planning_needs_no_github_cache_context():
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if key not in {"GITHUB_REPOSITORY", "GITHUB_REF", "CACHE_REF_HASH"}
+    }
+    environment["RAPIDS_VERSION_MAJOR_MINOR"] = "26.12"
+    command = ["bash", "ci/compute-candidate-matrix.sh"]
+    planned = subprocess.check_output(command, cwd=ROOT, env=environment, text=True)
+    dispatched = subprocess.check_output(
+        command,
+        cwd=ROOT,
+        env={
+            **environment,
+            "GITHUB_REPOSITORY": "rapidsai/ci-imgs",
+            "GITHUB_REF": "refs/heads/release-test-build-system-enrollment",
+            "CACHE_REF_HASH": "f" * 32,
+        },
+        text=True,
+    )
+    assert planned == dispatched
+    for row in json.loads(planned)["include"]:
+        assert "PR_CACHE_IMAGE_NAME" not in row
+        assert row["MAIN_CACHE_IMAGE_NAME"].startswith(
+            f"rapidsai/{row['IMAGE_REPO']}:cuda"
+        )
+
+
+@pytest.mark.parametrize(
+    "build_type,repository,ref,ref_name",
+    [
+        ("branch", "rapidsai/ci-imgs", "refs/heads/main", "main"),
+        ("branch", "rapidsai/ci-imgs", "refs/heads/feature/foo", "feature/foo"),
+        ("branch", "rapidsai/ci-imgs", "refs/heads/feature-foo", "feature-foo"),
+        ("pull-request", "rapidsai/ci-imgs", "refs/pull/486/merge", "486/merge"),
+        ("branch", "someone/ci-imgs", "refs/heads/feature/foo", "feature/foo"),
+    ],
+)
+def test_publication_cache_uses_main_or_repository_and_full_ref(
+    tmp_path, build_type, repository, ref, ref_name
+):
+    import hashlib
+
+    binaries = tmp_path / "bin"
+    binaries.mkdir()
+    version = binaries / "rapids-version-major-minor"
+    version.write_text("#!/bin/sh\nprintf '26.12\\n'\n")
+    version.chmod(0o755)
+    rows = json.loads(
+        subprocess.check_output(
+            ["bash", "ci/compute-matrix.sh"],
+            cwd=ROOT,
+            env={
+                **os.environ,
+                "PATH": f"{binaries}:{os.environ['PATH']}",
+                "BUILD_TYPE": build_type,
+                "GITHUB_REPOSITORY": repository,
+                "GITHUB_REF": ref,
+                "GITHUB_REF_NAME": ref_name,
+            },
+            text=True,
+        )
+    )["include"]
+    digest = hashlib.sha256(f"{repository}:{ref}".encode()).hexdigest()[:32]
+    for row in rows:
+        if build_type == "branch" and ref == "refs/heads/main":
+            assert row["PR_CACHE_IMAGE_NAME"] == row["MAIN_CACHE_IMAGE_NAME"]
+        else:
+            assert row["PR_CACHE_IMAGE_NAME"].startswith(
+                f"rapidsai/staging:{row['IMAGE_REPO']}-ref-{digest}-cuda"
+            )
+            assert row["PR_CACHE_IMAGE_NAME"] != row["MAIN_CACHE_IMAGE_NAME"]
+
+
 @pytest.mark.parametrize("arch", ["amd64", "arm64"])
 @pytest.mark.parametrize("image_repo", ["ci-conda", "ci-wheel", "citestwheel"])
-def test_archive_retains_real_bytes_and_frozen_identity(tmp_path, arch, image_repo):
+@pytest.mark.parametrize("python_version", ["3.14", "3.15t"])
+def test_archive_retains_real_bytes_and_frozen_identity(
+    tmp_path, arch, image_repo, python_version
+):
     archive = tmp_path / ".release-candidate-artifacts/container"
     archive.mkdir(parents=True)
     (archive / "image.tar").write_bytes(b"original OCI archive bytes")
-    image = f"rapidsai/{image_repo}:26.12-cuda13.3.0-rockylinux8-py3.14"
+    image = f"rapidsai/{image_repo}:26.12-cuda13.3.0-rockylinux8-py{python_version}"
     subprocess.run(
         ["bash", str(ROOT / "ci/prepare-candidate-image.sh")],
         cwd=tmp_path,
@@ -75,7 +164,7 @@ def test_archive_retains_real_bytes_and_frozen_identity(tmp_path, arch, image_re
         gzip.decompress(
             (
                 archive
-                / f"image-{image_repo}-26.12-cuda13.3.0-rockylinux8-py3.14-{arch}.tar.gz"
+                / f"image-{image_repo}-26.12-cuda13.3.0-rockylinux8-py{python_version}-{arch}.tar.gz"
             ).read_bytes()
         )
         == b"original OCI archive bytes"
@@ -84,7 +173,7 @@ def test_archive_retains_real_bytes_and_frozen_identity(tmp_path, arch, image_re
         "ecosystem": "container",
         "name": f"docker.io/rapidsai/{image_repo}",
         "version": "26.12",
-        "build": f"26.12-cuda13.3.0-rockylinux8-py3.14-{arch}",
+        "build": f"26.12-cuda13.3.0-rockylinux8-py{python_version}-{arch}",
         "platform": f"linux/{arch}",
     }
 
@@ -134,6 +223,7 @@ def test_all_candidate_matrix_archives_have_unique_catalog_paths(tmp_path):
     [
         ("rapidsai/ci-wheel:latest", "amd64"),
         ("evil/image:tag", "amd64"),
+        ("rapidsai/ci-conda:26.12-cuda13.3.0-rockylinux8-py3.15tt", "amd64"),
         ("rapidsai/ci-conda:26.12-cuda13.3.0-ubuntu24.04-py3.14", "x86"),
     ],
 )
@@ -165,6 +255,10 @@ def test_candidate_workflow_never_logs_in_pushes_or_exports_registry_cache():
             if "docker/build-push-action" in step.get("uses", ""):
                 assert step["with"]["push"] is False
                 assert "cache-to" not in step["with"]
+                assert step["with"]["cache-from"] == (
+                    "type=registry,ref=${{ matrix.MAIN_CACHE_IMAGE_NAME }}"
+                    "-buildcache-${{ matrix.ARCH }}"
+                )
                 assert step["with"]["outputs"].startswith("type=oci,")
                 assert step["with"]["context"] == "context"
     assert "container:ci-images" in (ROOT / ".github/workflows/build.yaml").read_text()
@@ -177,7 +271,7 @@ def test_candidate_workflow_never_logs_in_pushes_or_exports_registry_cache():
             "ci-conda",
             {
                 "CUDA_BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-base-ubuntu22.04",
-                "MINIFORGE_BASE_IMAGE": "docker.io/condaforge/miniforge3:26.1.0-0",
+                "MINIFORGE_BASE_IMAGE": "docker.io/condaforge/miniforge3:26.9.4-0",
             },
         ),
         (

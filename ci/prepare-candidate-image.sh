@@ -7,7 +7,7 @@ set -euo pipefail
 : "${ARCH:?Image architecture is required}"
 : "${RAPIDS_VERSION_MAJOR_MINOR:?Frozen container version is required}"
 if [[ ! "${ARCH}" =~ ^(amd64|arm64)$ ]] ||
-   [[ ! "${IMAGE_NAME}" =~ ^rapidsai/(ci-conda|ci-wheel|citestwheel):[0-9]{2}\.[0-9]{2}-cuda[0-9.]+-[a-z0-9.]+-py[0-9.]+$ ]]; then
+   [[ ! "${IMAGE_NAME}" =~ ^rapidsai/(ci-conda|ci-wheel|citestwheel):[0-9]{2}\.[0-9]{2}-cuda[0-9.]+-[a-z0-9.]+-py[0-9]+\.[0-9]+t?$ ]]; then
   echo 'Invalid candidate image identity' >&2
   exit 1
 fi

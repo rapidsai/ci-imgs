@@ -53,6 +53,7 @@ ARG GHA_TOOLS_CANDIDATE_REVISION=""
 ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
 ARG REAL_ARCH=notset
 ARG SCCACHE_VER=notset
+ARG UV_VER=notset
 RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
@@ -68,11 +69,14 @@ GHA_TOOLS_SHA256=${GHA_TOOLS_BOOTSTRAP_SHA256} \
 GHA_TOOLS_VERSION=${GHA_TOOLS_BOOTSTRAP_VERSION} \
 REAL_ARCH=${REAL_ARCH} \
 SCCACHE_VER=${SCCACHE_VER} \
+UV_VER=${UV_VER} \
   /tmp/build-scripts/install-tools \
     --aws-cli \
     --gh-cli \
     --gha-tools \
-    --sccache
+    --rustup \
+    --sccache \
+    --uv
 EOF
 
 # install other tools and libraries
@@ -434,9 +438,11 @@ ARG REAL_ARCH=notset
 ENV PYENV_ROOT="/pyenv"                      \
     AUDITWHEEL_POLICY="${POLICY}"            \
     AUDITWHEEL_ARCH="${REAL_ARCH}"           \
-    AUDITWHEEL_PLAT="${POLICY}_${REAL_ARCH}"
+    AUDITWHEEL_PLAT="${POLICY}_${REAL_ARCH}" \
+    RUSTUP_HOME="/usr/local/rustup"          \
+    CARGO_HOME="/usr/local/cargo"
 
-ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
+ENV PATH="${CARGO_HOME}/bin:${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 

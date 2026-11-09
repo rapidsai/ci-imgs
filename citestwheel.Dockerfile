@@ -36,6 +36,7 @@ ARG GHA_TOOLS_CANDIDATE_REVISION=""
 ARG GHA_TOOLS_BOOTSTRAP_VERSION=notset
 ARG LINUX_VER=notset
 ARG REAL_ARCH=notset
+ARG UV_VER=notset
 RUN \
   --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN \
   --mount=type=bind,source=scripts,target=/tmp/build-scripts \
@@ -53,10 +54,12 @@ GHA_TOOLS_VERSION=${GHA_TOOLS_BOOTSTRAP_VERSION} \
 AWS_CLI_VER=${AWS_CLI_VER} \
 GH_CLI_VER=${GH_CLI_VER} \
 REAL_ARCH=${REAL_ARCH} \
+UV_VER=${UV_VER} \
   /tmp/build-scripts/install-tools \
     --aws-cli \
     --gh-cli \
-    --gha-tools
+    --gha-tools \
+    --uv
 
 set -e
 case "${LINUX_VER}" in

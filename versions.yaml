@@ -1,17 +1,17 @@
 # SPDX-FileCopyrightText: Copyright (c) 2024-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 # renovate: datasource=github-releases depName=cli/cli
-GH_CLI_VER: 2.98.0
+GH_CLI_VER: 2.103.3
 # renovate: datasource=pypi depName=codecov-cli
 CODECOV_VER: 11.3.1
 # renovate: datasource=github-releases depName=mikefarah/yq
-YQ_VER: 4.53.6
+YQ_VER: 4.54.1
 # renovate: datasource=github-releases depName=aws/aws-cli
 AWS_CLI_VER: 2.28.1
 # renovate: datasource=docker depName=condaforge/miniforge3 versioning=docker
-MINIFORGE_VER: 26.1.0-0
+MINIFORGE_VER: 26.9.4-0
 # renovate: datasource=github-releases depName=rapidsai/sccache
-SCCACHE_VER: 0.17.0-rapids.4
+SCCACHE_VER: 0.18.0-rapids.14
 # Keep this bootstrap pin stable. It supplies retry helpers used while the images
 # are built and should only move when those build-time helpers need an update.
 GHA_TOOLS_BOOTSTRAP_VERSION: 0.0.213
@@ -19,3 +19,5 @@ GHA_TOOLS_BOOTSTRAP_SHA256: b1ecd475a068cdbe608ee44f78f4585b9a4a0f5829086f57a1ff
 # renovate: datasource=github-releases depName=rapidsai/gha-tools
 GHA_TOOLS_VERSION: 0.0.213
 GHA_TOOLS_SHA256: b1ecd475a068cdbe608ee44f78f4585b9a4a0f5829086f57a1ffeb0ff0d58047
+# renovate: datasource=github-releases depName=astral-sh/uv
+UV_VER: 0.13.7

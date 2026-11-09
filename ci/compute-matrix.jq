@@ -45,11 +45,22 @@ def compute_image_name_no_rapids_version($x):
   "rapidsai/" + $repo + ":" + $tag_prefix + "cuda" + $x.CUDA_VER + "-" + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
   $x + {IMAGE_NAME_NO_RAPIDS_VERSION: .};
 
-# Compute the persistent branch cache name, including for pull requests. Pull
-# requests can read this cache but write only to their PR-specific cache.
+# All builds can read the shared main-publication cache.
 def compute_cache_image_name($x):
   "rapidsai/" + $x.IMAGE_REPO + ":cuda" + $x.CUDA_VER + "-" + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
-  $x + {CACHE_IMAGE_NAME: .};
+  $x + {MAIN_CACHE_IMAGE_NAME: .};
+
+# On main publications, including manual ones, PR_CACHE_IMAGE_NAME is the same
+# as MAIN_CACHE_IMAGE_NAME. Other refs use their own staging cache.
+def compute_pr_cache_image_name($x):
+  if env.BUILD_TYPE == "branch" and env.GITHUB_REF == "refs/heads/main" then
+    $x.MAIN_CACHE_IMAGE_NAME
+  elif ((env.CACHE_REF_HASH // "") | test("^[0-9a-f]{32}$")) then
+    "rapidsai/staging:" + $x.IMAGE_REPO + "-ref-" + env.CACHE_REF_HASH + "-cuda" + $x.CUDA_VER + "-" + $x.LINUX_VER + "-py" + $x.PYTHON_VER
+  else
+    error("CACHE_REF_HASH must identify the repository and full ref")
+  end |
+  $x + {PR_CACHE_IMAGE_NAME: .};
 
 # Checks the current entry to see if it matches the given exclude
 def matches($entry; $exclude):
@@ -63,7 +74,7 @@ def filter_excludes($entry; $excludes):
 def lists2dict($keys; $values):
   reduce range($keys | length) as $ind ({}; . + {($keys[$ind]): $values[$ind]});
 
-def compute_matrix($input):
+def compute_base_matrix($input):
   ($input.exclude // []) as $excludes |
   $input | del(.exclude) |
   keys_unsorted as $matrix_keys |
@@ -84,10 +95,16 @@ def compute_matrix($input):
   ] |
   {include: .};
 
+# Publication cache writes depend on the invoking repository/ref. Keep that
+# runtime context out of the shared, source-bound candidate planning contract.
+def compute_matrix($input):
+  compute_base_matrix($input) |
+  .include |= map(compute_pr_cache_image_name(.));
+
 # Single release-candidate contract for both the producer and train planner.
 # Test images are independent; only build images gate candidate release builds.
 def compute_candidate_matrix($input):
-  compute_matrix($input) |
+  compute_base_matrix($input) |
   {include: [.include[] | select(.IMAGE_REPO != "citestwheel") |
     . as $variant | .ARCHES[] as $arch |
     $variant + {ARCH: $arch} | del(.ARCHES)]};

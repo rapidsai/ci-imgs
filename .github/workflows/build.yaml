@@ -142,6 +142,8 @@ jobs:
           platforms: linux/${{ matrix.ARCH }}
           pull: true
           push: false
+          # Import public main caches without registry credentials or exports.
+          cache-from: type=registry,ref=${{ matrix.MAIN_CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
           build-args: ${{ steps.args.outputs.ARGS }}
           tags: docker.io/${{ matrix.IMAGE_NAME }}-${{ matrix.ARCH }}
           outputs: type=oci,dest=.release-candidate-artifacts/container/image.tar,oci-mediatypes=true
