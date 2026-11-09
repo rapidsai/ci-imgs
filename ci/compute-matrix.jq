@@ -50,9 +50,9 @@ def compute_cache_image_name($x):
   "rapidsai/" + $x.IMAGE_REPO + ":cuda" + $x.CUDA_VER + "-" + $x.LINUX_VER + "-" + "py" + $x.PYTHON_VER |
   $x + {MAIN_CACHE_IMAGE_NAME: .};
 
-# Main publications, including manual ones, refresh the shared cache. Every
-# other ref writes only its own staging cache, including mirrored PR refs.
-def compute_cache_write_image_name($x):
+# On main publications, including manual ones, PR_CACHE_IMAGE_NAME is the same
+# as MAIN_CACHE_IMAGE_NAME. Other refs use their own staging cache.
+def compute_pr_cache_image_name($x):
   if env.BUILD_TYPE == "branch" and env.GITHUB_REF == "refs/heads/main" then
     $x.MAIN_CACHE_IMAGE_NAME
   elif ((env.CACHE_REF_HASH // "") | test("^[0-9a-f]{32}$")) then
@@ -60,7 +60,7 @@ def compute_cache_write_image_name($x):
   else
     error("CACHE_REF_HASH must identify the repository and full ref")
   end |
-  $x + {CACHE_WRITE_IMAGE_NAME: .};
+  $x + {PR_CACHE_IMAGE_NAME: .};
 
 # Checks the current entry to see if it matches the given exclude
 def matches($entry; $exclude):
@@ -92,6 +92,6 @@ def compute_matrix($input):
     compute_image_name(.) |
     compute_image_name_no_rapids_version(.) |
     compute_cache_image_name(.) |
-    compute_cache_write_image_name(.)
+    compute_pr_cache_image_name(.)
   ] |
   {include: .};

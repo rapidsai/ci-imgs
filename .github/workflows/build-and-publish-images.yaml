@@ -68,7 +68,8 @@ jobs:
       IMAGE_REPO: ${{ matrix.IMAGE_REPO }}
       IMAGE_NAME: ${{ matrix.IMAGE_NAME }}
       MAIN_CACHE_IMAGE_NAME: ${{ matrix.MAIN_CACHE_IMAGE_NAME }}
-      CACHE_WRITE_IMAGE_NAME: ${{ matrix.CACHE_WRITE_IMAGE_NAME }}
+      # On main publications, PR_CACHE_IMAGE_NAME equals MAIN_CACHE_IMAGE_NAME.
+      PR_CACHE_IMAGE_NAME: ${{ matrix.PR_CACHE_IMAGE_NAME }}
       DOCKERFILE: ${{ matrix.DOCKERFILE }}
       DOCKER_TARGET: ${{ matrix.DOCKER_TARGET }}
   build-multiarch-manifest:
