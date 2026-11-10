@@ -16,7 +16,7 @@ END_MARKER = "# END base-image ENV (used by ci/sync-base-env.sh, do not edit)"
 
 DOCKERFILE = Path(__file__).resolve().parent.parent / "ci-wheel.Dockerfile"
 
-lines = [line for line in DOCKERFILE.read_text().splitlines()]
+lines = DOCKERFILE.read_text().splitlines()
 
 begins = [i for i, line in enumerate(lines) if line == BEGIN_MARKER]
 ends = [i for i, line in enumerate(lines) if line == END_MARKER]
