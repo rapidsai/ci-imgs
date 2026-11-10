@@ -1,0 +1,87 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+name: One-off gha-tools refresh proof
+on:
+  push:
+    branches: [codex/isolate-gha-tools-layer]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    if: github.repository == 'rapidsai/ci-imgs' && contains(github.event.head_commit.message, '[benchmark-gha-refresh]')
+    runs-on: linux-arm64-cpu4
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - name: Freeze source, base digests and tool archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ci/one-off-refresh/prepare.sh
+          tar -cf refresh-benchmark-inputs.tar prepared
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: refresh-benchmark-inputs
+          path: refresh-benchmark-inputs.tar
+          retention-days: 14
+  seed:
+    needs: prepare
+    name: seed (${{ matrix.image }})
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [ci-conda, ci-wheel]
+    uses: $/.github/workflows/benchmark-gha-refresh-build.yaml
+    with:
+      image: ${{ matrix.image }}
+      phase: seed
+    secrets:
+      GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
+      GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
+  warm:
+    needs: seed
+    name: warm (${{ matrix.image }})
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [ci-conda, ci-wheel]
+    uses: $/.github/workflows/benchmark-gha-refresh-build.yaml
+    with:
+      image: ${{ matrix.image }}
+      phase: warm
+    secrets:
+      GPUCIBOT_DOCKERHUB_USER: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
+      GPUCIBOT_DOCKERHUB_TOKEN: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
+  summarize:
+    if: always() && needs.prepare.result == 'success'
+    needs: [prepare, seed, warm]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: refresh-evidence-*
+          path: evidence
+          merge-multiple: true
+      - name: Summarize verified timings
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ci/one-off-refresh/summarize.sh
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: gha-refresh-proof
+          path: |
+            refresh-summary.md
+            refresh-results.json
+            refresh-jobs.json
+          retention-days: 14

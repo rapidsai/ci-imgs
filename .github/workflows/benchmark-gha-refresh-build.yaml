@@ -1,0 +1,88 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+name: One-off refresh build
+on:
+  workflow_call:
+    inputs:
+      image:
+        type: string
+        required: true
+      phase:
+        type: string
+        required: true
+    secrets:
+      GPUCIBOT_DOCKERHUB_USER:
+        required: true
+      GPUCIBOT_DOCKERHUB_TOKEN:
+        required: true
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: linux-arm64-cpu4
+    timeout-minutes: 90
+    env:
+      IMAGE: ${{ inputs.image }}
+      PHASE: ${{ inputs.phase }}
+      IMAGE_TAG: rapidsai/staging:refresh-bench-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.image }}-${{ inputs.phase }}
+      CACHE_SEED: rapidsai/staging:refresh-bench-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.image }}-main-cache
+      CACHE_SCOPED: rapidsai/staging:refresh-bench-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.image }}-scoped-cache
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: refresh-benchmark-inputs
+      - name: Unpack inputs
+        run: tar -xf refresh-benchmark-inputs.tar
+      - if: inputs.phase == 'warm'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: refresh-evidence-${{ inputs.image }}-seed
+          path: seed
+      - uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
+        with:
+          username: ${{ secrets.GPUCIBOT_DOCKERHUB_USER }}
+          password: ${{ secrets.GPUCIBOT_DOCKERHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+        with:
+          buildkitd-config: /etc/buildkit/buildkitd.toml
+      - name: Select frozen release and arguments
+        id: args
+        run: |
+          slot=OLD
+          if [[ ${PHASE} == warm ]]; then slot=NEW; fi
+          {
+            echo 'args<<BUILDARGS'
+            cat "prepared/${IMAGE}.args"
+            echo "BENCHMARK_TOOLS_VERSION=$(jq -r .version "prepared/${slot}.json")"
+            echo "BENCHMARK_TOOLS_SHA256=$(jq -r .sha256 "prepared/${slot}.json")"
+            echo BUILDARGS
+          } >> "${GITHUB_OUTPUT}"
+      - name: Build image
+        id: build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: prepared/context
+          file: prepared/${{ inputs.image }}.Dockerfile
+          platforms: linux/arm64
+          pull: true
+          build-args: ${{ steps.args.outputs.args }}
+          no-cache-filters: gha-tools-update
+          cache-from: |
+            ${{ inputs.phase == 'warm' && format('type=registry,ref={0}', env.CACHE_SCOPED) || '' }}
+            ${{ inputs.phase == 'warm' && format('type=registry,ref={0}', env.CACHE_SEED) || '' }}
+          cache-to: type=registry,ref=${{ inputs.phase == 'seed' && env.CACHE_SEED || env.CACHE_SCOPED }},mode=max,compression=zstd,oci-mediatypes=true,image-manifest=true
+          outputs: type=registry,name=${{ env.IMAGE_TAG }},compression=zstd,force-compression=true,oci-mediatypes=true,compression-level=15
+          provenance: false
+          sbom: false
+          secrets: GH_TOKEN=${{ github.token }}
+      - name: Verify release contents and layer reuse
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: bash prepared/verify.sh
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: refresh-evidence-${{ inputs.image }}-${{ inputs.phase }}
+          path: evidence/
+          retention-days: 14
+          if-no-files-found: warn
