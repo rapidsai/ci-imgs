@@ -42,7 +42,7 @@ if (( count <= TEST_FAILURES )); then
     exit 1
 fi
 if [[ "$0" == */curl ]]; then
-    printf 'printf complete > "%s"\\n' "$TEST_MARKER" > "$output"
+    printf 'mkdir -p "$PYENV_ROOT"\\nprintf complete > "%s"\\n' "$TEST_MARKER" > "$output"
 else
     cp "$TEST_ARCHIVE" "$output"
 fi
@@ -74,6 +74,7 @@ exit 1
         "TEST_OUTPUTS": str(tmp_path / "outputs"),
         "TEST_PREMATURE": str(tmp_path / "premature"),
         "TEST_MARKER": str(tmp_path / "executed"),
+        "PYENV_ROOT": str(tmp_path / "pyenv"),
         "TMPDIR": str(tmp_path),
     }
     return tmp_path, binaries, environment
@@ -118,3 +119,86 @@ def test_wheel_images_use_the_safe_pyenv_installer(filename):
     contents = (ROOT / filename).read_text()
     assert "/tmp/build-scripts/install-pyenv" in contents
     assert "curl https://pyenv.run | bash" not in contents
+
+
+@pytest.mark.parametrize("stage", ["core", "plugin"])
+@pytest.mark.parametrize("failures", [1, 3])
+def test_pyenv_clone_retries_discard_partial_installations(transfer, stage, failures):
+    directory, binaries, environment = transfer
+    installer = directory / "installer"
+    installer.write_text(
+        "#!/bin/bash\nset -euo pipefail\n"
+        'test ! -e "$PYENV_ROOT"\n'
+        'git clone core "$PYENV_ROOT"\n'
+        'git clone plugin "$PYENV_ROOT/plugins/test-plugin"\n'
+    )
+    curl = binaries / "curl"
+    curl.write_text(
+        "#!/bin/bash\nset -euo pipefail\n"
+        "while (( $# )); do\n"
+        '  if [[ "$1" == "--output" ]]; then cp "$TEST_INSTALLER" "$2"; exit 0; fi\n'
+        "  shift\ndone\nexit 1\n"
+    )
+    git = binaries / "git"
+    git.write_text(
+        "#!/bin/bash\nset -euo pipefail\n"
+        'test ! -e "$TEST_DESTINATION"\n'
+        'test ! -e "$3"\n'
+        'mkdir -p "$3"\n'
+        'if [[ "$2" == "$TEST_FAILED_STAGE" ]]; then\n'
+        "  count=0\n"
+        '  if [[ -f "$TEST_GIT_CALLS" ]]; then count=$(cat "$TEST_GIT_CALLS"); fi\n'
+        '  count=$((count + 1))\nprintf "%s" "$count" > "$TEST_GIT_CALLS"\n'
+        "  if (( count <= TEST_GIT_FAILURES )); then\n"
+        '    printf partial > "$3/partial"\n'
+        "    echo 'error: RPC failed; curl 18; fatal: early EOF' >&2\n"
+        "    exit 128\n  fi\nfi\n"
+        'printf complete > "$3/complete"\n'
+    )
+    git.chmod(0o755)
+    destination = Path(environment["PYENV_ROOT"])
+    calls = directory / "git-calls"
+    result = subprocess.run(
+        ["bash", str(ROOT / "context/scripts/install-pyenv")],
+        env={
+            **environment,
+            "TEST_INSTALLER": str(installer),
+            "TEST_DESTINATION": str(destination),
+            "TEST_FAILED_STAGE": stage,
+            "TEST_GIT_CALLS": str(calls),
+            "TEST_GIT_FAILURES": str(failures),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
+    )
+    assert (result.returncode == 0) == (failures < 3), result.stdout + result.stderr
+    assert int(calls.read_text()) == min(failures + 1, 3)
+    assert not list(directory.glob(".pyenv-install.*"))
+    if failures < 3:
+        assert (destination / "complete").read_text() == "complete"
+        assert (destination / "plugins/test-plugin/complete").read_text() == "complete"
+        assert not list(destination.rglob("partial"))
+    else:
+        assert not destination.exists()
+
+
+def test_pyenv_install_preserves_existing_destination(transfer):
+    directory, _, environment = transfer
+    destination = Path(environment["PYENV_ROOT"])
+    destination.mkdir()
+    sentinel = destination / "existing"
+    sentinel.write_text("keep")
+    result = subprocess.run(
+        ["bash", str(ROOT / "context/scripts/install-pyenv")],
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
+    )
+    assert result.returncode != 0
+    assert sentinel.read_text() == "keep"
+    assert not (directory / "calls").exists()
+    assert not list(directory.glob(".pyenv-install.*"))

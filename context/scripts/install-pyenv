@@ -3,8 +3,25 @@
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
+pyenv_root="${PYENV_ROOT:-${HOME}/.pyenv}"
+if [[ -e "$pyenv_root" || -L "$pyenv_root" ]]; then
+  echo "Refusing to replace existing pyenv destination: $pyenv_root" >&2
+  exit 1
+fi
+
+# Stage beside the destination so only a complete installation is moved into place.
+mkdir -p -- "$(dirname -- "$pyenv_root")"
+work_dir="$(mktemp -d "$(dirname -- "$pyenv_root")/.pyenv-install.XXXXXX")"
+installer="${work_dir}/installer"
+checkout="${work_dir}/root"
+trap 'rm -rf -- "$work_dir"' EXIT
+
 # Never execute a partial installer or retry diagnostics from a download pipe.
-installer="$(mktemp)"
-trap 'rm -f -- "$installer"' EXIT
 rapids-retry curl -fsSL --output "$installer" https://pyenv.run
-bash "$installer"
+# The installer refuses an existing root, including one left by a failed clone.
+# Discard only our owned checkout before retrying the core and plugin clones.
+rapids-retry bash -euo pipefail -c '
+  rm -rf -- "$1"
+  PYENV_ROOT="$1" bash "$2"
+' _ "$checkout" "$installer"
+mv -- "$checkout" "$pyenv_root"
