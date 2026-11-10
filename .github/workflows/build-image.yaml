@@ -106,6 +106,8 @@ jobs:
           build-args: |
             ${{ steps.generate-build-args.outputs.ARGS }}
           target: ${{ inputs.DOCKER_TARGET }}
+          # Refresh the final tools layer without invalidating construction stages.
+          no-cache-filters: gha-tools-update
           tags: ${{ inputs.IMAGE_NAME }}-${{ matrix.ARCH }}
           cache-from: |
             type=registry,ref=${{ inputs.PR_CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
