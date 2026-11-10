@@ -164,7 +164,8 @@ def cache_scope(
         raise CacheError("private cache requires the trusted candidate workflow")
     patterns = {
         "image_repository": r"ci-conda|ci-wheel|citestwheel",
-        "target": r"[A-Za-z0-9_-]+",
+        # Empty selects the Dockerfile's default stage (for example ci-conda).
+        "target": r"[A-Za-z0-9_-]*",
         "arch": r"amd64|arm64",
         "linux": r"[a-z0-9.]+",
         "cuda": r"[0-9]+(?:\.[0-9]+){1,2}",

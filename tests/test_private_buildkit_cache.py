@@ -222,6 +222,85 @@ def variant():
     }
 
 
+def test_restore_accepts_reported_default_target_variant(
+    candidate_environment, tmp_path, monkeypatch
+):
+    candidate_environment.update(
+        DOCKER_TARGET="", ARCH="amd64", CUDA_VER="12.2.2", PYTHON_VER="3.15t"
+    )
+    for name, value in candidate_environment.items():
+        monkeypatch.setenv(name, value)
+    store = MemoryStore()
+    monkeypatch.setattr(cache, "S3Store", lambda: store)
+    output = tmp_path / "outputs"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "cache",
+            "restore",
+            "--root",
+            str(tmp_path / "cache"),
+            "--output",
+            str(output),
+        ],
+    )
+    cache.main()
+    assert len(store.gets) == 1
+    assert "cache-from=\n" in output.read_text()
+    assert "cache-to=type=local" in output.read_text()
+    assert "use-cache=true" in output.read_text()
+
+
+def test_generated_candidate_matrix_has_valid_distinct_cache_scopes(
+    candidate_environment,
+):
+    rows = json.loads(
+        subprocess.check_output(
+            ["bash", "ci/compute-candidate-matrix.sh"],
+            cwd=ROOT,
+            env={**os.environ, **candidate_environment},
+            text=True,
+        )
+    )["include"]
+    scopes = set()
+    for row in rows:
+        actual = {
+            "image_repository": row["IMAGE_REPO"],
+            "target": row.get("DOCKER_TARGET") or "",
+            "arch": row["ARCH"],
+            "linux": row["LINUX_VER"],
+            "cuda": row["CUDA_VER"],
+            "python": row["PYTHON_VER"],
+            "release": candidate_environment["RAPIDS_VERSION_MAJOR_MINOR"],
+        }
+        scopes.add(cache.cache_scope(actual, candidate_environment))
+    assert len(scopes) == len(rows)
+    assert any(not row.get("DOCKER_TARGET") for row in rows)
+    assert any(row["PYTHON_VER"].endswith("t") for row in rows)
+
+
+@pytest.mark.parametrize("target", ["", "builder", "ci-conda"])
+def test_default_and_named_targets_keep_separate_scopes(candidate_environment, target):
+    scopes = {
+        cache.cache_scope({**variant(), "target": value}, candidate_environment)
+        for value in ("", "builder", "ci-conda")
+    }
+    assert len(scopes) == 3
+    assert (
+        cache.cache_scope({**variant(), "target": target}, candidate_environment)
+        in scopes
+    )
+
+
+@pytest.mark.parametrize(
+    "target", ["../stage", "bad stage", "stage\n", "stage,mode=max"]
+)
+def test_invalid_target_is_still_rejected(candidate_environment, target):
+    with pytest.raises(cache.CacheError, match="invalid private cache variant"):
+        cache.cache_scope({**variant(), "target": target}, candidate_environment)
+
+
 def test_scope_survives_unrelated_train_changes_and_separates_variants(
     candidate_environment,
 ):
