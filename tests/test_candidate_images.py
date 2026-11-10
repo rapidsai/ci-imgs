@@ -254,11 +254,9 @@ def test_candidate_workflow_never_logs_in_pushes_or_exports_registry_cache():
             assert "docker/login-action" not in step.get("uses", "")
             if "docker/build-push-action" in step.get("uses", ""):
                 assert step["with"]["push"] is False
-                assert "cache-to" not in step["with"]
-                assert step["with"]["cache-from"] == (
-                    "type=registry,ref=${{ matrix.MAIN_CACHE_IMAGE_NAME }}"
-                    "-buildcache-${{ matrix.ARCH }}"
-                )
+                assert step["with"]["cache-to"] == "${{ steps.cache.outputs.cache-to }}"
+                assert "steps.cache.outputs.cache-from" in step["with"]["cache-from"]
+                assert "steps.cache.outputs.use-cache" in step["with"]["cache-from"]
                 assert step["with"]["outputs"].startswith("type=oci,")
                 assert step["with"]["context"] == "context"
     assert "container:ci-images" in (ROOT / ".github/workflows/build.yaml").read_text()

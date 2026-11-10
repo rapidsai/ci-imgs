@@ -109,6 +109,46 @@ that work is independent of release readiness. The regular workflow retains
 the full image matrix and its `latest.yaml` validation. Private candidates do
 not publish `latest` tags.
 
+### Private candidate layer caches
+
+Candidate image builds restore and export Docker's supported `local` BuildKit
+cache backend through the private `rapids-release-candidates` bucket. This
+avoids registry publication credentials and the experimental native S3 backend.
+The disposable cache lives under `build-cache/ci-imgs/buildkit/v1/`, separately
+from immutable candidate artifacts and train references. Its scope includes the
+trusted repository/ref, image repository/target, architecture, OS, CUDA, Python,
+RAPIDS release, and optional refresh generation. An unrelated package change
+in a new train therefore does not discard the image's layer cache.
+
+Every build exports to a fresh local directory so obsolete blobs do not
+accumulate. The helper uploads a create-only run/attempt snapshot, then updates
+the small `latest.json` pointer using an ETag conditional write. A concurrent
+writer cannot silently replace a newer pointer. Restores verify the archive
+SHA-256, reject unsafe tar paths and links, and validate OCI metadata and blob
+digests. Snapshots are limited to 4 GiB compressed, 16 GiB expanded and 100,000
+entries; imports expire after seven days. Missing, inaccessible, oversized, or
+corrupt caches warn and fall back to a normal build. A successful image build
+still creates its OCI archive and passes independent catalog admission.
+
+The frozen train's `candidate_image_policy.mode=refresh` bypasses both private
+and public cache imports and runs Docker with `no-cache`; it can still export
+the refreshed layers. `refresh_key` optionally selects a persistent new cache
+generation. This policy is independent of compiler `sccache` policy.
+
+Before enabling writes, the existing CI-images private producer role needs
+`s3:GetObject` and `s3:PutObject` only on
+`arn:aws:s3:::rapids-release-candidates/build-cache/ci-imgs/buildkit/v1/*`.
+The bucket policy must admit conditional updates only for this prefix's
+`*/latest.json` pointers; snapshot writes remain create-only. Configure a
+seven-day lifecycle for current and noncurrent cache objects and abort
+incomplete multipart uploads after one day. These permissions and retention
+rules do not apply to canonical artifacts or public publishing. Source-only
+validation does not establish that this live infrastructure is activated.
+
+Run `RUN_BUILDKIT_CACHE_SMOKE=1 python -m pytest -q
+tests/test_private_buildkit_cache.py` to exercise two fresh BuildKit daemons
+with an exported cache transferred through the helper's storage interface.
+
 ## Cleaning Up
 
 Every build first writes images to the https://hub.docker.com/r/rapidsai/staging repo on DockerHub,

@@ -47,7 +47,7 @@ jobs:
           aws-region: us-east-2
           role-duration-seconds: 3600
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-rc-producer-${{ github.repository_id }}
-      - uses: rapidsai/shared-actions/release-candidate-context@f1b91d61c122ac51f260d440a25295db902109b9
+      - uses: rapidsai/shared-actions/release-candidate-context@871f8c784ef0071b2fb29b40bfb00fb98f10a55d
         id: context
         with:
           source-sha: ${{ inputs.sha }}
@@ -75,6 +75,14 @@ jobs:
       packages: read
     env:
       RAPIDS_SHA: ${{ inputs.sha }}
+      BUILD_TYPE: ${{ inputs.build_type }}
+      IMAGE_REPO: ${{ matrix.IMAGE_REPO }}
+      DOCKER_TARGET: ${{ matrix.DOCKER_TARGET }}
+      ARCH: ${{ matrix.ARCH }}
+      CUDA_VER: ${{ matrix.CUDA_VER }}
+      LINUX_VER: ${{ matrix.LINUX_VER }}
+      PYTHON_VER: ${{ matrix.PYTHON_VER }}
+      RAPIDS_VERSION_MAJOR_MINOR: ${{ needs.candidate-matrix.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -90,10 +98,10 @@ jobs:
           role-duration-seconds: 3600
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-rc-producer-${{ github.repository_id }}
       - name: Prepare frozen candidate build inputs
-        uses: rapidsai/shared-actions/release-candidate-dependencies@f1b91d61c122ac51f260d440a25295db902109b9
+        uses: rapidsai/shared-actions/release-candidate-dependencies@871f8c784ef0071b2fb29b40bfb00fb98f10a55d
         env:
           RELEASE_CANDIDATE_SHARED_ACTIONS_REPOSITORY: rapidsai/shared-actions
-          RELEASE_CANDIDATE_SHARED_ACTIONS_REVISION: f1b91d61c122ac51f260d440a25295db902109b9
+          RELEASE_CANDIDATE_SHARED_ACTIONS_REVISION: 871f8c784ef0071b2fb29b40bfb00fb98f10a55d
         with:
           candidate-train-sha256: ${{ needs.candidate-matrix.outputs.train }}
           artifact-family: container
@@ -133,6 +141,12 @@ jobs:
         run: ci/sync-base-env.sh "${BASE_IMAGE}" "${DOCKERFILE}"
       - name: Prepare local archive directory
         run: mkdir -p .release-candidate-artifacts/container
+      - name: Restore the private BuildKit layer cache
+        id: cache
+        run: >-
+          python3 ci/private_buildkit_cache.py restore
+          --root "${RUNNER_TEMP}/ci-imgs-buildkit-cache"
+          --output "${GITHUB_OUTPUT}"
       - name: Build the real CI image to an OCI archive
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
@@ -142,8 +156,12 @@ jobs:
           platforms: linux/${{ matrix.ARCH }}
           pull: true
           push: false
-          # Import public main caches without registry credentials or exports.
-          cache-from: type=registry,ref=${{ matrix.MAIN_CACHE_IMAGE_NAME }}-buildcache-${{ matrix.ARCH }}
+          no-cache: ${{ steps.cache.outputs.use-cache != 'true' }}
+          # A frozen refresh request bypasses both public and private cache imports.
+          cache-from: |
+            ${{ steps.cache.outputs.use-cache == 'true' && format('type=registry,ref={0}-buildcache-{1}', matrix.MAIN_CACHE_IMAGE_NAME, matrix.ARCH) || '' }}
+            ${{ steps.cache.outputs.cache-from }}
+          cache-to: ${{ steps.cache.outputs.cache-to }}
           build-args: ${{ steps.args.outputs.ARGS }}
           tags: docker.io/${{ matrix.IMAGE_NAME }}-${{ matrix.ARCH }}
           outputs: type=oci,dest=.release-candidate-artifacts/container/image.tar,oci-mediatypes=true
@@ -162,8 +180,12 @@ jobs:
           aws-region: us-east-2
           role-duration-seconds: 3600
           role-to-assume: arn:aws:iam::279114543810:role/gha-oidc-rc-producer-${{ github.repository_id }}
+      - name: Save the private BuildKit layer cache
+        run: >-
+          python3 ci/private_buildkit_cache.py save
+          --root "${RUNNER_TEMP}/ci-imgs-buildkit-cache"
       - name: Publish run-bound private image catalog
-        uses: rapidsai/shared-actions/release-catalog-dispatch@f1b91d61c122ac51f260d440a25295db902109b9
+        uses: rapidsai/shared-actions/release-catalog-dispatch@871f8c784ef0071b2fb29b40bfb00fb98f10a55d
         with:
           config: >-
             {"release_catalog_key":"container:ci-images",
