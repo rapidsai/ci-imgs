@@ -55,8 +55,7 @@ jobs:
   build-images:
     uses: $/.github/workflows/build-and-publish-images.yaml
     needs: changed-files
-    # The marked one-off proof runs a bounded image subset in its own workflow.
-    if: ${{ !contains(github.event.head_commit.message, '[benchmark-gha-refresh]') && fromJSON(needs.changed-files.outputs.changed_file_groups).build_images }}
+    if: fromJSON(needs.changed-files.outputs.changed_file_groups).build_images
     with:
       build_type: pull-request
     secrets:
