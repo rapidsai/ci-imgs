@@ -11,8 +11,10 @@ set -e -u -o pipefail
 aws_cli_flag=0
 gh_cli_flag=0
 gha_tools_flag=0
+rustup_flag=0
 sccache_flag=0
 yq_flag=0
+uv_flag=0
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -28,8 +30,16 @@ while [[ $# -gt 0 ]]; do
       gha_tools_flag=1
       shift
       ;;
+    --rustup)
+      rustup_flag=1
+      shift
+      ;;
     --sccache)
       sccache_flag=1
+      shift
+      ;;
+    --uv)
+      uv_flag=1
       shift
       ;;
     --yq)
@@ -78,6 +88,15 @@ if (( gha_tools_flag == 1 )); then
   echo "done installing 'gha-tools' to '${TOOL_INSTALL_DIR}'"
 fi
 
+# Keep uv outside Python environments so activating a venv or conda env preserves it.
+if (( uv_flag == 1 )); then
+  uv_installer=$(mktemp)
+  rapids-retry wget -q "https://astral.sh/uv/${UV_VER}/install.sh" -O "${uv_installer}"
+  UV_UNMANAGED_INSTALL="${TOOL_INSTALL_DIR}" sh "${uv_installer}"
+  rm -f "${uv_installer}"
+  uv --version
+fi
+
 # install gh CLI
 # NOTE: gh CLI must be installed before rapids-install-sccache (uses `gh release download`)
 if (( gh_cli_flag == 1 )); then
@@ -98,6 +117,15 @@ if (( aws_cli_flag == 1 )); then
   unzip -q /tmp/awscliv2.zip -d /tmp
   /tmp/aws/install
   rm -rf /tmp/aws /tmp/awscliv2.zip
+fi
+
+# install rustup
+if (( rustup_flag == 1 )); then
+  echo "installing rustup"
+  rapids-retry wget -O /tmp/rustup-init https://sh.rustup.rs/
+  RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo sh /tmp/rustup-init --yes --no-update-default-toolchain
+  rm /tmp/rustup-init
+  echo "done installing 'rustup' CLI to '${TOOL_INSTALL_DIR}'"
 fi
 
 # install sccache
