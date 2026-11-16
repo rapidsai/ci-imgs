@@ -44,8 +44,6 @@ if [[
     docker manifest push "rapidsai/${IMAGE_REPO}:${MANIFEST_TAG}"
   else
     PR_NUM="${GITHUB_REF_NAME##*/}"
-    docker manifest create "rapidsai/staging:${IMAGE_REPO}-${PR_NUM}-latest" "${source_tags[@]}"
-    docker manifest push "rapidsai/staging:${IMAGE_REPO}-${PR_NUM}-latest"
 
     docker manifest create "rapidsai/staging:${IMAGE_REPO}-${PR_NUM}-${MANIFEST_TAG}" "${source_tags[@]}"
     docker manifest push "rapidsai/staging:${IMAGE_REPO}-${PR_NUM}-${MANIFEST_TAG}"
