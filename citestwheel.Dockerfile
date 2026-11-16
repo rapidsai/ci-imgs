@@ -197,17 +197,12 @@ pyenv install ${PYTHON_VER}
 pyenv global ${PYTHON_VER}
 python --version
 
-git clone https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git /tmp/rapids-dependency-file-generator
-git -C /tmp/rapids-dependency-file-generator checkout 4a42c76999ef986c884c2f57bdc2e48d4b3b7f1a
-
 # `rapids-pip-retry` defaults to using `python -m pip` to select which `pip` to
 # use so should be compatible with `pyenv`
 rapids-pip-retry install --upgrade pip
 rapids-pip-retry install \
   'certifi>=2026.1.4' \
-  '/tmp/rapids-dependency-file-generator'
-
-rm -r /tmp/rapids-dependency-file-generator
+  'rapids-dependency-file-generator @ git+https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git@4a42c76999ef986c884c2f57bdc2e48d4b3b7f1a'
 
 pyenv rehash
 
