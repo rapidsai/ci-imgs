@@ -19,7 +19,7 @@ Images built from the `main` branch in CI are double-published with the followin
 :cuda{cuda_version}-{operating_system}-py{python_version}
 ```
 
-Images built from other branches (including release branches), pull requests, or locally only receive the versioned tag (with `{rapids_version}-`).
+Images built from other branches (including release branches), pull requests, or locally only receive the versioned CUDA/OS/Python tag (with `{rapids_version}-`).
 
 One particular combination is also chosen for `latest` tags like these:
 
@@ -57,6 +57,13 @@ pull in bug fixes, new features, etc. without needing to manually update tags as
 ## `latest` tag
 
 The `latest` image tags are controlled by the values in `latest.yaml`.
+
+Pull request builds publish the selected combination to staging with these tags:
+
+```text
+rapidsai/staging:{image_type}-{pr_num}-latest
+rapidsai/staging:{image_type}-{pr_num}-{rapids_version}-latest
+```
 
 ## Building the images locally
 
