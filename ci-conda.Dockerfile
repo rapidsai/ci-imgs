@@ -245,6 +245,8 @@ rapids-conda-retry install -n base -y -c /opt/dfg-prototype rapids-dependency-fi
 
 rm -r /tmp/rapids-dependency-file-generator
 
+sed -e '/channels:/ a \ \ - file:///opt/dfg-prototype' -i /opt/conda/.condarc
+
 conda clean -aiptfy
 EOF
 
