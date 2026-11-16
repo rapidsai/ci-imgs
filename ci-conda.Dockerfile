@@ -232,12 +232,18 @@ PACKAGES_TO_INSTALL=(
   'git>=2.52.0'
   'jq>=1.8.1'
   'packaging>=25.0'
-  'rapids-dependency-file-generator==1.*,>=1.22'
   'rattler-build>=0.76.1'
 )
 
 rapids-conda-retry install -n base -y \
   "${PACKAGES_TO_INSTALL[@]}"
+
+git clone https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git /tmp/rapids-dependency-file-generator
+git -C /tmp/rapids-dependency-file-generator checkout 4a42c76999ef986c884c2f57bdc2e48d4b3b7f1a
+rattler-build --output-dir /tmp/rapids-dependency-file-generator --recipe-dir /tmp/rapids-dependnecy-file-generator/recipe
+rapids-conda-retry install -n base -y -c /tmp/rapids-dependency-file-generator/output rapids-dependency-file-generator
+
+rm -r /tmp/rapids-dependency-file-generator
 
 conda clean -aiptfy
 EOF

@@ -314,6 +314,9 @@ RUN \
 # >=25.3 floor is there to ensure we have a version that respects '--build-constraint'
 rapids-pip-retry install --upgrade 'pip>=25.3'
 
+git clone https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git /tmp/rapids-dependency-file-generator
+git -C /tmp/rapids-dependency-file-generator checkout 4a42c76999ef986c884c2f57bdc2e48d4b3b7f1a
+
 PACKAGES_TO_INSTALL=(
   'abi3audit>=0.0.26'
   'auditwheel>=6.2.0'
@@ -323,12 +326,14 @@ PACKAGES_TO_INSTALL=(
   'dunamai>=1.25.0'
   'patchelf>=0.17.2.4'
   'pydistcheck==0.11.*'
-  'rapids-dependency-file-generator==1.*,>=1.22'
+  '/tmp/rapids-dependency-file-generator'
   'twine>=6.2.0'
   'wheel>=0.45.1'
 )
 rapids-pip-retry install \
   "${PACKAGES_TO_INSTALL[@]}"
+
+rm -r /tmp/rapids-dependency-file-generator
 
 pyenv rehash
 
