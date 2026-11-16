@@ -1,5 +1,5 @@
 #!/bin/bash
-# SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
@@ -33,7 +33,6 @@ if [[
   "${LATEST_CUDA_VER}" == "${CUDA_VER}" &&
   "${LATEST_PYTHON_VER}" == "${PYTHON_VER}"
 ]]; then
-  # only create/update ':latest' manifest if it is a non-PR workflow.
   MANIFEST_TAG="${RAPIDS_VERSION_MAJOR_MINOR}-latest"
   if [[ "${BUILD_TYPE}" != "pull-request" ]]; then
     # create/update ":latest"
@@ -44,6 +43,11 @@ if [[
     docker manifest create "rapidsai/${IMAGE_REPO}:${MANIFEST_TAG}" "${source_tags[@]}"
     docker manifest push "rapidsai/${IMAGE_REPO}:${MANIFEST_TAG}"
   else
-    echo "Skipping 'latest' and '${MANIFEST_TAG}' manifest creation for PR workflow."
+    PR_NUM="${GITHUB_REF_NAME##*/}"
+    docker manifest create "rapidsai/staging:${IMAGE_REPO}-${PR_NUM}-latest" "${source_tags[@]}"
+    docker manifest push "rapidsai/staging:${IMAGE_REPO}-${PR_NUM}-latest"
+
+    docker manifest create "rapidsai/staging:${IMAGE_REPO}-${PR_NUM}-${MANIFEST_TAG}" "${source_tags[@]}"
+    docker manifest push "rapidsai/staging:${IMAGE_REPO}-${PR_NUM}-${MANIFEST_TAG}"
   fi
 fi
