@@ -12,7 +12,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_candidate_matrix_preserves_build_images_and_defers_test_images():
+def test_candidate_matrix_preserves_package_build_os_and_defers_test_images():
     env = {
         **os.environ,
         "RAPIDS_VERSION_MAJOR_MINOR": "26.12",
@@ -58,10 +58,31 @@ def test_candidate_matrix_preserves_build_images_and_defers_test_images():
     ]
     candidate_rows = json.loads(candidate.stdout)["include"]
     assert candidate_rows == [
-        row for row in production_rows if row["IMAGE_REPO"] != "citestwheel"
+        row
+        for row in production_rows
+        if row["IMAGE_REPO"] != "citestwheel" and row["LINUX_VER"] == "rockylinux8"
     ]
     assert len(candidate_rows) < len(production_rows)
     assert all(row["IMAGE_REPO"] != "citestwheel" for row in candidate_rows)
+    assert {row["LINUX_VER"] for row in candidate_rows} == {"rockylinux8"}
+    assert {row["IMAGE_REPO"] for row in candidate_rows} == {"ci-conda", "ci-wheel"}
+    assert {row["LINUX_VER"] for row in production_rows} == {
+        "rockylinux8",
+        "ubuntu22.04",
+        "ubuntu24.04",
+        "ubuntu26.04",
+    }
+    for image_repo in ("ci-conda", "ci-wheel"):
+        dimensions = ("ARCH", "CUDA_VER", "PYTHON_VER")
+        assert {
+            tuple(row[key] for key in dimensions)
+            for row in candidate_rows
+            if row["IMAGE_REPO"] == image_repo
+        } == {
+            tuple(row[key] for key in dimensions)
+            for row in production_rows
+            if row["IMAGE_REPO"] == image_repo
+        }
     assert {row["ARCH"] for row in candidate_rows} == {"amd64", "arm64"}
 
 

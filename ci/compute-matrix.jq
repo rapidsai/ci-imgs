@@ -103,8 +103,10 @@ def compute_matrix($input):
 
 # Single release-candidate contract for both the producer and train planner.
 # Test images are independent; only build images gate candidate release builds.
+# Conda packages and wheels build on Rocky Linux 8. Other OS variants provide
+# test coverage and are built by the regular publication workflow.
 def compute_candidate_matrix($input):
   compute_base_matrix($input) |
-  {include: [.include[] | select(.IMAGE_REPO != "citestwheel") |
+  {include: [.include[] | select(.IMAGE_REPO != "citestwheel" and .LINUX_VER == "rockylinux8") |
     . as $variant | .ARCHES[] as $arch |
     $variant + {ARCH: $arch} | del(.ARCHES)]};
