@@ -238,7 +238,7 @@ PACKAGES_TO_INSTALL=(
 rapids-conda-retry install -n base -y \
   "${PACKAGES_TO_INSTALL[@]}"
 
-git clone --revision=4a42c76999ef986c884c2f57bdc2e48d4b3b7f1a https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git /tmp/rapids-dependency-file-generator
+git clone --revision=7ad2dedcb53b173280ba26cb85794e96b1d51585 https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git /tmp/rapids-dependency-file-generator
 rattler-build build --output-dir /opt/dfg-prototype --recipe-dir /tmp/rapids-dependency-file-generator/recipe
 rapids-conda-retry install -n base -y -c /opt/dfg-prototype rapids-dependency-file-generator
 

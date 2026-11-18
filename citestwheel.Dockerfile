@@ -202,7 +202,7 @@ python --version
 rapids-pip-retry install --upgrade pip
 rapids-pip-retry install \
   'certifi>=2026.1.4' \
-  'rapids-dependency-file-generator @ git+https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git@4a42c76999ef986c884c2f57bdc2e48d4b3b7f1a'
+  'rapids-dependency-file-generator @ git+https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git@7ad2dedcb53b173280ba26cb85794e96b1d51585'
 
 pyenv rehash
 

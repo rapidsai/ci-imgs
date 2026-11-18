@@ -323,7 +323,7 @@ PACKAGES_TO_INSTALL=(
   'dunamai>=1.25.0'
   'patchelf>=0.17.2.4'
   'pydistcheck==0.11.*'
-  'rapids-dependency-file-generator @ git+https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git@4a42c76999ef986c884c2f57bdc2e48d4b3b7f1a'
+  'rapids-dependency-file-generator @ git+https://github.com/KyleFromNVIDIA/rapids-dependency-file-generator.git@7ad2dedcb53b173280ba26cb85794e96b1d51585'
   'twine>=6.2.0'
   'wheel>=0.45.1'
 )
