@@ -105,8 +105,13 @@ def compute_matrix($input):
 # Test images are independent; only build images gate candidate release builds.
 # Conda packages and wheels build on Rocky Linux 8. Other OS variants provide
 # test coverage and are built by the regular publication workflow.
+# Stable-ABI wheels use the oldest supported Python; Conda still needs every
+# Python variant. Keep publication images until shared CI callers migrate.
 def compute_candidate_matrix($input):
+  ($input.PYTHON_VER | map(select(test("^[0-9]+[.][0-9]+$"))) |
+    min_by(split(".") | map(tonumber))) as $oldest_python |
   compute_base_matrix($input) |
   {include: [.include[] | select(.IMAGE_REPO != "citestwheel" and .LINUX_VER == "rockylinux8") |
+    select(.IMAGE_REPO != "ci-wheel" or .PYTHON_VER == $oldest_python) |
     . as $variant | .ARCHES[] as $arch |
     $variant + {ARCH: $arch} | del(.ARCHES)]};
