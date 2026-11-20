@@ -112,6 +112,10 @@ class S3Store:
         if result.returncode:
             if "(404)" in result.stderr or "(NoSuchKey)" in result.stderr:
                 return None
+            if "(403)" in result.stderr or "(AccessDenied)" in result.stderr:
+                # S3 can hide an absent key from a role without ListBucket
+                # access. A conditional create is safe even if the key exists.
+                return None
             raise CacheError("private cache pointer read unavailable")
         value = result.stdout.strip()
         if not re.fullmatch(r'"[a-f0-9-]+"', value):
@@ -213,21 +217,29 @@ def image_policy(environment: dict[str, str]) -> tuple[str, str]:
     return policy["mode"], policy["refresh_key"]
 
 
-def validate_layout(directory: Path) -> None:
-    """Validate OCI cache metadata and every content-addressed blob."""
+def validate_layout(directory: Path, *, local_export: bool = False) -> list[Path]:
+    """Validate the OCI files and return the paths safe to archive."""
     if directory.is_symlink():
         raise CacheError("private cache directory cannot be a symlink")
+    pending = list(directory.iterdir())
+    files = []
     total = 0
-    for count, path in enumerate(directory.rglob("*"), start=1):
+    count = 0
+    while pending:
+        path = pending.pop()
+        count += 1
         if count > MAX_MEMBERS or path.is_symlink():
             raise CacheError("private cache contains too many entries or a symlink")
         name = path.relative_to(directory).as_posix()
         if path.is_dir():
-            # BuildKit leaves its empty content-ingestion work directory behind.
-            if name == "ingest" and not any(path.iterdir()):
+            # BuildKit can leave transient upload state in its local exporter.
+            if local_export and name == "ingest":
                 continue
             if name not in ("blobs", "blobs/sha256"):
-                raise CacheError("private cache contains an unexpected directory")
+                raise CacheError(
+                    f"private cache contains an unexpected directory: {name!r}"
+                )
+            pending.extend(path.iterdir())
             continue
         match = BLOB.fullmatch(name)
         if not path.is_file() or (
@@ -239,6 +251,7 @@ def validate_layout(directory: Path) -> None:
             raise CacheError("private cache exceeds its expanded size limit")
         if match is not None and file_digest(path) != match[1]:
             raise CacheError("private cache blob checksum mismatch")
+        files.append(path)
     try:
         if any(
             (directory / name).stat().st_size > 1024**2
@@ -261,6 +274,7 @@ def validate_layout(directory: Path) -> None:
                 raise CacheError("private OCI cache manifest is missing")
     except (OSError, ValueError, AttributeError, TypeError) as error:
         raise CacheError("invalid private OCI cache metadata") from error
+    return files
 
 
 def extract_cache(archive: Path, destination: Path) -> None:
@@ -347,7 +361,7 @@ def save(store: Store, scope: str, root: Path, run_id: str, attempt: str) -> Non
     if not run_id.isdigit() or not attempt.isdigit():
         raise CacheError("invalid private cache run identity")
     exported = root / "export"
-    validate_layout(exported)
+    files = validate_layout(exported, local_export=True)
     with tempfile.TemporaryDirectory(prefix="save-", dir=root) as temporary:
         archive = Path(temporary) / "cache.tar.gz"
         with (
@@ -357,13 +371,12 @@ def save(store: Store, scope: str, root: Path, run_id: str, attempt: str) -> Non
             ) as compressed,
             tarfile.open(fileobj=compressed, mode="w|") as target,
         ):
-            for path in sorted(exported.rglob("*")):
-                if path.is_file():
-                    target.add(
-                        path,
-                        arcname=path.relative_to(exported).as_posix(),
-                        recursive=False,
-                    )
+            for path in sorted(files):
+                target.add(
+                    path,
+                    arcname=path.relative_to(exported).as_posix(),
+                    recursive=False,
+                )
         if archive.stat().st_size > MAX_ARCHIVE_BYTES:
             raise CacheError("private cache exceeds its archive size limit")
         key = f"{PREFIX}/{scope}/snapshots/{run_id}-{attempt}/cache.tar.gz"

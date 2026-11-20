@@ -69,6 +69,9 @@ def stored(tmp_path):
     store = MemoryStore()
     root = tmp_path / "first"
     layout(root / "export")
+    ingest = root / "export/ingest/transaction"
+    ingest.mkdir(parents=True)
+    (ingest / "data").write_bytes(b"transient BuildKit upload")
     cache.save(store, SCOPE, root, "123", "1")
     return store
 
@@ -81,6 +84,7 @@ def test_round_trip_and_pointer_published_last(stored, tmp_path):
     assert stored.puts[1] == (f"{cache.PREFIX}/{SCOPE}/latest.json", None)
     assert cache.restore(stored, SCOPE, tmp_path / "next")
     cache.validate_layout(tmp_path / "next/import")
+    assert not (tmp_path / "next/import/ingest").exists()
 
 
 def test_pointer_updates_use_compare_and_swap(stored, tmp_path):
@@ -419,8 +423,9 @@ def test_optional_cache_denial_preserves_cold_build(
     assert "use-cache=true" in output.read_text()
 
 
+@pytest.mark.parametrize("head_status", [0, 403])
 def test_s3_writes_are_conditional_and_use_only_private_namespace(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, head_status
 ):
     monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/aws")
     store = cache.S3Store()
@@ -428,6 +433,10 @@ def test_s3_writes_are_conditional_and_use_only_private_namespace(
 
     def run(arguments):
         commands.append(arguments)
+        if arguments[0] == "head-object" and head_status:
+            return subprocess.CompletedProcess(
+                arguments, 1, "", "An error occurred (403) (Forbidden)"
+            )
         return subprocess.CompletedProcess(arguments, 0, '"0123456789abcdef"\n', "")
 
     monkeypatch.setattr(store, "_run", run)
@@ -439,7 +448,12 @@ def test_s3_writes_are_conditional_and_use_only_private_namespace(
     previous = store.etag(pointer)
     store.put(pointer, source, expected_etag=previous)
     assert commands[0][-2:] == ["--if-none-match", "*"]
-    assert commands[-1][-2:] == ["--if-match", '"0123456789abcdef"']
+    expected = (
+        ["--if-none-match", "*"]
+        if head_status
+        else ["--if-match", '"0123456789abcdef"']
+    )
+    assert commands[-1][-2:] == expected
     assert all(
         command[command.index("--bucket") + 1] == cache.BUCKET for command in commands
     )
@@ -568,7 +582,7 @@ def test_real_buildkit_cache_roundtrip_with_fresh_builders(tmp_path):
                 assert "CACHED" in result.stderr
             else:
                 cache.save(store, SCOPE, root, "123", "1")
-        cache.validate_layout(tmp_path / "second/export")
+        cache.validate_layout(tmp_path / "second/export", local_export=True)
     finally:
         for builder in builders:
             subprocess.run(
