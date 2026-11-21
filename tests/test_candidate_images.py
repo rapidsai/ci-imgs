@@ -57,22 +57,12 @@ def test_candidate_matrix_preserves_package_build_os_and_defers_test_images():
         for arch in row["ARCHES"]
     ]
     candidate_rows = json.loads(candidate.stdout)["include"]
-    oldest_python = min(
-        (
-            version
-            for version in yaml.safe_load((ROOT / "matrix.yaml").read_text())[
-                "PYTHON_VER"
-            ]
-            if not version.endswith("t")
-        ),
-        key=lambda version: tuple(map(int, version.split("."))),
-    )
     assert candidate_rows == [
         row
         for row in production_rows
         if row["IMAGE_REPO"] != "citestwheel"
         and row["LINUX_VER"] == "rockylinux8"
-        and (row["IMAGE_REPO"] != "ci-wheel" or row["PYTHON_VER"] == oldest_python)
+        and row["PYTHON_VER"] == "3.12"
     ]
     assert len(candidate_rows) < len(production_rows)
     assert all(row["IMAGE_REPO"] != "citestwheel" for row in candidate_rows)
@@ -93,16 +83,15 @@ def test_candidate_matrix_preserves_package_build_os_and_defers_test_images():
         } == {
             tuple(row[key] for key in dimensions)
             for row in production_rows
-            if row["IMAGE_REPO"] == image_repo
-            and (image_repo != "ci-wheel" or row["PYTHON_VER"] == oldest_python)
+            if row["IMAGE_REPO"] == image_repo and row["PYTHON_VER"] == "3.12"
         }
     assert {row["ARCH"] for row in candidate_rows} == {"amd64", "arm64"}
 
 
-def test_candidate_wheels_choose_numeric_oldest_standard_python():
+def _candidate_rows(python_versions):
     matrix = yaml.safe_load((ROOT / "matrix.yaml").read_text())
-    matrix["PYTHON_VER"] = ["3.10", "3.8t", "3.9"]
-    result = subprocess.check_output(
+    matrix["PYTHON_VER"] = python_versions
+    return subprocess.run(
         ["jq", "-c", 'include "ci/compute-matrix"; compute_candidate_matrix(.)'],
         input=json.dumps(matrix),
         cwd=ROOT,
@@ -111,17 +100,25 @@ def test_candidate_wheels_choose_numeric_oldest_standard_python():
             "RAPIDS_VERSION_MAJOR_MINOR": "26.12",
             "BUILD_TYPE": "branch",
         },
+        check=False,
+        capture_output=True,
         text=True,
     )
-    rows = json.loads(result)["include"]
-    assert {row["PYTHON_VER"] for row in rows if row["IMAGE_REPO"] == "ci-wheel"} == {
-        "3.9"
-    }
-    assert {row["PYTHON_VER"] for row in rows if row["IMAGE_REPO"] == "ci-conda"} == {
-        "3.10",
-        "3.8t",
-        "3.9",
-    }
+
+
+def test_candidate_images_only_use_python_3_12():
+    result = _candidate_rows(["3.10", "3.12", "3.13", "3.15t"])
+    assert result.returncode == 0
+    rows = json.loads(result.stdout)["include"]
+    assert {row["IMAGE_REPO"] for row in rows} == {"ci-conda", "ci-wheel"}
+    assert {row["PYTHON_VER"] for row in rows} == {"3.12"}
+
+
+def test_candidate_matrix_fails_without_python_3_12():
+    result = _candidate_rows(["3.13", "3.14"])
+    assert result.returncode != 0
+    assert "candidate Python 3.12" in result.stderr
+    assert result.stdout == ""
 
 
 def test_candidate_planning_needs_no_github_cache_context():

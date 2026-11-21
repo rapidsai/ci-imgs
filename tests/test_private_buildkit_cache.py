@@ -281,7 +281,7 @@ def test_generated_candidate_matrix_has_valid_distinct_cache_scopes(
         scopes.add(cache.cache_scope(actual, candidate_environment))
     assert len(scopes) == len(rows)
     assert any(not row.get("DOCKER_TARGET") for row in rows)
-    assert any(row["PYTHON_VER"].endswith("t") for row in rows)
+    assert {row["PYTHON_VER"] for row in rows} == {"3.12"}
 
 
 @pytest.mark.parametrize("target", ["", "builder", "ci-conda"])

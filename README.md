@@ -105,8 +105,9 @@ Update the corresponding SHA-256 value whenever either version changes. CI store
 The private release candidate workflow builds `ci-conda` and `ci-wheel` images
 only for Rocky Linux 8, the OS used to build Conda packages and wheels on both
 amd64 and arm64. Ubuntu variants are omitted from candidate image construction
-because they are not used for package builds. CUDA and Python coverage remain
-unchanged. The producer and train planner use the same candidate matrix generator,
+because they are not used for package builds. Only Python 3.12 is built; the
+CUDA coverage is unchanged, and planning fails if 3.12 is missing from
+`matrix.yaml`. The producer and train planner use the same candidate matrix generator,
 so omitted variants are not required for candidate completion.
 It omits `citestwheel` so test image construction and failures do not delay the
 release. Test images may be built later through the regular image workflow;
