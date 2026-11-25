@@ -57,12 +57,29 @@ def test_candidate_matrix_preserves_package_build_os_and_defers_test_images():
         for arch in row["ARCHES"]
     ]
     candidate_rows = json.loads(candidate.stdout)["include"]
-    assert candidate_rows == [
+    build_rows = [
         row
         for row in production_rows
         if row["IMAGE_REPO"] != "citestwheel"
         and row["LINUX_VER"] == "rockylinux8"
         and row["PYTHON_VER"] == "3.12"
+    ]
+    newest = {
+        (row["IMAGE_REPO"], row["CUDA_VER"].split(".")[0]): max(
+            (
+                other["CUDA_VER"]
+                for other in build_rows
+                if other["IMAGE_REPO"] == row["IMAGE_REPO"]
+                and other["CUDA_VER"].split(".")[0] == row["CUDA_VER"].split(".")[0]
+            ),
+            key=lambda version: tuple(int(part) for part in version.split(".")),
+        )
+        for row in build_rows
+    }
+    assert candidate_rows == [
+        row
+        for row in build_rows
+        if row["CUDA_VER"] == newest[(row["IMAGE_REPO"], row["CUDA_VER"].split(".")[0])]
     ]
     assert len(candidate_rows) < len(production_rows)
     assert all(row["IMAGE_REPO"] != "citestwheel" for row in candidate_rows)
@@ -83,14 +100,18 @@ def test_candidate_matrix_preserves_package_build_os_and_defers_test_images():
         } == {
             tuple(row[key] for key in dimensions)
             for row in production_rows
-            if row["IMAGE_REPO"] == image_repo and row["PYTHON_VER"] == "3.12"
+            if row["IMAGE_REPO"] == image_repo
+            and row["PYTHON_VER"] == "3.12"
+            and row["CUDA_VER"] in {"12.9.2", "13.4.3"}
         }
     assert {row["ARCH"] for row in candidate_rows} == {"amd64", "arm64"}
 
 
-def _candidate_rows(python_versions):
+def _candidate_rows(python_versions, cuda_versions=None):
     matrix = yaml.safe_load((ROOT / "matrix.yaml").read_text())
     matrix["PYTHON_VER"] = python_versions
+    if cuda_versions is not None:
+        matrix["CUDA_VER"] = cuda_versions
     return subprocess.run(
         ["jq", "-c", 'include "ci/compute-matrix"; compute_candidate_matrix(.)'],
         input=json.dumps(matrix),
@@ -112,6 +133,23 @@ def test_candidate_images_only_use_python_3_12():
     rows = json.loads(result.stdout)["include"]
     assert {row["IMAGE_REPO"] for row in rows} == {"ci-conda", "ci-wheel"}
     assert {row["PYTHON_VER"] for row in rows} == {"3.12"}
+
+
+def test_candidate_images_use_the_newest_cuda_of_each_major_version():
+    # Release builds run in the newest CUDA of each major version; older minors
+    # would be built and verified without any release build running in them.
+    result = _candidate_rows(
+        ["3.12"], ["12.2.2", "12.9.2", "13.0.3", "13.10.0", "13.4.3"]
+    )
+    assert result.returncode == 0, result.stderr
+    rows = json.loads(result.stdout)["include"]
+    assert {(row["IMAGE_REPO"], row["CUDA_VER"]) for row in rows} == {
+        ("ci-conda", "12.9.2"),
+        ("ci-conda", "13.10.0"),
+        ("ci-wheel", "12.9.2"),
+        ("ci-wheel", "13.10.0"),
+    }
+    assert {row["ARCH"] for row in rows} == {"amd64", "arm64"}
 
 
 def test_candidate_matrix_fails_without_python_3_12():

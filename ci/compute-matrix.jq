@@ -107,14 +107,26 @@ def compute_matrix($input):
 # test coverage and are built by the regular publication workflow.
 # Candidates build with a single Python version (3.12) for both Conda and
 # wheels. Keep publication images until shared CI callers migrate.
+# Release builds run in the newest CUDA of each major version, so candidates
+# build only those; an older minor would be built and verified with no release
+# build running in it. A build that needs another image fails at generation.
 def candidate_python_version: "3.12";
+
+def cuda_version_key: split(".") | map(tonumber);
+
+def newest_cuda_per_major:
+  group_by([.IMAGE_REPO, (.CUDA_VER | split(".")[0])]) |
+  map((map(.CUDA_VER | cuda_version_key) | max) as $newest |
+      .[] | select((.CUDA_VER | cuda_version_key) == $newest));
 
 def compute_candidate_matrix($input):
   (if ($input.PYTHON_VER | index(candidate_python_version)) == null
    then error("PYTHON_VER does not include candidate Python " + candidate_python_version)
    else candidate_python_version end) as $python |
   compute_base_matrix($input) |
-  {include: [.include[] | select(.IMAGE_REPO != "citestwheel" and .LINUX_VER == "rockylinux8") |
-    select(.PYTHON_VER == $python) |
+  [.include[] | select(.IMAGE_REPO != "citestwheel" and .LINUX_VER == "rockylinux8") |
+    select(.PYTHON_VER == $python)] |
+  newest_cuda_per_major as $kept |
+  {include: [.[] | select(IN($kept[])) |
     . as $variant | .ARCHES[] as $arch |
     $variant + {ARCH: $arch} | del(.ARCHES)]};
