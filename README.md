@@ -116,6 +116,20 @@ that work is independent of release readiness. The regular workflow retains
 the full image matrix and its `latest.yaml` validation. Private candidates do
 not publish `latest` tags.
 
+### Candidate base images
+
+Candidate images build `FROM` base images pinned by digest, and the release
+train records which ones. `candidate_base_images` in `ci/compute-matrix.jq`
+names each candidate row's base tags by build argument (`CUDA_BASE_IMAGE` and
+`MINIFORGE_BASE_IMAGE` for `ci-conda`, `BASE_IMAGE` for `ci-wheel`). The release
+planner calls it at this repository's frozen commit, resolves each tag to its
+digest and records `candidate_image_bases` in the train, so the base content is
+part of the train and of each image's reuse key. A candidate build passes the
+row's entry as `CANDIDATE_BASE_IMAGES` (argument to `<tag>@sha256:<digest>`).
+`ci/compute-build-args.sh` resolves nothing: it fails unless every argument is
+exactly the tag `candidate_base_images` names, pinned by a full digest.
+Production builds are unchanged.
+
 ### Private candidate layer caches
 
 Candidate image builds restore and export Docker's supported `local` BuildKit

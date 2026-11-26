@@ -356,31 +356,24 @@ def test_candidate_workflow_never_logs_in_pushes_or_exports_registry_cache():
     assert "container:ci-images" in (ROOT / ".github/workflows/build.yaml").read_text()
 
 
-@pytest.mark.parametrize(
-    "image_repo,expected_args",
-    [
-        (
-            "ci-conda",
-            {
-                "CUDA_BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-base-ubuntu22.04",
-                "MINIFORGE_BASE_IMAGE": "docker.io/condaforge/miniforge3:26.9.4-0",
-            },
-        ),
-        (
-            "ci-wheel",
-            {
-                "BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-devel-rockylinux8",
-            },
-        ),
-        (
-            "citestwheel",
-            {
-                "CUDA_BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-base-ubuntu22.04",
-            },
-        ),
-    ],
-)
-def test_candidate_build_args_select_mirror_images(tmp_path, image_repo, expected_args):
+def _digest(tag):
+    """A stand-in digest the train would record for one base tag."""
+    import hashlib
+
+    return f"{tag}@sha256:{hashlib.sha256(tag.encode()).hexdigest()}"
+
+
+MIRROR_TAGS = {
+    "ci-conda": {
+        "CUDA_BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-base-ubuntu22.04",
+        "MINIFORGE_BASE_IMAGE": "docker.io/condaforge/miniforge3:26.9.4-0",
+    },
+    "ci-wheel": {"BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-devel-rockylinux8"},
+    "citestwheel": {"CUDA_BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-base-ubuntu22.04"},
+}
+
+
+def _mirror_build_args(tmp_path, image_repo, bases):
     output_file = tmp_path / "github-output"
     env = {
         **os.environ,
@@ -394,7 +387,29 @@ def test_candidate_build_args_select_mirror_images(tmp_path, image_repo, expecte
         "IMAGE_REPO": image_repo,
         "CANDIDATE_IMAGE_MIRROR": "true",
     }
-    subprocess.run(["bash", "ci/compute-build-args.sh"], cwd=ROOT, env=env, check=True)
+    if bases is not None:
+        env["CANDIDATE_BASE_IMAGES"] = (
+            bases if isinstance(bases, str) else json.dumps(bases)
+        )
+    result = subprocess.run(
+        ["bash", "ci/compute-build-args.sh"],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result, output_file
+
+
+@pytest.mark.parametrize("image_repo", sorted(MIRROR_TAGS))
+def test_candidate_build_args_use_the_trains_base_image_digests(tmp_path, image_repo):
+    # The release train records each base image's digest; the build takes exactly those and resolves nothing.
+    bases = {
+        argument: _digest(tag) for argument, tag in MIRROR_TAGS[image_repo].items()
+    }
+    result, output_file = _mirror_build_args(tmp_path, image_repo, bases)
+    assert result.returncode == 0, result.stderr
 
     output = output_file.read_text()
     args_block = output.split("ARGS<<EOT\n", maxsplit=1)[1].split(
@@ -406,7 +421,7 @@ def test_candidate_build_args_select_mirror_images(tmp_path, image_repo, expecte
             line.split("=", maxsplit=1) for line in args_block.splitlines()
         )
     }
-    for key, value in expected_args.items():
+    for key, value in bases.items():
         assert args[key] == value
     if image_repo == "citestwheel":
         versions = yaml.safe_load((ROOT / "versions.yaml").read_text())
@@ -418,8 +433,131 @@ def test_candidate_build_args_select_mirror_images(tmp_path, image_repo, expecte
             args["GHA_TOOLS_BOOTSTRAP_SHA256"] == versions["GHA_TOOLS_BOOTSTRAP_SHA256"]
         )
     if image_repo == "ci-wheel":
-        assert "BASE_IMAGE=docker.io/nvidia/cuda:13.3.0-devel-rockylinux8" in output
+        assert f"BASE_IMAGE={bases['BASE_IMAGE']}" in output
     assert "dockerhub.nvidia.com" not in output
+
+
+GOOD = {argument: _digest(tag) for argument, tag in MIRROR_TAGS["ci-conda"].items()}
+
+
+@pytest.mark.parametrize(
+    ("bases", "message"),
+    [
+        (None, "CANDIDATE_BASE_IMAGES"),
+        ("not json", "CANDIDATE_BASE_IMAGES"),
+        ({"CUDA_BASE_IMAGE": GOOD["CUDA_BASE_IMAGE"]}, "base images"),
+        ({**GOOD, "EXTRA_IMAGE": GOOD["CUDA_BASE_IMAGE"]}, "base images"),
+        (
+            {**GOOD, "CUDA_BASE_IMAGE": MIRROR_TAGS["ci-conda"]["CUDA_BASE_IMAGE"]},
+            "base images",
+        ),
+        (
+            {
+                **GOOD,
+                "CUDA_BASE_IMAGE": "docker.io/nvidia/cuda:13.3.0-devel-ubuntu22.04@sha256:"
+                + "a" * 64,
+            },
+            "base images",
+        ),
+        (
+            {
+                **GOOD,
+                "CUDA_BASE_IMAGE": MIRROR_TAGS["ci-conda"]["CUDA_BASE_IMAGE"]
+                + "@sha256:abc",
+            },
+            "base images",
+        ),
+    ],
+)
+def test_candidate_build_args_fail_without_the_trains_exact_base_images(
+    tmp_path, bases, message
+):
+    result, output_file = _mirror_build_args(tmp_path, "ci-conda", bases)
+    assert result.returncode != 0
+    assert message in result.stderr
+    assert not output_file.exists()
+
+
+def _base_images(row, versions=None):
+    versions = versions or yaml.safe_load((ROOT / "versions.yaml").read_text())
+    return subprocess.run(
+        [
+            "jq",
+            "-c",
+            "--argjson",
+            "versions",
+            json.dumps(versions),
+            'include "ci/compute-matrix"; candidate_base_images($versions)',
+        ],
+        input=json.dumps(row),
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+@pytest.mark.parametrize("image_repo", sorted(MIRROR_TAGS))
+def test_candidate_base_images_names_each_rows_base_tags(image_repo):
+    # The release planner calls this at the frozen ci-imgs commit to record the digests in the train.
+    row = {
+        "IMAGE_REPO": image_repo,
+        "CUDA_VER": "13.3.0",
+        "LINUX_VER": "rockylinux8" if image_repo == "ci-wheel" else "ubuntu22.04",
+    }
+    result = _base_images(row)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == MIRROR_TAGS[image_repo]
+
+
+@pytest.mark.parametrize(
+    ("row", "versions"),
+    [
+        (
+            {
+                "IMAGE_REPO": "ci-unknown",
+                "CUDA_VER": "13.3.0",
+                "LINUX_VER": "ubuntu22.04",
+            },
+            None,
+        ),
+        (
+            {
+                "IMAGE_REPO": "ci-conda",
+                "CUDA_VER": "13.3.0",
+                "LINUX_VER": "ubuntu22.04",
+            },
+            {"MINIFORGE_VER": ""},
+        ),
+        ({"IMAGE_REPO": "ci-conda", "LINUX_VER": "ubuntu22.04"}, None),
+    ],
+)
+def test_candidate_base_images_refuse_what_they_cannot_name(row, versions):
+    assert _base_images(row, versions).returncode != 0
+
+
+def test_normal_build_args_need_no_base_image_digests(tmp_path):
+    env = {
+        **os.environ,
+        "GITHUB_ACTIONS": "true",
+        "GITHUB_OUTPUT": str(tmp_path / "github-output"),
+        "RAPIDS_VERSION_MAJOR_MINOR": "26.12",
+        "CUDA_VER": "13.3.0",
+        "LINUX_VER": "ubuntu22.04",
+        "PYTHON_VER": "3.14",
+        "ARCH": "amd64",
+        "IMAGE_REPO": "ci-conda",
+    }
+    env.pop("CANDIDATE_BASE_IMAGES", None)
+    result = subprocess.run(
+        ["bash", "ci/compute-build-args.sh"],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_citestwheel_declares_frozen_gha_tools_build_arguments_before_use():

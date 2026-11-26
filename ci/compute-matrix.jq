@@ -130,3 +130,26 @@ def compute_candidate_matrix($input):
   {include: [.[] | select(IN($kept[])) |
     . as $variant | .ARCHES[] as $arch |
     $variant + {ARCH: $arch} | del(.ARCHES)]};
+
+# The images a candidate image row builds FROM, by build argument, as tags. The release planner calls this at the
+# frozen ci-imgs commit and records each tag's digest in the release train (candidate_image_bases); in candidate
+# builds ci/compute-build-args.sh takes exactly those digests and checks them against these tags.
+def candidate_base_images($versions):
+  if (.CUDA_VER | type) != "string" or (.LINUX_VER | type) != "string" then
+    error("candidate base images need CUDA_VER and LINUX_VER")
+  elif .IMAGE_REPO == "ci-conda" then
+    if ($versions.MINIFORGE_VER | type) != "string" or $versions.MINIFORGE_VER == "" then
+      error("candidate base images need MINIFORGE_VER in versions.yaml")
+    else
+      {
+        CUDA_BASE_IMAGE: "docker.io/nvidia/cuda:\(.CUDA_VER)-base-\(.LINUX_VER)",
+        MINIFORGE_BASE_IMAGE: "docker.io/condaforge/miniforge3:\($versions.MINIFORGE_VER)"
+      }
+    end
+  elif .IMAGE_REPO == "ci-wheel" then
+    {BASE_IMAGE: "docker.io/nvidia/cuda:\(.CUDA_VER)-devel-\(.LINUX_VER)"}
+  elif .IMAGE_REPO == "citestwheel" then
+    {CUDA_BASE_IMAGE: "docker.io/nvidia/cuda:\(.CUDA_VER)-base-\(.LINUX_VER)"}
+  else
+    error("unsupported IMAGE_REPO for candidate base images: \(.IMAGE_REPO)")
+  end;

@@ -29,25 +29,37 @@ MANYLINUX_VER: ${MANYLINUX_VER}
 CONDA_ARCH: ${CONDA_ARCH}
 "
 
-# Candidate images use canonical Docker Hub references so the runner's configured
-# Docker and BuildKit mirrors handle every pull. Keep production defaults unchanged.
+# Candidate images build FROM exactly the base images the release train recorded: CANDIDATE_BASE_IMAGES maps each
+# build argument to <tag>@sha256:<digest>, and every tag must be the one candidate_base_images (ci/compute-matrix.jq)
+# names for this row, so the planner and the build agree. Nothing is resolved here. The canonical Docker Hub
+# references keep the runner's configured Docker and BuildKit mirrors handling every pull. Production is unchanged.
 if [[ "${CANDIDATE_IMAGE_MIRROR:-false}" == "true" ]]; then
-  case "${IMAGE_REPO}" in
-    ci-conda)
-      ARGS+=$'\nCUDA_BASE_IMAGE: docker.io/nvidia/cuda:'"${CUDA_VER}-base-${LINUX_VER}"
-      ARGS+=$'\nMINIFORGE_BASE_IMAGE: docker.io/condaforge/miniforge3:'"$(yq -r '.MINIFORGE_VER' versions.yaml)"
-      ;;
-    ci-wheel)
-      ARGS+=$'\nBASE_IMAGE: docker.io/nvidia/cuda:'"${CUDA_VER}-devel-${LINUX_VER}"
-      ;;
-    citestwheel)
-      ARGS+=$'\nCUDA_BASE_IMAGE: docker.io/nvidia/cuda:'"${CUDA_VER}-base-${LINUX_VER}"
-      ;;
-    *)
-      echo "Unsupported IMAGE_REPO for candidate image mirror: ${IMAGE_REPO}" >&2
-      exit 1
-      ;;
-  esac
+  if ! jq -e 'type == "object"' <<<"${CANDIDATE_BASE_IMAGES:-}" >/dev/null 2>&1; then
+    echo "candidate images need CANDIDATE_BASE_IMAGES, the release train's base images for this row" >&2
+    exit 1
+  fi
+  base_args="$(
+    jq -nr \
+      --arg repo "${IMAGE_REPO}" --arg cuda "${CUDA_VER}" --arg linux "${LINUX_VER}" \
+      --argjson versions "$(yq -o=json versions.yaml)" \
+      --argjson given "${CANDIDATE_BASE_IMAGES}" \
+      'include "ci/compute-matrix";
+       {IMAGE_REPO: $repo, CUDA_VER: $cuda, LINUX_VER: $linux} | candidate_base_images($versions) as $tags
+       | if ($given | keys) != ($tags | keys) then error("wrong base image arguments")
+         else $tags | to_entries | map(
+           .key as $argument | .value as $tag | $given[$argument] as $reference
+           | if ($reference | type) == "string" and ($reference | startswith($tag + "@sha256:"))
+               and ($reference | ltrimstr($tag + "@sha256:") | test("^[0-9a-f]{64}$"))
+             then "\($argument): \($reference)"
+             else error("\($argument) is not \($tag) pinned by digest")
+             end
+         ) | join("\n")
+         end'
+  )" || {
+    echo "CANDIDATE_BASE_IMAGES does not match this row's base images" >&2
+    exit 1
+  }
+  ARGS+=$'\n'"${base_args}"
 fi
 
 export ARGS
